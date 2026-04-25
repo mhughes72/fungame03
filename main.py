@@ -100,7 +100,8 @@ def _pick_participants() -> list[str]:
 # --------------------------------------------------------------------------- #
 
 _DEBUG_HELP = """
-  Debug commands (prefix with !):
+  Commands (prefix with !):
+    !quit               exit the game
     !debug              toggle all debug output on/off
     !debug <channel>    toggle a single channel  (e.g. !debug state)
     !debug status       show current on/off state of all channels
@@ -109,11 +110,16 @@ _DEBUG_HELP = """
   Channels: moderator  philosopher  consensus  routing  state
 """
 
+class _Quit(Exception):
+    pass
+
 def _handle_debug_command(raw: str) -> None:
     parts = raw.lstrip("!").strip().lower().split()
     cmd = parts[0] if parts else ""
 
-    if cmd == "help":
+    if cmd == "quit" or cmd == "exit":
+        raise _Quit
+    elif cmd == "help":
         print(_DEBUG_HELP)
     elif cmd == "debug":
         if len(parts) == 1:
@@ -218,7 +224,6 @@ def run_game():
                 }
                 _header(f'NEW TOPIC: "{topic}"')
             else:
-                print("\n  The room falls silent. Farewell.\n")
                 break
         else:
             _display_no_consensus(state)
@@ -256,4 +261,7 @@ def run_game():
 
 
 if __name__ == "__main__":
-    run_game()
+    try:
+        run_game()
+    except (KeyboardInterrupt, _Quit):
+        print("\n\n  The room falls silent. Farewell.\n")
