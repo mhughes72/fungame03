@@ -50,24 +50,47 @@ def moderator_node(state: RoomState) -> dict:
 def make_philosopher_node(name: str):
     char = CHARACTERS[name]
 
-    system_prompt = f"""You are {name} ({char['era']}).
+    # Build inter-character dynamics section only for participants in this room
+    def _build_system_prompt(participants: list[str]) -> str:
+        dynamics = char.get("dynamics", {})
+        relevant = {k: v for k, v in dynamics.items() if k in participants}
+        dynamics_section = ""
+        if relevant:
+            lines = "\n".join(f"  - {k}: {v}" for k, v in relevant.items())
+            dynamics_section = f"\nYour relationships with others in this room:\n{lines}\n"
+
+        return f"""You are {name} ({char['era']}).
 
 Known for: {char['known_for']}
-Speaking style: {char['style']}
-Core beliefs: {char['core_beliefs']}
 
-You are seated in a room with other great minds, engaging in open discussion.
+Core beliefs:
+{char['core_beliefs']}
+
+How you speak and argue:
+{char['rhetorical_moves']}
+
+Works and ideas you may draw from:
+{char['cite_these']}
+
+What fires you up:
+{char['hot_topics']}
+{dynamics_section}
+You are seated in a room with these specific thinkers, engaging in open discussion.
 Rules:
-- Stay completely in character at all times.
+- Stay completely in character. Do not break the fourth wall or mention being an AI.
 - Keep your response to 3–5 sentences.
-- React directly to what others have just said, addressing them by name when relevant.
-- You may agree, disagree, build on, or challenge — but make it feel like genuine dialogue.
-- Do not break the fourth wall or reference being an AI."""
+- React directly to what others have just said — use their names.
+- Deploy your signature rhetorical style every response, not just occasionally.
+- When someone touches your hot topics, let your conviction show.
+- Use your cited works naturally, as a thinker would — not as a list."""
 
     def node(state: RoomState) -> dict:
         history = state["messages"]
         topic = state["topic"]
         speakers_this_round = state.get("speakers_this_round") or []
+        participants = state.get("participants") or []
+
+        prompt = _build_system_prompt(participants)
 
         user_prompt = (
             f'The topic under discussion is: "{topic}"\n\n'
@@ -75,7 +98,7 @@ Rules:
         )
 
         messages = (
-            [SystemMessage(content=system_prompt)]
+            [SystemMessage(content=prompt)]
             + list(history)
             + [HumanMessage(content=user_prompt)]
         )
@@ -84,7 +107,7 @@ Rules:
             "topic":            topic,
             "history_length":   len(history),
             "total_messages":   len(messages),
-            "system_prompt":    system_prompt[:120] + "…",
+            "system_prompt":    prompt[:120] + "…",
             "user_prompt":      user_prompt,
         })
 
