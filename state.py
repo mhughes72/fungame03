@@ -15,3 +15,4 @@ class RoomState(TypedDict):
     partial_agreements: list[dict]   # [{participants, on}] — updated each check
     points_of_agreement: list[str]
     remaining_disagreements: list[str]
+    argument_log: dict  # {name: [claim1, claim2, ...]} — last 5 claims per character

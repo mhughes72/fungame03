@@ -1,10 +1,17 @@
 import os
 import sys
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 from dotenv import load_dotenv
 from langchain_core.messages import HumanMessage, AIMessage
 
 from personas import CHARACTERS
 from graph import build_graph, save_graph_image
+from nodes import summarize_history
 from state import RoomState
 import debug as dbg
 
@@ -94,7 +101,7 @@ def _pick_participants() -> list[str]:
     print()
 
     while True:
-        raw = input("  Pick 2–4 thinkers by number (e.g. 1,3,5): ").strip()
+        raw = input("  Pick 2-4 thinkers by number (e.g. 1,3,5): ").strip()
         try:
             indices = [int(x.strip()) - 1 for x in raw.split(",")]
             if not all(0 <= i < len(names) for i in indices):
@@ -104,7 +111,7 @@ def _pick_participants() -> list[str]:
             selected = [names[i] for i in indices]
             return selected
         except (ValueError, IndexError):
-            print("  Please enter 2–4 valid numbers separated by commas.\n")
+            print("  Please enter 2-4 valid numbers separated by commas.\n")
 
 
 # --------------------------------------------------------------------------- #
@@ -191,6 +198,7 @@ def run_game():
         "partial_agreements": [],
         "points_of_agreement": [],
         "remaining_disagreements": [],
+        "argument_log": {},
     }
 
     _header(f'TOPIC: "{topic}"')
@@ -226,6 +234,12 @@ def run_game():
 
         state = final_state
 
+        # Compress old messages into a rolling summary once history grows long
+        condensed = summarize_history(state["messages"], state["topic"])
+        if len(condensed) < len(state["messages"]):
+            print(f"\n  [Earlier conversation summarized — history condensed to {len(condensed)} messages]\n")
+            state = {**state, "messages": condensed}
+
         # Show consensus analysis
         if state.get("consensus"):
             _display_consensus(state)
@@ -244,6 +258,7 @@ def run_game():
                     "partial_agreements": [],
                     "points_of_agreement": [],
                     "remaining_disagreements": [],
+                    "argument_log": {},
                 }
                 _header(f'NEW TOPIC: "{topic}"')
             else:

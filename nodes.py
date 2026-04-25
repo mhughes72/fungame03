@@ -1,3 +1,7 @@
+import time
+import random
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 from pydantic import BaseModel
@@ -6,201 +10,340 @@ from state import RoomState
 from personas import CHARACTERS
 import debug as dbg
 
+
 def _chat_llm():
     return ChatOpenAI(model="gpt-4o", temperature=0.85)
 
 def _structured_llm():
     return ChatOpenAI(model="gpt-4o", temperature=0.1)
 
-def _moderator_llm():
-    # Fast/cheap model — routing decisions don't need gpt-4o quality
-    return ChatOpenAI(model="gpt-4o-mini", temperature=0.3)
+def _selector_llm():
+    return ChatOpenAI(model="gpt-4o-mini", temperature=0.2)
 
 
-# How many turns between consensus checks — 3 full "rounds" worth per participant count
 def turns_per_check(participant_count: int) -> int:
     return participant_count * 3
 
 
-class _ModeratorDecision(BaseModel):
-    next_speaker: str
+# --------------------------------------------------------------------------- #
+# Philosopher prompt builders                                                   #
+# --------------------------------------------------------------------------- #
+
+def _philosopher_system_prompt(
+    name: str,
+    participants: list[str],
+    partial_agreements: list[dict],
+) -> str:
+    char = CHARACTERS[name]
+
+    coalition_section = ""
+    if partial_agreements:
+        allied, opposing = [], []
+        for a in partial_agreements:
+            if name in a["participants"]:
+                others = [p for p in a["participants"] if p != name]
+                allied.append(f"  - You and {', '.join(others)} are converging on: {a['on']}")
+            else:
+                allied_names = " and ".join(a["participants"])
+                opposing.append(f"  - {allied_names} are converging on: {a['on']}")
+        if allied:
+            coalition_section += (
+                f"\n\nYou are part of an emerging alignment:\n" + "\n".join(allied) + "\n"
+                "When relevant, deepen this common ground and try to bring others around to it."
+            )
+        if opposing:
+            coalition_section += (
+                f"\n\nOther participants are forming a coalition you are NOT part of:\n"
+                + "\n".join(opposing) + "\n"
+                "Challenge this alliance — find the flaw in their shared position or drive a wedge."
+            )
+
+    return (
+        f"You are {name} ({char['era']}).\n\n"
+        f"Known for: {char['known_for']}\n\n"
+        f"Core beliefs:\n{char['core_beliefs']}\n\n"
+        f"How you speak and argue:\n{char['rhetorical_moves']}\n\n"
+        f"Works and ideas you may draw from:\n{char['cite_these']}\n\n"
+        f"What fires you up:\n{char['hot_topics']}\n"
+        f"{coalition_section}\n\n"
+        "You are seated in a room with these specific thinkers, engaging in open discussion.\n"
+        "Rules:\n"
+        "- Stay completely in character. Do not break the fourth wall or mention being an AI.\n"
+        "- Keep your response to 2–3 sentences. Be sharp, not exhaustive.\n"
+        "- Address ONE person or ONE idea per turn — do not survey the whole room.\n"
+        "- NEVER restate a point you have already made. The conversation must move forward.\n"
+        "- Engage with the specific argument just made — not the topic in general.\n"
+        "- Stay anchored to the central question. Sub-arguments must serve as evidence toward it — not replace it.\n"
+        "- Do not assume the answer to the question. If the topic is a question, treat it as genuinely open.\n"
+        "- Deploy your signature rhetorical style every response, not just occasionally.\n"
+        "- When someone touches your hot topics, let your conviction show.\n"
+        "- Use your cited works naturally, as a thinker would — not as a list."
+    )
+
+
+def _philosopher_user_prompt(name: str, history: list, topic: str, argument_log: dict | None = None) -> str:
+    safe_name = name.replace(" ", "_")
+
+    last_msg = history[-1] if history else None
+    if last_msg and hasattr(last_msg, "content") and last_msg.name != safe_name:
+        last_speaker = (last_msg.name or "Someone").replace("_", " ")
+        last_said = last_msg.content[:300]
+        respond_to = (
+            f'{last_speaker} just said: "{last_said}"\n\n'
+            f"Respond directly to THIS argument. Do not restate your own position — "
+            f"engage with what {last_speaker} specifically argued."
+        )
+    else:
+        respond_to = "It is your turn to open or advance the debate."
+
+    past_claims = (argument_log or {}).get(name, [])
+    if past_claims:
+        formatted = "\n".join(
+            f'  - "{c[:150]}{"…" if len(c) > 150 else ""}"' for c in past_claims
+        )
+        no_repeat = f"\nArguments you have already made — do NOT repeat these, build further or shift ground:\n{formatted}\n"
+    else:
+        no_repeat = ""
+
+    return (
+        f'Central question being debated: "{topic}"\n\n'
+        f"{no_repeat}"
+        f"{respond_to}\n\n"
+        f'Ensure your response connects back to the central question: "{topic}". '
+        f"Do not assume the answer — engage with whether it is true."
+    )
+
+
+# --------------------------------------------------------------------------- #
+# Parallel generation + selection                                               #
+# --------------------------------------------------------------------------- #
+
+class _SelectorDecision(BaseModel):
+    chosen_speaker: str
     reason: str
 
 
-# --------------------------------------------------------------------------- #
-# Moderator                                                                     #
-# --------------------------------------------------------------------------- #
+def _relevance_score(name: str, last_content: str) -> int:
+    """Score how likely this character is to react strongly to the last message."""
+    hot = CHARACTERS[name].get("hot_topics", "").lower()
+    last = last_content.lower()
+    hot_words = set(hot.split())
+    last_words = set(last.split())
+    return len(hot_words & last_words)
 
-def moderator_node(state: RoomState) -> dict:
-    participants = state["participants"]
-    recent_speakers = state.get("recent_speakers") or []
-    turn_count = state.get("turn_count") or 0
 
-    # Trigger consensus check every N turns, scaled to participant count
-    if turn_count > 0 and turn_count % turns_per_check(len(participants)) == 0:
-        dbg.dlog("MODERATOR", f"Turn {turn_count} — triggering consensus check")
-        return {"current_speaker": "consensus_check"}
+def _top_candidates(names: list[str], last_content: str, n: int = 2) -> list[str]:
+    """Return the N candidates most likely to react, by hot-topic keyword overlap."""
+    if len(names) <= n:
+        return names
+    scored = sorted(names, key=lambda name: _relevance_score(name, last_content), reverse=True)
+    return scored[:n]
 
-    messages = state.get("messages") or []
-    last_messages = messages[-4:]
-    transcript = "\n".join(
-        f"{(m.name or 'User').replace('_', ' ')}: {m.content[:300]}"
-        for m in last_messages
-        if hasattr(m, "content")
-    ) or "(the debate is just beginning)"
 
-    persona_hints = "\n".join(
-        f"  {name}: {CHARACTERS[name]['hot_topics'][:120]}"
-        for name in participants
-    )
+_CANDIDATE_HISTORY = 10  # max messages passed to each candidate call
 
-    recency = recent_speakers[-3:] if recent_speakers else []
 
-    # Surface any known partial agreements so the moderator can route dissenters at coalitions
+def _trim_history(history: list) -> list:
+    """Keep any leading summary block + the most recent N messages."""
+    if not history:
+        return history
+    # Preserve a leading SystemMessage summary if present
+    if isinstance(history[0], SystemMessage) and history[0].content.startswith("[DEBATE SUMMARY"):
+        return [history[0]] + history[1:][-_CANDIDATE_HISTORY:]
+    return history[-_CANDIDATE_HISTORY:]
+
+
+def _generate_candidate(name: str, state: RoomState) -> dict:
+    """Generate one philosopher's response. Designed to run in a thread."""
+    participants       = state.get("participants") or []
     partial_agreements = state.get("partial_agreements") or []
-    coalitions_section = ""
-    if partial_agreements:
-        lines = "\n".join(
-            f"  {' + '.join(p['participants'])} agree on: {p['on']}"
-            for p in partial_agreements
-        )
-        coalitions_section = (
-            f"\nEmerging coalitions (consider routing a dissenter to challenge these):\n{lines}\n"
-        )
+    history            = _trim_history(state["messages"])
+    topic              = state["topic"]
 
-    prompt = (
-        f"Participants: {', '.join(participants)}\n\n"
-        f"Recent exchange:\n{transcript}\n\n"
-        f"Spoke recently — give them a break unless directly challenged: {recency or 'no one yet'}\n\n"
-        f"What fires each participant up:\n{persona_hints}\n"
-        f"{coalitions_section}\n"
-        f"Who should speak next? Prioritize:\n"
-        f"1. Someone who was directly challenged, named, or had their beliefs attacked\n"
-        f"2. A dissenter who should push back on an emerging coalition\n"
-        f"3. Someone whose hot topics were just touched\n"
-        f"4. Someone who hasn't spoken recently\n\n"
-        f"You MUST pick one name exactly from this list: {participants}"
+    argument_log  = state.get("argument_log") or {}
+    system_prompt = _philosopher_system_prompt(name, participants, partial_agreements)
+    user_prompt   = _philosopher_user_prompt(name, state["messages"], topic, argument_log)
+
+    messages = (
+        [SystemMessage(content=system_prompt)]
+        + list(history)
+        + [HumanMessage(content=user_prompt)]
     )
 
-    decision: _ModeratorDecision = _moderator_llm().with_structured_output(
-        _ModeratorDecision
-    ).invoke([
-        SystemMessage(content=(
-            "You are a debate moderator. Keep the conversation reactive and dynamic. "
-            "Always return a name that appears exactly in the participants list."
-        )),
-        HumanMessage(content=prompt),
-    ])
+    dbg.dlog("PHILOSOPHER", f"{name} — generating candidate")
 
-    next_speaker = decision.next_speaker
-    # Validate — fallback to least-recently-spoken if the LLM drifts
-    if next_speaker not in participants:
-        dbg.dlog("MODERATOR", f"Invalid speaker '{next_speaker}' — falling back")
-        next_speaker = next(
-            (p for p in participants if p not in recent_speakers[-2:]),
-            participants[0],
-        )
+    for attempt in range(4):
+        try:
+            response = _chat_llm().invoke(messages)
+            break
+        except Exception as e:
+            if "429" in str(e) or "rate_limit" in str(e).lower():
+                wait = (attempt + 1) * 8 + random.uniform(0, 3)
+                dbg.dlog("PHILOSOPHER", f"{name} — rate limit, retrying in {wait:.1f}s (attempt {attempt + 1})")
+                time.sleep(wait)
+            else:
+                raise
+    else:
+        raise RuntimeError(f"{name}: failed after 4 attempts due to rate limiting")
 
-    new_recent = (recent_speakers + [next_speaker])[-6:]
-
-    dbg.dlog("MODERATOR", f"Turn {turn_count} → {next_speaker}", {
-        "reason":          decision.reason,
-        "recent_speakers": recency,
-        "turn_count":      turn_count,
+    usage = getattr(response, "usage_metadata", None)
+    dbg.dlog("PHILOSOPHER", f"{name} — done", {
+        "tokens_in":  getattr(usage, "input_tokens", "n/a"),
+        "tokens_out": getattr(usage, "output_tokens", "n/a"),
+        "preview":    response.content[:100] + ("…" if len(response.content) > 100 else ""),
     })
 
     return {
-        "current_speaker": next_speaker,
-        "recent_speakers": new_recent,
-        "turn_count": turn_count + 1,
+        "name":      name,
+        "safe_name": name.replace(" ", "_"),
+        "content":   response.content,
     }
 
 
+def _select_winner(candidates: list[dict], state: RoomState) -> dict:
+    """Use a fast LLM to pick the most dramatically compelling response."""
+    if len(candidates) == 1:
+        dbg.dlog("MODERATOR", f"Only one candidate — auto-selecting {candidates[0]['name']}")
+        return candidates[0]
+
+    messages        = state.get("messages") or []
+    recent_speakers = state.get("recent_speakers") or []
+    last_msg        = messages[-1] if messages else None
+    last_speaker    = ""
+    last_said       = ""
+    if last_msg and hasattr(last_msg, "content"):
+        last_speaker = (last_msg.name or "").replace("_", " ")
+        last_said    = last_msg.content[:400]
+
+    # Detect if two people have been dominating — tell the selector to break it up
+    recent_unique = list(dict.fromkeys(recent_speakers[-6:]))  # order-preserving dedupe
+    ping_pong_warning = ""
+    if len(set(recent_speakers[-6:])) <= 2 and len(recent_speakers) >= 4:
+        locked = list(set(recent_speakers[-4:]))
+        fresh  = [c["name"] for c in candidates if c["name"] not in locked]
+        if fresh:
+            ping_pong_warning = (
+                f"\n\nIMPORTANT: {' and '.join(locked)} have been dominating the last several turns. "
+                f"Strongly prefer a response from {' or '.join(fresh)} to bring fresh perspective into the debate.\n"
+            )
+
+    candidates_text = "\n\n".join(
+        f'[{c["name"]}]: "{c["content"]}"'
+        for c in candidates
+    )
+
+    prompt = (
+        f'Debate topic: "{state["topic"]}"\n\n'
+        f'Last said by {last_speaker}: "{last_said}"\n\n'
+        f"Recent speaker order: {recent_unique}\n"
+        f"Candidate responses:\n{candidates_text}\n"
+        f"{ping_pong_warning}\n"
+        "Choose the response that best advances the debate. Prefer the one that:\n"
+        "1. Brings a genuinely new angle — not just a continuation of the same back-and-forth\n"
+        "2. Most sharply engages with what was just said\n"
+        "3. Feels most dramatically alive and true to that thinker's voice\n\n"
+        f"Return the speaker name exactly as it appears. Valid names: "
+        f"{[c['name'] for c in candidates]}"
+    )
+
+    selector_messages = [
+        SystemMessage(content=(
+            "You are a dramatic editor selecting the most compelling contribution "
+            "to a philosophical debate. Always return a name from the provided list."
+        )),
+        HumanMessage(content=prompt),
+    ]
+    for attempt in range(4):
+        try:
+            decision: _SelectorDecision = _selector_llm().with_structured_output(
+                _SelectorDecision
+            ).invoke(selector_messages)
+            break
+        except Exception as e:
+            if "429" in str(e) and "insufficient_quota" not in str(e):
+                wait = (attempt + 1) * 8 + random.uniform(0, 3)
+                dbg.dlog("MODERATOR", f"Selector rate limit, retrying in {wait:.1f}s (attempt {attempt + 1})")
+                time.sleep(wait)
+            else:
+                raise
+    else:
+        raise RuntimeError("Selector failed after 4 attempts due to rate limiting")
+
+    chosen = next(
+        (c for c in candidates if c["name"] == decision.chosen_speaker),
+        candidates[0],
+    )
+
+    dbg.dlog("MODERATOR", f"Selector chose {chosen['name']}", {
+        "reason":     decision.reason,
+        "candidates": [c["name"] for c in candidates],
+        "rejected":   [c["name"] for c in candidates if c["name"] != chosen["name"]],
+    })
+
+    return chosen
+
+
 # --------------------------------------------------------------------------- #
-# Philosopher node factory                                                      #
+# Graph nodes                                                                   #
 # --------------------------------------------------------------------------- #
 
-def make_philosopher_node(name: str):
-    char = CHARACTERS[name]
+def moderator_node(state: RoomState) -> dict:
+    """Only responsibility: decide when to trigger a consensus check."""
+    participants = state["participants"]
+    turn_count   = state.get("turn_count") or 0
 
-    # Build inter-character dynamics section only for participants in this room
-    def _build_system_prompt(participants: list[str]) -> str:
-        dynamics = char.get("dynamics", {})
-        relevant = {k: v for k, v in dynamics.items() if k in participants}
-        dynamics_section = ""
-        if relevant:
-            lines = "\n".join(f"  - {k}: {v}" for k, v in relevant.items())
-            dynamics_section = f"\nYour relationships with others in this room:\n{lines}\n"
+    if turn_count > 0 and turn_count % turns_per_check(len(participants)) == 0:
+        dbg.dlog("MODERATOR", f"Turn {turn_count} — triggering consensus check")
+        return {"current_speaker": "consensus_check", "turn_count": turn_count + 1}
 
-        return f"""You are {name} ({char['era']}).
+    dbg.dlog("MODERATOR", f"Turn {turn_count} — starting parallel generation")
+    return {"current_speaker": "__turn__"}
 
-Known for: {char['known_for']}
 
-Core beliefs:
-{char['core_beliefs']}
+def parallel_turn_node(state: RoomState) -> dict:
+    """Generate responses from all eligible participants in parallel, select the best."""
+    participants    = state["participants"]
+    recent_speakers = state.get("recent_speakers") or []
+    turn_count      = state.get("turn_count") or 0
+    last_speaker    = recent_speakers[-1] if recent_speakers else ""
 
-How you speak and argue:
-{char['rhetorical_moves']}
+    # Everyone except the last speaker is eligible
+    eligible = [p for p in participants if p != last_speaker]
 
-Works and ideas you may draw from:
-{char['cite_these']}
+    # Narrow to top-2 by hot-topic relevance to keep token usage manageable
+    messages_list  = state.get("messages") or []
+    last_content   = messages_list[-1].content if messages_list else ""
+    candidates_names = _top_candidates(eligible, last_content, n=2)
 
-What fires you up:
-{char['hot_topics']}
-{dynamics_section}
-You are seated in a room with these specific thinkers, engaging in open discussion.
-Rules:
-- Stay completely in character. Do not break the fourth wall or mention being an AI.
-- Keep your response to 3–5 sentences.
-- React directly to what others have just said — use their names.
-- Deploy your signature rhetorical style every response, not just occasionally.
-- When someone touches your hot topics, let your conviction show.
-- Use your cited works naturally, as a thinker would — not as a list."""
+    dbg.dlog("MODERATOR", "Parallel generation", {
+        "eligible":   eligible,
+        "candidates": candidates_names,
+        "excluded":   last_speaker or "(none)",
+    })
 
-    def node(state: RoomState) -> dict:
-        history = state["messages"]
-        topic = state["topic"]
-        participants = state.get("participants") or []
-
-        prompt = _build_system_prompt(participants)
-
-        user_prompt = (
-            f'The topic under discussion is: "{topic}"\n\n'
-            f"It is your turn to speak. Respond as {name}."
-        )
-
-        messages = (
-            [SystemMessage(content=prompt)]
-            + list(history)
-            + [HumanMessage(content=user_prompt)]
-        )
-
-        dbg.dlog("PHILOSOPHER", f"{name} — invoking LLM", {
-            "topic":            topic,
-            "history_length":   len(history),
-            "total_messages":   len(messages),
-            "system_prompt":    prompt[:120] + "…",
-            "user_prompt":      user_prompt,
-        })
-
-        response = _chat_llm().invoke(messages)
-
-        usage = getattr(response, "usage_metadata", None)
-        dbg.dlog("PHILOSOPHER", f"{name} — response received", {
-            "response_length":  len(response.content),
-            "tokens_in":        getattr(usage, "input_tokens", "n/a"),
-            "tokens_out":       getattr(usage, "output_tokens", "n/a"),
-            "preview":          response.content[:120] + ("…" if len(response.content) > 120 else ""),
-        })
-
-        safe_name = name.replace(" ", "_")
-        return {
-            "messages": [AIMessage(content=response.content, name=safe_name)],
-            "speakers_this_round": speakers_this_round + [name],
+    # Generate all responses in parallel
+    with ThreadPoolExecutor(max_workers=len(candidates_names)) as executor:
+        futures = {
+            executor.submit(_generate_candidate, name, state): name
+            for name in candidates_names
         }
+        responses = [f.result() for f in as_completed(futures)]
 
-    node.__name__ = f"philosopher_{name.lower().replace(' ', '_')}"
-    return node
+    winner = _select_winner(responses, state)
+
+    new_recent = (recent_speakers + [winner["name"]])[-6:]
+
+    argument_log = dict(state.get("argument_log") or {})
+    prev = list(argument_log.get(winner["name"], []))
+    argument_log[winner["name"]] = (prev + [winner["content"]])[-5:]
+
+    return {
+        "messages":        [AIMessage(content=winner["content"], name=winner["safe_name"])],
+        "current_speaker":  winner["name"],
+        "recent_speakers":  new_recent,
+        "turn_count":       turn_count + 1,
+        "argument_log":     argument_log,
+    }
 
 
 # --------------------------------------------------------------------------- #
@@ -208,26 +351,26 @@ Rules:
 # --------------------------------------------------------------------------- #
 
 class _PartialAgreement(BaseModel):
-    participants: list[str]   # e.g. ["Socrates", "Marx"]
-    on: str                   # what they agree on
+    participants: list[str]
+    on: str
 
 
 class _ConsensusResult(BaseModel):
     full_consensus: bool
     full_summary: str
     partial_agreements: list[_PartialAgreement]
-    dissenters: list[str]            # participants not yet in any agreement
+    dissenters: list[str]
     points_of_agreement: list[str]
     remaining_disagreements: list[str]
 
 
 def consensus_checker_node(state: RoomState) -> dict:
-    messages = state["messages"]
-    topic = state["topic"]
-    turn_count = state.get("turn_count") or 0
+    messages     = state["messages"]
+    topic        = state["topic"]
+    turn_count   = state.get("turn_count") or 0
     participants = state["participants"]
 
-    recent = messages[-12:]
+    recent     = messages[-12:]
     transcript = "\n\n".join(
         f"{(m.name or 'User').replace('_', ' ')}: {m.content}"
         for m in recent
@@ -239,12 +382,12 @@ def consensus_checker_node(state: RoomState) -> dict:
         f"Participants: {', '.join(participants)}\n"
         f"Turn: {turn_count}\n\n"
         f"Transcript:\n{transcript}\n\n"
-        "Analyze this conversation carefully:\n"
-        "1. Has the FULL group reached meaningful consensus? Be strict — everyone must genuinely agree.\n"
+        "Analyze this conversation carefully. Focus ONLY on the main topic — ignore tangents.\n"
+        "1. Has the FULL group reached meaningful consensus on the main topic? Be strict — everyone must genuinely agree.\n"
         "2. Are there PARTIAL agreements — subsets of 2+ participants converging on something "
-        "while others disagree or haven't engaged? List each subset and what they agree on.\n"
+        "directly related to the main topic?\n"
         "3. Who are the dissenters — participants not part of any emerging agreement?\n"
-        "4. What are the remaining points of contention?"
+        "4. What are the remaining points of contention ABOUT THE MAIN TOPIC specifically?"
     )
 
     dbg.dlog("CONSENSUS", f"Checking at turn {turn_count}", {
@@ -252,7 +395,6 @@ def consensus_checker_node(state: RoomState) -> dict:
         "messages_sampled": len(recent),
         "transcript_chars": len(transcript),
     })
-    dbg.dlog("CONSENSUS", "Transcript sent to checker", transcript)
 
     result: _ConsensusResult = _structured_llm().with_structured_output(
         _ConsensusResult
@@ -267,16 +409,65 @@ def consensus_checker_node(state: RoomState) -> dict:
     partial = [{"participants": p.participants, "on": p.on} for p in result.partial_agreements]
 
     dbg.dlog("CONSENSUS", f"Result — full={result.full_consensus}, partial={len(partial)}", {
-        "full_summary":             result.full_summary,
-        "partial_agreements":       partial or "(none)",
-        "dissenters":               result.dissenters or "(none)",
-        "remaining_disagreements":  result.remaining_disagreements or "(none)",
+        "full_summary":            result.full_summary,
+        "partial_agreements":      partial or "(none)",
+        "dissenters":              result.dissenters or "(none)",
+        "remaining_disagreements": result.remaining_disagreements or "(none)",
     })
 
     return {
-        "consensus":                result.full_consensus,
-        "consensus_summary":        result.full_summary,
-        "partial_agreements":       partial,
-        "points_of_agreement":      result.points_of_agreement,
-        "remaining_disagreements":  result.remaining_disagreements,
+        "consensus":               result.full_consensus,
+        "consensus_summary":       result.full_summary,
+        "partial_agreements":      partial,
+        "points_of_agreement":     result.points_of_agreement,
+        "remaining_disagreements": result.remaining_disagreements,
     }
+
+
+# --------------------------------------------------------------------------- #
+# History summarizer                                                            #
+# --------------------------------------------------------------------------- #
+
+_SUMMARIZE_AFTER = 14   # summarize sooner to keep context lean
+_KEEP_RECENT     = 6
+
+
+def summarize_history(messages: list, topic: str) -> list:
+    """Compress old messages into a summary, keeping the most recent ones intact."""
+    if len(messages) <= _SUMMARIZE_AFTER:
+        return messages
+
+    to_summarize = messages[:-_KEEP_RECENT]
+    to_keep      = messages[-_KEEP_RECENT:]
+
+    transcript = "\n\n".join(
+        f"{(m.name or 'User').replace('_', ' ')}: {m.content}"
+        for m in to_summarize
+        if hasattr(m, "content")
+    )
+
+    dbg.dlog("STATE", f"Summarizing {len(to_summarize)} messages → 1 summary block")
+
+    response = _structured_llm().invoke([
+        SystemMessage(content="You summarize philosophical debates concisely and accurately."),
+        HumanMessage(content=(
+            f'Topic: "{topic}"\n\n'
+            f"Summarize the debate below. Preserve:\n"
+            f"- Each participant's key arguments and how they evolved\n"
+            f"- Important moments of agreement, conflict, or shift\n"
+            f"- Any notable formulations or turning points\n"
+            f"Write in third person, 150–250 words.\n\n"
+            f"Transcript:\n{transcript}"
+        )),
+    ])
+
+    summary_msg = SystemMessage(
+        content=(
+            f"[DEBATE SUMMARY — {len(to_summarize)} earlier messages]\n\n"
+            f"{response.content}"
+        )
+    )
+
+    dbg.dlog("STATE", "Summary produced", response.content[:200])
+
+    return [summary_msg] + list(to_keep)
