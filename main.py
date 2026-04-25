@@ -58,7 +58,7 @@ def _display_consensus(state: RoomState):
             print(f"    • {pt}")
 
 def _display_no_consensus(state: RoomState):
-    _section(f"END OF ROUND {state['round_count']}")
+    _section(f"AFTER {state['turn_count']} TURNS — NO CONSENSUS YET")
     if state.get("remaining_disagreements"):
         print("\n  Open tensions:")
         for pt in state["remaining_disagreements"]:
@@ -172,8 +172,8 @@ def run_game():
         "topic": topic,
         "participants": participants,
         "current_speaker": "",
-        "speakers_this_round": [],
-        "round_count": 0,
+        "recent_speakers": [],
+        "turn_count": 0,
         "consensus": False,
         "consensus_summary": "",
         "points_of_agreement": [],
@@ -195,11 +195,11 @@ def run_game():
             final_state = snapshot
 
             dbg.dlog("STATE", "Snapshot after node", {
-                "current_speaker":      snapshot.get("current_speaker"),
-                "speakers_this_round":  snapshot.get("speakers_this_round"),
-                "round_count":          snapshot.get("round_count"),
-                "total_messages":       len(snapshot.get("messages") or []),
-                "consensus":            snapshot.get("consensus"),
+                "current_speaker":  snapshot.get("current_speaker"),
+                "recent_speakers":  snapshot.get("recent_speakers"),
+                "turn_count":       snapshot.get("turn_count"),
+                "total_messages":   len(snapshot.get("messages") or []),
+                "consensus":        snapshot.get("consensus"),
             })
 
         state = final_state
@@ -215,8 +215,8 @@ def run_game():
                     **state,
                     "topic": topic,
                     "messages": [],
-                    "speakers_this_round": [],
-                    "round_count": 0,
+                    "recent_speakers": [],
+                    "turn_count": 0,
                     "consensus": False,
                     "consensus_summary": "",
                     "points_of_agreement": [],
@@ -237,11 +237,8 @@ def run_game():
                 _handle_debug_command(user_input)
                 continue
 
-            # Reset for next round; optionally inject user message
-            state = {
-                **state,
-                "speakers_this_round": [],
-            }
+            # Inject user message if provided; state otherwise carries forward as-is
+            state = {**state}
 
             if user_input:
                 dbg.dlog("STATE", "User message injected", {"content": user_input})
@@ -252,10 +249,10 @@ def run_game():
                     ],
                 }
 
-        # Guard against infinite loops
-        if state.get("round_count", 0) >= 8:
+        # Guard against runaway debates
+        if state.get("turn_count", 0) >= 40:
             _section("THE DEBATE CONTINUES...")
-            print("  After many rounds, no full consensus has emerged.")
+            print("  After many turns, no full consensus has emerged.")
             print("  Some questions resist easy resolution.\n")
             break
 

@@ -8,8 +8,8 @@ class RoomState(TypedDict):
     topic: str
     participants: list[str]
     current_speaker: str
-    speakers_this_round: list[str]
-    round_count: int
+    recent_speakers: list[str]   # last N speakers — used for recency penalty
+    turn_count: int
     consensus: bool
     consensus_summary: str
     points_of_agreement: list[str]

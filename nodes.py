@@ -12,6 +12,19 @@ def _chat_llm():
 def _structured_llm():
     return ChatOpenAI(model="gpt-4o", temperature=0.1)
 
+def _moderator_llm():
+    # Fast/cheap model — routing decisions don't need gpt-4o quality
+    return ChatOpenAI(model="gpt-4o-mini", temperature=0.3)
+
+
+# How many philosopher turns between consensus checks
+TURNS_PER_CHECK = 5
+
+
+class _ModeratorDecision(BaseModel):
+    next_speaker: str
+    reason: str
+
 
 # --------------------------------------------------------------------------- #
 # Moderator                                                                     #
@@ -19,28 +32,73 @@ def _structured_llm():
 
 def moderator_node(state: RoomState) -> dict:
     participants = state["participants"]
-    speakers_this_round = state.get("speakers_this_round") or []
-    round_count = state.get("round_count") or 0
+    recent_speakers = state.get("recent_speakers") or []
+    turn_count = state.get("turn_count") or 0
 
-    remaining = [p for p in participants if p not in speakers_this_round]
+    # Trigger consensus check every N turns
+    if turn_count > 0 and turn_count % TURNS_PER_CHECK == 0:
+        dbg.dlog("MODERATOR", f"Turn {turn_count} — triggering consensus check")
+        return {"current_speaker": "consensus_check"}
 
-    dbg.dlog("MODERATOR", f"Round {round_count} — deciding next speaker", {
-        "participants":        participants,
-        "spoke_this_round":    speakers_this_round or "(none yet)",
-        "remaining":           remaining or "(all spoke)",
-        "total_messages":      len(state.get("messages") or []),
+    messages = state.get("messages") or []
+    last_messages = messages[-4:]
+    transcript = "\n".join(
+        f"{(m.name or 'User').replace('_', ' ')}: {m.content[:300]}"
+        for m in last_messages
+        if hasattr(m, "content")
+    ) or "(the debate is just beginning)"
+
+    persona_hints = "\n".join(
+        f"  {name}: {CHARACTERS[name]['hot_topics'][:120]}"
+        for name in participants
+    )
+
+    recency = recent_speakers[-3:] if recent_speakers else []
+
+    prompt = (
+        f"Participants: {', '.join(participants)}\n\n"
+        f"Recent exchange:\n{transcript}\n\n"
+        f"Spoke recently — give them a break unless directly challenged: {recency or 'no one yet'}\n\n"
+        f"What fires each participant up:\n{persona_hints}\n\n"
+        f"Who should speak next? Prioritize:\n"
+        f"1. Someone who was directly challenged, named, or had their beliefs attacked\n"
+        f"2. Someone whose hot topics were just touched\n"
+        f"3. Someone who hasn't spoken recently\n\n"
+        f"You MUST pick one name exactly from this list: {participants}"
+    )
+
+    decision: _ModeratorDecision = _moderator_llm().with_structured_output(
+        _ModeratorDecision
+    ).invoke([
+        SystemMessage(content=(
+            "You are a debate moderator. Keep the conversation reactive and dynamic. "
+            "Always return a name that appears exactly in the participants list."
+        )),
+        HumanMessage(content=prompt),
+    ])
+
+    next_speaker = decision.next_speaker
+    # Validate — fallback to least-recently-spoken if the LLM drifts
+    if next_speaker not in participants:
+        dbg.dlog("MODERATOR", f"Invalid speaker '{next_speaker}' — falling back")
+        next_speaker = next(
+            (p for p in participants if p not in recent_speakers[-2:]),
+            participants[0],
+        )
+
+    new_recent = (recent_speakers + [next_speaker])[-6:]
+
+    dbg.dlog("MODERATOR", f"Turn {turn_count} → {next_speaker}", {
+        "reason":          decision.reason,
+        "recent_speakers": recency,
+        "turn_count":      turn_count,
     })
 
-    if not remaining:
-        dbg.dlog("MODERATOR", "All spoke → triggering consensus check")
-        return {
-            "current_speaker": "consensus_check",
-            "speakers_this_round": [],
-            "round_count": round_count + 1,
-        }
-
-    dbg.dlog("MODERATOR", f"Next speaker → {remaining[0]}")
-    return {"current_speaker": remaining[0]}
+    return {
+        "current_speaker": next_speaker,
+        "recent_speakers": new_recent,
+        "turn_count": turn_count + 1,
+    }
 
 
 # --------------------------------------------------------------------------- #
