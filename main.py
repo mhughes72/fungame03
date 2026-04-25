@@ -11,7 +11,7 @@ from langchain_core.messages import HumanMessage, AIMessage
 
 from personas import CHARACTERS
 from graph import build_graph, save_graph_image
-from nodes import summarize_history
+from nodes import summarize_history, generate_character_summaries, generate_moderator_steer
 from state import RoomState
 import debug as dbg
 
@@ -75,8 +75,26 @@ def _display_partial_agreements(agreements: list[dict]) -> None:
         print(f"    {names}  →  {a['on']}")
     _hr("·")
 
+def _display_style_bar(current: str):
+    print("  Moderator approach (type a number to switch):")
+    for i, (style, desc) in enumerate(_MODERATOR_STYLES, 1):
+        marker = "●" if style == current else " "
+        print(f"    {marker} {i}. {style:<20}  {desc}")
+
+def _display_moderator(msg: str):
+    print()
+    _hr("·")
+    print("  [Moderator]")
+    for line in msg.strip().split("\n"):
+        print(f"    {line}")
+    _hr("·")
+
 def _display_no_consensus(state: RoomState):
     _section(f"AFTER {state['turn_count']} TURNS — NO CONSENSUS YET")
+    if state.get("points_of_agreement"):
+        print("\n  Full agreements:")
+        for pt in state["points_of_agreement"]:
+            print(f"    • {pt}")
     if state.get("partial_agreements"):
         print("\n  Partial agreements:")
         for a in state["partial_agreements"]:
@@ -84,8 +102,13 @@ def _display_no_consensus(state: RoomState):
             print(f"    {names}  →  {a['on']}")
     if state.get("remaining_disagreements"):
         print("\n  Open tensions:")
-        for pt in state["remaining_disagreements"]:
-            print(f"    • {pt}")
+        for t in state["remaining_disagreements"]:
+            if isinstance(t, dict):
+                print(f"    • {t['topic']}")
+                print(f"        {t['participant_a']}: {t['stance_a']}")
+                print(f"        {t['participant_b']}: {t['stance_b']}")
+            else:
+                print(f"    • {t}")
 
 
 # --------------------------------------------------------------------------- #
@@ -101,7 +124,7 @@ def _pick_participants() -> list[str]:
     print()
 
     while True:
-        raw = input("  Pick 2-4 thinkers by number (e.g. 1,3,5): ").strip()
+        raw = input("  Pick 2-4 thinkers by number (default: 6,9): ").strip() or "6,9"
         try:
             indices = [int(x.strip()) - 1 for x in raw.split(",")]
             if not all(0 <= i < len(names) for i in indices):
@@ -148,8 +171,46 @@ def _handle_debug_command(raw: str) -> None:
             dbg.status()
         else:
             dbg.toggle(parts[1].upper())
+    elif cmd == "style":
+        return "pick_style"
     else:
         print(f"  Unknown command: {raw!r}  (type !help for options)\n")
+
+
+# --------------------------------------------------------------------------- #
+# Moderator style picker                                                        #
+# --------------------------------------------------------------------------- #
+
+_MODERATOR_STYLES = [
+    ("socratic",        "Builds bridges, seeks common ground"),
+    ("combative",       "Exposes contradictions, demands concessions"),
+    ("devil's advocate","Attacks whatever position is gaining momentum"),
+    ("koan",            "Oblique, unanswerable questions to disrupt overconfidence"),
+    ("journalist",      "Demands one concrete sentence — no abstraction"),
+    ("straw man",       "Misrepresents a position to force the speaker to clarify it"),
+    ("steel man",       "Forces a participant to argue their opponent's case at its strongest"),
+]
+
+def _pick_moderator_style() -> str:
+    print("\n  Moderator style:\n")
+    for i, (style, desc) in enumerate(_MODERATOR_STYLES, 1):
+        print(f"  {i}.  {style:<20}  {desc}")
+    print()
+    while True:
+        raw = input("  Choose [1]: ").strip()
+        if not raw:
+            style = _MODERATOR_STYLES[0][0]
+            print(f"  → {style}\n")
+            return style
+        try:
+            idx = int(raw) - 1
+            if 0 <= idx < len(_MODERATOR_STYLES):
+                style = _MODERATOR_STYLES[idx][0]
+                print(f"  → {style}\n")
+                return style
+        except ValueError:
+            pass
+        print("  Please enter a number from the list.\n")
 
 
 # --------------------------------------------------------------------------- #
@@ -178,6 +239,8 @@ def run_game():
     if not topic:
         topic = "What is the nature of justice?"
 
+    moderator_style = "socratic"
+
     graph = build_graph(participants)
 
     try:
@@ -199,6 +262,9 @@ def run_game():
         "points_of_agreement": [],
         "remaining_disagreements": [],
         "argument_log": {},
+        "concession_counts": {},
+        "character_summaries": {},
+        "moderator_style": moderator_style,
     }
 
     _header(f'TOPIC: "{topic}"')
@@ -238,7 +304,12 @@ def run_game():
         condensed = summarize_history(state["messages"], state["topic"])
         if len(condensed) < len(state["messages"]):
             print(f"\n  [Earlier conversation summarized — history condensed to {len(condensed)} messages]\n")
-            state = {**state, "messages": condensed}
+            char_summaries = generate_character_summaries(state)
+            for char_name, arc in char_summaries.items():
+                dbg.dlog("PHILOSOPHER", f"Debate arc — {char_name}", arc)
+            state = {**state, "messages": condensed, "character_summaries": char_summaries}
+
+        is_steer_exit = state.get("current_speaker") == "__steer__"
 
         # Show consensus analysis
         if state.get("consensus"):
@@ -259,6 +330,9 @@ def run_game():
                     "points_of_agreement": [],
                     "remaining_disagreements": [],
                     "argument_log": {},
+                    "concession_counts": {},
+                    "character_summaries": {},
+                    "moderator_style": state.get("moderator_style", "socratic"),
                 }
                 _header(f'NEW TOPIC: "{topic}"')
             else:
@@ -266,16 +340,26 @@ def run_game():
         else:
             _display_no_consensus(state)
             print()
+            current_style = state.get("moderator_style", "socratic")
+            _display_style_bar(current_style)
+            print()
             user_input = input(
-                "  Your turn (press Enter to let them continue, or type to join): "
+                "  Your turn (Enter to steer, 1-7 to switch style, or type to join): "
             ).strip()
 
-            # Debug commands — prefix with !
             if user_input.startswith("!"):
-                _handle_debug_command(user_input)
+                result = _handle_debug_command(user_input)
                 continue
 
-            # Inject user message if provided; state otherwise carries forward as-is
+            # Number input — change style then fire moderator
+            if user_input.isdigit():
+                idx = int(user_input) - 1
+                if 0 <= idx < len(_MODERATOR_STYLES):
+                    current_style = _MODERATOR_STYLES[idx][0]
+                    state = {**state, "moderator_style": current_style}
+                    print(f"  → {current_style}\n")
+                user_input = ""  # fall through to moderator steer
+
             state = {**state}
 
             if user_input:
@@ -286,9 +370,19 @@ def run_game():
                         HumanMessage(content=user_input, name="User")
                     ],
                 }
+            else:
+                steer = generate_moderator_steer(state)
+                _display_moderator(steer)
+                dbg.dlog("STATE", "Moderator steer injected", {"content": steer})
+                state = {
+                    **state,
+                    "messages": list(state["messages"]) + [
+                        HumanMessage(content=steer, name="Moderator")
+                    ],
+                }
 
         # Guard against runaway debates
-        if state.get("turn_count", 0) >= 40:
+        if state.get("turn_count", 0) >= 24:
             _section("THE DEBATE CONTINUES...")
             print("  After many turns, no full consensus has emerged.")
             print("  Some questions resist easy resolution.\n")
@@ -296,7 +390,11 @@ def run_game():
 
 
 if __name__ == "__main__":
-    try:
-        run_game()
-    except (KeyboardInterrupt, _Quit):
-        print("\n\n  The room falls silent. Farewell.\n")
+    if "--ui" in sys.argv:
+        from ui import PhilosopherBar
+        PhilosopherBar().run()
+    else:
+        try:
+            run_game()
+        except (KeyboardInterrupt, _Quit):
+            print("\n\n  The room falls silent. Farewell.\n")

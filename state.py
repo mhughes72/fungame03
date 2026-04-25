@@ -15,4 +15,7 @@ class RoomState(TypedDict):
     partial_agreements: list[dict]   # [{participants, on}] — updated each check
     points_of_agreement: list[str]
     remaining_disagreements: list[str]
-    argument_log: dict  # {name: [claim1, claim2, ...]} — last 5 claims per character
+    argument_log: dict         # {name: [claim1, claim2, ...]} — last 3 claims per character
+    concession_counts: dict    # {name: int} — times each character has granted a point
+    character_summaries: dict  # {name: str} — first-person debate arc, generated at compression
+    moderator_style: str       # "socratic" or "combative"

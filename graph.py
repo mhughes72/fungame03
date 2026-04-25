@@ -16,11 +16,13 @@ def build_graph(participants: list[str]):
     builder.set_entry_point("moderator")
 
     def route_from_moderator(state: RoomState) -> str:
-        destination = (
-            "consensus_checker"
-            if state["current_speaker"] == "consensus_check"
-            else "parallel_turn"
-        )
+        speaker = state["current_speaker"]
+        if speaker == "consensus_check":
+            destination = "consensus_checker"
+        elif speaker == "__steer__":
+            destination = END
+        else:
+            destination = "parallel_turn"
         dbg.dlog("ROUTING", f"moderator → {destination}")
         return destination
 
