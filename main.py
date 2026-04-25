@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from langchain_core.messages import HumanMessage, AIMessage
 
 from personas import CHARACTERS
-from graph import build_graph
+from graph import build_graph, save_graph_image
 from state import RoomState
 import debug as dbg
 
@@ -154,6 +154,12 @@ def run_game():
         topic = "What is the nature of justice?"
 
     graph = build_graph(participants)
+
+    try:
+        img_path = save_graph_image(graph)
+        print(f"  Graph saved → {img_path}\n")
+    except Exception as e:
+        print(f"  (Graph image unavailable: {e})\n")
 
     state: RoomState = {
         "messages": [],

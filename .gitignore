@@ -46,6 +46,9 @@ desktop.ini
 *.log
 debug.log
 
+# Generated graph images
+room_graph.png
+
 # LangGraph / LangChain cache
 .langchain.db
 langchain_cache/

@@ -41,3 +41,11 @@ def build_graph(participants: list[str]):
     builder.add_edge("consensus_checker", END)
 
     return builder.compile()
+
+
+def save_graph_image(compiled_graph, path: str = "room_graph.png") -> str:
+    """Render the graph to a PNG and save it. Returns the output path."""
+    png_bytes = compiled_graph.get_graph().draw_mermaid_png()
+    with open(path, "wb") as f:
+        f.write(png_bytes)
+    return path
