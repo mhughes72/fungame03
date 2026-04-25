@@ -17,8 +17,9 @@ def _moderator_llm():
     return ChatOpenAI(model="gpt-4o-mini", temperature=0.3)
 
 
-# How many philosopher turns between consensus checks
-TURNS_PER_CHECK = 5
+# How many turns between consensus checks — 3 full "rounds" worth per participant count
+def turns_per_check(participant_count: int) -> int:
+    return participant_count * 3
 
 
 class _ModeratorDecision(BaseModel):
@@ -35,8 +36,8 @@ def moderator_node(state: RoomState) -> dict:
     recent_speakers = state.get("recent_speakers") or []
     turn_count = state.get("turn_count") or 0
 
-    # Trigger consensus check every N turns
-    if turn_count > 0 and turn_count % TURNS_PER_CHECK == 0:
+    # Trigger consensus check every N turns, scaled to participant count
+    if turn_count > 0 and turn_count % turns_per_check(len(participants)) == 0:
         dbg.dlog("MODERATOR", f"Turn {turn_count} — triggering consensus check")
         return {"current_speaker": "consensus_check"}
 
