@@ -57,15 +57,27 @@ def _display_consensus(state: RoomState):
         for pt in state["remaining_disagreements"]:
             print(f"    • {pt}")
 
+def _display_partial_agreements(agreements: list[dict]) -> None:
+    if not agreements:
+        return
+    print()
+    _hr("·")
+    print("  Emerging alignments:")
+    for a in agreements:
+        names = " + ".join(a["participants"])
+        print(f"    {names}  →  {a['on']}")
+    _hr("·")
+
 def _display_no_consensus(state: RoomState):
     _section(f"AFTER {state['turn_count']} TURNS — NO CONSENSUS YET")
+    if state.get("partial_agreements"):
+        print("\n  Partial agreements:")
+        for a in state["partial_agreements"]:
+            names = " + ".join(a["participants"])
+            print(f"    {names}  →  {a['on']}")
     if state.get("remaining_disagreements"):
         print("\n  Open tensions:")
         for pt in state["remaining_disagreements"]:
-            print(f"    • {pt}")
-    if state.get("points_of_agreement"):
-        print("\n  Emerging agreement:")
-        for pt in state["points_of_agreement"]:
             print(f"    • {pt}")
 
 
@@ -176,6 +188,7 @@ def run_game():
         "turn_count": 0,
         "consensus": False,
         "consensus_summary": "",
+        "partial_agreements": [],
         "points_of_agreement": [],
         "remaining_disagreements": [],
     }
@@ -185,6 +198,7 @@ def run_game():
     while True:
         # Stream the graph so each philosopher's response prints as it arrives
         displayed_count = len(state.get("messages") or [])
+        prev_partial = state.get("partial_agreements") or []
         final_state = state
 
         for snapshot in graph.stream(state, stream_mode="values"):
@@ -192,14 +206,22 @@ def run_game():
             for msg in new_msgs:
                 _display_message(msg)
             displayed_count = len(snapshot["messages"])
+
+            # Surface newly formed partial agreements the moment the consensus checker fires
+            new_partial = snapshot.get("partial_agreements") or []
+            if new_partial != prev_partial:
+                _display_partial_agreements(new_partial)
+                prev_partial = new_partial
+
             final_state = snapshot
 
             dbg.dlog("STATE", "Snapshot after node", {
-                "current_speaker":  snapshot.get("current_speaker"),
-                "recent_speakers":  snapshot.get("recent_speakers"),
-                "turn_count":       snapshot.get("turn_count"),
-                "total_messages":   len(snapshot.get("messages") or []),
-                "consensus":        snapshot.get("consensus"),
+                "current_speaker":   snapshot.get("current_speaker"),
+                "recent_speakers":   snapshot.get("recent_speakers"),
+                "turn_count":        snapshot.get("turn_count"),
+                "total_messages":    len(snapshot.get("messages") or []),
+                "consensus":         snapshot.get("consensus"),
+                "partial_agreements": snapshot.get("partial_agreements"),
             })
 
         state = final_state
@@ -219,6 +241,7 @@ def run_game():
                     "turn_count": 0,
                     "consensus": False,
                     "consensus_summary": "",
+                    "partial_agreements": [],
                     "points_of_agreement": [],
                     "remaining_disagreements": [],
                 }

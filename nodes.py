@@ -56,15 +56,29 @@ def moderator_node(state: RoomState) -> dict:
 
     recency = recent_speakers[-3:] if recent_speakers else []
 
+    # Surface any known partial agreements so the moderator can route dissenters at coalitions
+    partial_agreements = state.get("partial_agreements") or []
+    coalitions_section = ""
+    if partial_agreements:
+        lines = "\n".join(
+            f"  {' + '.join(p['participants'])} agree on: {p['on']}"
+            for p in partial_agreements
+        )
+        coalitions_section = (
+            f"\nEmerging coalitions (consider routing a dissenter to challenge these):\n{lines}\n"
+        )
+
     prompt = (
         f"Participants: {', '.join(participants)}\n\n"
         f"Recent exchange:\n{transcript}\n\n"
         f"Spoke recently — give them a break unless directly challenged: {recency or 'no one yet'}\n\n"
-        f"What fires each participant up:\n{persona_hints}\n\n"
+        f"What fires each participant up:\n{persona_hints}\n"
+        f"{coalitions_section}\n"
         f"Who should speak next? Prioritize:\n"
         f"1. Someone who was directly challenged, named, or had their beliefs attacked\n"
-        f"2. Someone whose hot topics were just touched\n"
-        f"3. Someone who hasn't spoken recently\n\n"
+        f"2. A dissenter who should push back on an emerging coalition\n"
+        f"3. Someone whose hot topics were just touched\n"
+        f"4. Someone who hasn't spoken recently\n\n"
         f"You MUST pick one name exactly from this list: {participants}"
     )
 
@@ -146,7 +160,6 @@ Rules:
     def node(state: RoomState) -> dict:
         history = state["messages"]
         topic = state["topic"]
-        speakers_this_round = state.get("speakers_this_round") or []
         participants = state.get("participants") or []
 
         prompt = _build_system_prompt(participants)
@@ -194,9 +207,16 @@ Rules:
 # Consensus checker                                                             #
 # --------------------------------------------------------------------------- #
 
+class _PartialAgreement(BaseModel):
+    participants: list[str]   # e.g. ["Socrates", "Marx"]
+    on: str                   # what they agree on
+
+
 class _ConsensusResult(BaseModel):
-    reached: bool
-    summary: str
+    full_consensus: bool
+    full_summary: str
+    partial_agreements: list[_PartialAgreement]
+    dissenters: list[str]            # participants not yet in any agreement
     points_of_agreement: list[str]
     remaining_disagreements: list[str]
 
@@ -204,24 +224,30 @@ class _ConsensusResult(BaseModel):
 def consensus_checker_node(state: RoomState) -> dict:
     messages = state["messages"]
     topic = state["topic"]
-    round_count = state.get("round_count") or 1
+    turn_count = state.get("turn_count") or 0
+    participants = state["participants"]
 
-    # Only look at the last ~12 messages for recency
     recent = messages[-12:]
     transcript = "\n\n".join(
-        f"{m.name or 'User'}: {m.content}"
+        f"{(m.name or 'User').replace('_', ' ')}: {m.content}"
         for m in recent
         if hasattr(m, "content")
     )
 
     prompt = (
-        f'Topic: "{topic}"\nRound: {round_count}\n\n'
+        f'Topic: "{topic}"\n'
+        f"Participants: {', '.join(participants)}\n"
+        f"Turn: {turn_count}\n\n"
         f"Transcript:\n{transcript}\n\n"
-        "Have the participants reached meaningful consensus or meaningful convergence on any key points? "
-        "Be strict: consensus means genuine agreement, not just everyone having spoken."
+        "Analyze this conversation carefully:\n"
+        "1. Has the FULL group reached meaningful consensus? Be strict — everyone must genuinely agree.\n"
+        "2. Are there PARTIAL agreements — subsets of 2+ participants converging on something "
+        "while others disagree or haven't engaged? List each subset and what they agree on.\n"
+        "3. Who are the dissenters — participants not part of any emerging agreement?\n"
+        "4. What are the remaining points of contention?"
     )
 
-    dbg.dlog("CONSENSUS", f"Checking after round {round_count}", {
+    dbg.dlog("CONSENSUS", f"Checking at turn {turn_count}", {
         "total_messages":   len(messages),
         "messages_sampled": len(recent),
         "transcript_chars": len(transcript),
@@ -230,24 +256,27 @@ def consensus_checker_node(state: RoomState) -> dict:
 
     result: _ConsensusResult = _structured_llm().with_structured_output(
         _ConsensusResult
-    ).invoke(
-        [
-            SystemMessage(
-                content="You analyze philosophical conversations for intellectual consensus."
-            ),
-            HumanMessage(content=prompt),
-        ]
-    )
+    ).invoke([
+        SystemMessage(content=(
+            "You are an expert analyst of philosophical debates. "
+            "Detect both full group consensus and partial agreements between subsets of participants."
+        )),
+        HumanMessage(content=prompt),
+    ])
 
-    dbg.dlog("CONSENSUS", f"Result — reached={result.reached}", {
-        "summary":                  result.summary,
-        "points_of_agreement":      result.points_of_agreement or "(none)",
+    partial = [{"participants": p.participants, "on": p.on} for p in result.partial_agreements]
+
+    dbg.dlog("CONSENSUS", f"Result — full={result.full_consensus}, partial={len(partial)}", {
+        "full_summary":             result.full_summary,
+        "partial_agreements":       partial or "(none)",
+        "dissenters":               result.dissenters or "(none)",
         "remaining_disagreements":  result.remaining_disagreements or "(none)",
     })
 
     return {
-        "consensus": result.reached,
-        "consensus_summary": result.summary,
-        "points_of_agreement": result.points_of_agreement,
-        "remaining_disagreements": result.remaining_disagreements,
+        "consensus":                result.full_consensus,
+        "consensus_summary":        result.full_summary,
+        "partial_agreements":       partial,
+        "points_of_agreement":      result.points_of_agreement,
+        "remaining_disagreements":  result.remaining_disagreements,
     }

@@ -12,5 +12,6 @@ class RoomState(TypedDict):
     turn_count: int
     consensus: bool
     consensus_summary: str
+    partial_agreements: list[dict]   # [{participants, on}] — updated each check
     points_of_agreement: list[str]
     remaining_disagreements: list[str]
