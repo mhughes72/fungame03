@@ -80,7 +80,7 @@ export function mount(container, sessionId, participants, topic, styles, api) {
         }
         openSteerModal(currentStyle, styles, debateSummary(lastState, participants), leftCol).then(result => {
           if (result === null) {
-            quit()
+            appendGameOver(convoPane, lastState, participants, quit)
           } else {
             api.steer(sessionId, result.text, result.style)
               .catch(err => appendSystem(convoPane, `Steer error: ${err.message}`))
@@ -97,7 +97,7 @@ export function mount(container, sessionId, participants, topic, styles, api) {
               .catch(err => appendSystem(convoPane, `Error: ${err.message}`))
           },
           onQuit: quit,
-        })
+        }, lastState)
         break
 
       case 'bar_beat':
@@ -122,7 +122,13 @@ export function mount(container, sessionId, participants, topic, styles, api) {
     container.dispatchEvent(new CustomEvent('debate:quit', { bubbles: true }))
   }
 
-  container.querySelector('#quit-btn').addEventListener('click', quit)
+  container.querySelector('#quit-btn').addEventListener('click', () => {
+    if (lastState.turn > 0) {
+      appendGameOver(convoPane, lastState, participants, quit)
+    } else {
+      quit()
+    }
+  })
 
   // ── open stream ────────────────────────────────────────────────────── //
 
@@ -174,7 +180,7 @@ function appendSystem(el, text) {
   scrollAppend(el, div)
 }
 
-function appendConsensus(el, { summary, points }, { onNewTopic, onQuit }) {
+function appendConsensus(el, { summary, points }, { onNewTopic, onQuit }, state = {}) {
   const div = document.createElement('div')
   div.className = 'consensus-panel'
   div.innerHTML = `
@@ -185,6 +191,7 @@ function appendConsensus(el, { summary, points }, { onNewTopic, onQuit }) {
         ${points.map(p => `<li>${escHtml(p)}</li>`).join('')}
       </ul>
     ` : ''}
+    ${_debateStats(state)}
     <div class="consensus-new-topic">
       <input class="consensus-topic-input" id="consensus-topic-input"
              type="text" placeholder="New topic…" autocomplete="off" />
@@ -208,6 +215,84 @@ function appendConsensus(el, { summary, points }, { onNewTopic, onQuit }) {
     }
   })
   div.querySelector('#consensus-end').addEventListener('click', onQuit)
+}
+
+function appendGameOver(el, state, participants, onQuit) {
+  clearTyping(el)
+  const div = document.createElement('div')
+  div.className = 'game-over-panel'
+  const turn = state.turn || 0
+  const subtitle = turn
+    ? `${turn} turn${turn !== 1 ? 's' : ''} — no consensus reached`
+    : 'The evening ends before it really began.'
+  div.innerHTML = `
+    <div class="game-over-title">━━━ LAST CALL ━━━</div>
+    <div class="game-over-subtitle">${escHtml(subtitle)}</div>
+    ${_debateStats(state)}
+    <div class="game-over-actions">
+      <button class="consensus-end-btn" id="game-over-leave">Leave the bar</button>
+    </div>
+  `
+  scrollAppend(el, div)
+  div.querySelector('#game-over-leave').addEventListener('click', onQuit)
+}
+
+function _debateStats(state) {
+  const {
+    turn = 0,
+    heat = 0,
+    partial_agreements = [],
+    points_of_agreement = [],
+    remaining_disagreements = [],
+  } = state
+
+  if (!turn) return ''
+
+  const heatLabel = heatLabel_(heat)
+  const heatColor = heatColor_(heat)
+  const filled = '█'.repeat(heat)
+  const empty  = '░'.repeat(10 - heat)
+
+  let html = `<div class="report-stats">`
+  html += `<div class="report-stat-row">
+    <span class="report-stat-label">turns</span>
+    <span class="report-stat-value">${turn}</span>
+  </div>`
+  html += `<div class="report-stat-row">
+    <span class="report-stat-label">heat at close</span>
+    <span class="report-stat-value" style="color:${heatColor}">${filled}<span style="color:var(--text-dim)">${empty}</span> ${heatLabel}</span>
+  </div>`
+
+  if (points_of_agreement.length) {
+    html += `<div class="report-section-label">agreements reached</div>`
+    html += points_of_agreement.map(p =>
+      `<div class="report-agree-item">✓ ${escHtml(p)}</div>`
+    ).join('')
+  }
+
+  if (partial_agreements.length) {
+    html += `<div class="report-section-label">alignments that formed</div>`
+    html += partial_agreements.map(a =>
+      `<div class="report-partial"><span class="report-partial-names">${escHtml(a.participants.join(' + '))}</span> — <span class="report-partial-on">${escHtml(a.on)}</span></div>`
+    ).join('')
+  }
+
+  if (remaining_disagreements.length) {
+    html += `<div class="report-section-label">still unresolved</div>`
+    html += remaining_disagreements.map(t => {
+      if (typeof t === 'object' && t !== null) {
+        return `<div class="report-tension">
+          <span class="report-tension-topic">${escHtml(t.topic)}</span>
+          <span class="report-tension-stance">${escHtml(t.participant_a)}: ${escHtml(t.stance_a)}</span>
+          <span class="report-tension-stance">${escHtml(t.participant_b)}: ${escHtml(t.stance_b)}</span>
+        </div>`
+      }
+      return `<div class="report-tension">${escHtml(String(t))}</div>`
+    }).join('')
+  }
+
+  html += `</div>`
+  return html
 }
 
 function showTyping(el, name) {

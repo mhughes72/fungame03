@@ -550,6 +550,76 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 .consensus-end-btn:hover { border-color: var(--red); color: var(--red); }
 
 
+/* ── shared debate report stats (consensus + game-over) ─────────────── */
+.report-stats {
+  margin: 0.75rem 0;
+  border-top: 1px solid var(--border);
+  padding-top: 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.report-stat-row {
+  display: flex;
+  gap: 1rem;
+  align-items: baseline;
+  font-size: 0.82rem;
+}
+.report-stat-label { color: var(--text-dim); min-width: 110px; }
+.report-stat-value { font-family: var(--mono); }
+
+.report-section-label {
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  margin-top: 0.5rem;
+  margin-bottom: 0.1rem;
+}
+
+.report-agree-item { color: var(--green); font-size: 0.88rem; padding: 0.1rem 0; }
+
+.report-partial { font-size: 0.85rem; padding: 0.1rem 0; }
+.report-partial-names { color: var(--amber); font-weight: 700; }
+.report-partial-on { color: var(--text-dim); font-style: italic; }
+
+.report-tension { display: flex; flex-direction: column; gap: 0.1rem; padding: 0.2rem 0; }
+.report-tension-topic { color: var(--red); font-weight: 700; font-size: 0.85rem; }
+.report-tension-stance { color: #8a5040; font-size: 0.8rem; padding-left: 0.75rem; }
+
+
+/* ── game-over panel (no consensus) ─────────────────────────────────── */
+.game-over-panel {
+  margin-top: 1.5rem;
+  border: 1px solid var(--border-hi);
+  padding: 1.25rem 1.5rem;
+  background: var(--bg-mid);
+}
+
+.game-over-title {
+  color: var(--amber);
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 0.4rem;
+  letter-spacing: 0.04em;
+}
+
+.game-over-subtitle {
+  color: var(--text-dim);
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 0.9rem;
+  text-align: center;
+  margin-bottom: 0.25rem;
+}
+
+.game-over-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+
 /* ══════════════════════════════════════════════════════════════════════ */
 /* STEER DRAWER                                                           */
 /* ══════════════════════════════════════════════════════════════════════ */
