@@ -12,6 +12,7 @@ __pycache__/
 *.egg
 *.egg-info/
 dist/
+!client/dist
 build/
 eggs/
 parts/
@@ -27,6 +28,10 @@ lib64/
 venv/
 env/
 ENV/
+
+# Node
+client/node_modules/
+client/.vite/
 
 # IDE
 .vscode/
