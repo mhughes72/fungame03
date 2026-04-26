@@ -641,21 +641,16 @@ body:has(.steer-overlay) .sidebar {
 .steer-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.15);
   border: none !important;
   outline: none !important;
   box-shadow: none !important;
   z-index: 100;
   padding: 1rem;
-  pointer-events: auto;
+  pointer-events: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.2s;
-}
-
-.steer-overlay.overlay-focused {
-  background: rgba(0, 0, 0, 0.6);
 }
 
 .steer-overlay > * {
