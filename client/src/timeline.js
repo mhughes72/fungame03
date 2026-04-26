@@ -1,5 +1,5 @@
 /**
- * Debate timeline strip — fixed-height bar chart below the conversation pane.
+ * Debate timeline strip — heatmap of coloured blocks, one per turn.
  * create(container) → { addPoint({turn, heat, agreements, steered}), markSteered() }
  */
 
@@ -21,51 +21,49 @@ export function create(container) {
     return '#c83030'
   }
 
-  function addPoint({ turn, heat, agreements = 0, steered = false }) {
-    const col = document.createElement('div')
-    col.className = 'tl-turn'
+  function heatLabel(h) {
+    if (h <= 2) return 'cool'
+    if (h <= 4) return 'warm'
+    if (h <= 6) return 'charged'
+    if (h <= 8) return 'heated'
+    return 'flashpoint'
+  }
 
-    const steerTick = document.createElement('div')
-    steerTick.className = 'tl-steer-tick' + (pendingSteer ? ' tl-steer-tick--active' : '')
-    col.appendChild(steerTick)
+  function addPoint({ turn, heat, agreements = 0 }) {
+    const block = document.createElement('div')
+    block.className = 'tl-block'
+    block.style.background = heatColor(heat)
 
-    const bar = document.createElement('div')
-    bar.className = 'tl-bar'
-    const pct = Math.max(4, (heat / 10) * 100)
-    bar.style.height = pct + '%'
-    bar.style.background = heatColor(heat)
-    col.appendChild(bar)
+    if (agreements > 0) block.classList.add('tl-block--agreement')
+    if (pendingSteer)    block.classList.add('tl-block--steered')
 
-    const dot = document.createElement('div')
-    dot.className = 'tl-dot' + (agreements > 0 ? ' tl-dot--active' : '')
-    col.appendChild(dot)
+    const label = document.createElement('div')
+    label.className = 'tl-block-label'
+    label.textContent = turn
+    block.appendChild(label)
 
     pendingSteer = false
 
-    // tooltip
-    col.addEventListener('mouseenter', e => showTooltip(e, { turn, heat, agreements, steered: steerTick.classList.contains('tl-steer-tick--active') }))
-    col.addEventListener('mouseleave', hideTooltip)
+    block.addEventListener('mouseenter', e => showTooltip(e, { turn, heat, agreements, steered: block.classList.contains('tl-block--steered') }))
+    block.addEventListener('mouseleave', hideTooltip)
 
-    canvas.appendChild(col)
+    canvas.appendChild(block)
     canvas.scrollLeft = canvas.scrollWidth
   }
 
   function markSteered() {
     pendingSteer = true
-    // mark the most recent bar too
-    const last = canvas.querySelector('.tl-turn:last-child .tl-steer-tick')
-    if (last) last.classList.add('tl-steer-tick--active')
+    const last = canvas.querySelector('.tl-block:last-child')
+    if (last) last.classList.add('tl-block--steered')
   }
 
   function showTooltip(e, { turn, heat, agreements, steered }) {
     hideTooltip()
     tooltip = document.createElement('div')
     tooltip.className = 'tl-tooltip'
-    const heatLabels = ['', '', 'cool', '', 'warm', '', 'charged', '', 'heated', '', 'flashpoint']
-    const label = heatLabels[heat] || ''
     tooltip.innerHTML =
       `<span class="tl-tt-turn">Turn ${turn}</span>` +
-      `<span class="tl-tt-heat" style="color:${heatColor(heat)}">heat ${heat} — ${label}</span>` +
+      `<span class="tl-tt-heat" style="color:${heatColor(heat)}">heat ${heat} — ${heatLabel(heat)}</span>` +
       (agreements > 0 ? `<span class="tl-tt-agree">+${agreements} agreement${agreements > 1 ? 's' : ''}</span>` : '') +
       (steered ? `<span class="tl-tt-steer">steered here</span>` : '')
     document.body.appendChild(tooltip)
@@ -74,10 +72,8 @@ export function create(container) {
 
   function positionTooltip(e) {
     if (!tooltip) return
-    const x = e.clientX
-    const y = e.clientY
-    tooltip.style.left = (x + 12) + 'px'
-    tooltip.style.top  = (y - 40) + 'px'
+    tooltip.style.left = (e.clientX + 12) + 'px'
+    tooltip.style.top  = (e.clientY - 40) + 'px'
   }
 
   function hideTooltip() {

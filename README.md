@@ -269,7 +269,7 @@ Use 2 participants (faster, cheaper) unless a feature specifically requires more
 **What to verify:** modal opens, accepts input, dismisses correctly, updates style.
 
 1. Run `--ui`. Let the debate reach turn 4.
-2. Confirm the `SteerModal` opens automatically over the debate view (background should still be partially visible).
+2. Confirm the `SteerModal` opens automatically over the debate view (right sidebar remains fully visible and unobscured).
 3. Enter text in the input field → click **Steer** → confirm your text appears in the conversation as a `[You]` message and the debate continues.
 4. On the next steer break, select a different style from the radio list → click **Steer** without text → confirm the moderator generates a steer and the right pane style indicator updates.
 5. On the next steer break, click **Quit** → confirm the app exits cleanly.

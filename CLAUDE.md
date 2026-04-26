@@ -164,7 +164,7 @@ The consensus checker's structured output includes a `drifted_topic` field. If t
 |---|---|---|
 | Seating chart with portraits | Done | Oval table, DALL-E 3 portraits, pulse/glow seat states |
 | Debate summary in steer modal | Done | One-sentence state summary above text input |
-| Debate timeline strip | Done | Heat bars per turn, agreement dots, steer ticks, hover tooltips |
+| Debate timeline strip | Done | Heatmap blocks per turn (colour = heat level), green outline for agreements, gold stripe for steers, hover tooltips |
 | End-of-debate report | TODO | Full report after consensus: all agreements reached, who shifted, heat arc, turn-by-turn highlights |
 | Stage direction graphics | TODO | Visual treatment for `*[action]*` asides — e.g. brief seat animation, overlay flash, or distinct styled block in the convo pane |
 

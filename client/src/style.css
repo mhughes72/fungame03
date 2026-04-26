@@ -320,7 +320,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 
 /* ── timeline strip ─────────────────────────────────────────────────── */
 .timeline-strip {
-  height: 56px;
+  height: 120px;
   flex-shrink: 0;
   background: #060300;
   border-top: 1px solid var(--border);
@@ -329,60 +329,58 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 
 .tl-canvas {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   height: 100%;
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: none;
-  padding: 0 4px;
-  gap: 2px;
+  padding: 0 10px;
+  gap: 3px;
 }
 .tl-canvas::-webkit-scrollbar { display: none; }
 
-.tl-turn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
-  height: 100%;
-  width: 10px;
+/* heatmap block — one per turn */
+.tl-block {
   flex-shrink: 0;
+  width: 32px;
+  height: 72px;
+  border-radius: 3px;
   position: relative;
   cursor: default;
-}
-
-.tl-bar {
-  width: 6px;
-  min-height: 3px;
-  border-radius: 1px 1px 0 0;
   transition: filter 0.15s;
-  flex-shrink: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 4px;
 }
-.tl-turn:hover .tl-bar { filter: brightness(1.4); }
+.tl-block:hover { filter: brightness(1.3); }
 
-/* agreement dot below bar */
-.tl-dot {
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: transparent;
-  flex-shrink: 0;
-  margin-bottom: 2px;
+/* green border = agreement reached this turn */
+.tl-block--agreement {
+  outline: 2px solid var(--green);
+  outline-offset: -2px;
 }
-.tl-dot--active { background: var(--green); }
 
-/* steer tick — small notch at the top */
-.tl-steer-tick {
+/* gold stripe at top = steered this turn */
+.tl-block--steered::before {
+  content: '';
   position: absolute;
-  top: 2px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 2px;
-  height: 6px;
-  background: transparent;
-  border-radius: 1px;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: var(--gold);
+  border-radius: 3px 3px 0 0;
 }
-.tl-steer-tick--active { background: var(--gold); }
+
+/* turn number label inside block */
+.tl-block-label {
+  font-size: 0.6rem;
+  color: rgba(0, 0, 0, 0.45);
+  font-family: var(--mono);
+  line-height: 1;
+  user-select: none;
+}
 
 /* tooltip */
 .tl-tooltip {
