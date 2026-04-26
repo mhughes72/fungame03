@@ -8,7 +8,6 @@
 
 import { open as openSteerModal } from './steer.js'
 import * as Seating from './seating.js'
-import * as Timeline from './timeline.js'
 
 export function mount(container, sessionId, participants, topic, styles, api) {
   container.innerHTML = `
@@ -22,25 +21,22 @@ export function mount(container, sessionId, participants, topic, styles, api) {
       <div class="seats-bar" id="seats-bar"></div>
 
       <div class="debate-layout">
-        <div class="left-col">
+        <div class="left-col" id="left-col">
           <div class="convo-pane" id="convo-pane"></div>
-          <div class="timeline-strip" id="timeline-strip"></div>
         </div>
         <div class="sidebar" id="sidebar"></div>
       </div>
     </div>
   `
 
-  const seatsBar      = container.querySelector('#seats-bar')
-  const convoPane     = container.querySelector('#convo-pane')
-  const sidebar       = container.querySelector('#sidebar')
-  const timelineStrip = container.querySelector('#timeline-strip')
+  const seatsBar  = container.querySelector('#seats-bar')
+  const convoPane = container.querySelector('#convo-pane')
+  const sidebar   = container.querySelector('#sidebar')
+  const leftCol   = container.querySelector('#left-col')
 
   let currentStyle = 'socratic'
   let closeStream  = null
   let lastState    = { turn: 0, heat: 0, partial_agreements: [], remaining_disagreements: [], drift_topic: '' }
-
-  const timeline = Timeline.create(timelineStrip)
 
   const seating = Seating.create(seatsBar, participants)
   renderSidebar(sidebar, {
@@ -72,11 +68,6 @@ export function mount(container, sessionId, participants, topic, styles, api) {
         currentStyle = data.moderator_style
         lastState = data
         renderSidebar(sidebar, { topic, ...data })
-        timeline.addPoint({
-          turn:       data.turn,
-          heat:       data.heat,
-          agreements: (data.partial_agreements || []).length + (data.points_of_agreement || []).length,
-        })
         break
 
       case 'steer_needed':
@@ -87,11 +78,10 @@ export function mount(container, sessionId, participants, topic, styles, api) {
           appendSystem(convoPane,
             `   original topic: ${topic}`)
         }
-        openSteerModal(currentStyle, styles, debateSummary(lastState, participants)).then(result => {
+        openSteerModal(currentStyle, styles, debateSummary(lastState, participants), leftCol).then(result => {
           if (result === null) {
             quit()
           } else {
-            timeline.markSteered()
             api.steer(sessionId, result.text, result.style)
               .catch(err => appendSystem(convoPane, `Steer error: ${err.message}`))
           }

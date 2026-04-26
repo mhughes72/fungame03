@@ -1,5 +1,5 @@
 /**
- * Steer modal — opens as a full-screen overlay.
+ * Steer drawer — slides up from the bottom of the left column.
  * Returns a Promise that resolves with { text, style } or null (quit).
  */
 
@@ -11,93 +11,73 @@ function escHtml(str) {
     .replace(/"/g, '&quot;')
 }
 
-export function open(currentStyle, styles, summary = '') {
+export function open(currentStyle, styles, summary = '', drawerContainer) {
   return new Promise((resolve) => {
-    const overlay = document.createElement('div')
-    overlay.className = 'steer-overlay'
-    overlay.innerHTML = `
-      <div class="steer-box">
+    const drawer = document.createElement('div')
+    drawer.className = 'steer-drawer'
+    drawer.innerHTML = `
+      <div class="steer-drawer-header">
         <div class="steer-title">── STEER THE DEBATE ──</div>
+        <button class="steer-quit-btn" id="steer-quit">Quit game</button>
+      </div>
 
-        ${summary ? `<div class="steer-summary">${escHtml(summary)}</div>` : ''}
+      ${summary ? `<div class="steer-summary">${escHtml(summary)}</div>` : ''}
 
-        <label class="steer-field-label" for="steer-text-input">
-          Speak directly into the debate:
-        </label>
+      <div class="steer-input-row">
         <input
           class="steer-text-input"
           id="steer-text-input"
           type="text"
-          placeholder="Leave blank to let the moderator intervene…"
+          placeholder="Speak into the debate — or leave blank for the moderator…"
           autocomplete="off"
         />
+        <button class="steer-submit-btn" id="steer-submit">Steer ▶</button>
+      </div>
 
-        <div class="steer-or">── or choose a moderator approach ──</div>
-
-        <div class="style-list" id="style-list">
+      <div class="steer-styles-row">
+        <span class="steer-or">approach:</span>
+        <div class="style-chips" id="style-chips">
           ${styles.map(s => `
-            <label class="style-item${s.style === currentStyle ? ' style-selected' : ''}">
-              <input type="radio" name="mod-style" value="${escHtml(s.style)}"
-                     ${s.style === currentStyle ? 'checked' : ''} />
-              <span class="style-name">${escHtml(s.style)}</span>
-              <span class="style-desc">${escHtml(s.description)}</span>
-            </label>
+            <button
+              class="style-chip${s.style === currentStyle ? ' style-selected' : ''}"
+              data-style="${escHtml(s.style)}"
+              title="${escHtml(s.description)}"
+            >${escHtml(s.style)}</button>
           `).join('')}
-        </div>
-
-        <div class="steer-actions">
-          <button class="steer-quit-btn" id="steer-quit">Quit game</button>
-          <button class="steer-submit-btn" id="steer-submit">Steer  ▶</button>
         </div>
       </div>
     `
 
-    document.body.appendChild(overlay)
+    const target = drawerContainer || document.body
+    target.appendChild(drawer)
 
-    // Hover to toggle backdrop opacity
-    overlay.addEventListener('mouseover', () => {
-      overlay.classList.add('overlay-focused')
-    })
-    overlay.addEventListener('mouseout', () => {
-      overlay.classList.remove('overlay-focused')
-    })
-
-    const textInput = overlay.querySelector('#steer-text-input')
+    const textInput = drawer.querySelector('#steer-text-input')
     textInput.focus()
 
-    // Highlight the selected radio item
-    overlay.querySelectorAll('.style-item input').forEach(radio => {
-      radio.addEventListener('change', () => {
-        overlay.querySelectorAll('.style-item').forEach(el => el.classList.remove('style-selected'))
-        radio.closest('.style-item').classList.add('style-selected')
+    let selectedStyle = currentStyle
+
+    drawer.querySelectorAll('.style-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        drawer.querySelectorAll('.style-chip').forEach(c => c.classList.remove('style-selected'))
+        chip.classList.add('style-selected')
+        selectedStyle = chip.dataset.style
       })
     })
 
-    function getStyle() {
-      const checked = overlay.querySelector('input[name=mod-style]:checked')
-      return checked ? checked.value : currentStyle
-    }
-
     function submit() {
       const text = textInput.value.trim()
-      const style = getStyle()
-      overlay.remove()
-      resolve({ text, style })
+      drawer.remove()
+      resolve({ text, style: selectedStyle })
     }
 
-    overlay.querySelector('#steer-submit').addEventListener('click', submit)
-    overlay.querySelector('#steer-quit').addEventListener('click', () => {
-      overlay.remove()
+    drawer.querySelector('#steer-submit').addEventListener('click', submit)
+    drawer.querySelector('#steer-quit').addEventListener('click', () => {
+      drawer.remove()
       resolve(null)
     })
 
     textInput.addEventListener('keydown', e => {
       if (e.key === 'Enter') submit()
-    })
-
-    // Click outside the box = blank steer (same as pressing Enter with empty input)
-    overlay.addEventListener('click', e => {
-      if (e.target === overlay) submit()
     })
   })
 }
