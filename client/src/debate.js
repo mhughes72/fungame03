@@ -8,6 +8,7 @@
 
 import { open as openSteerModal } from './steer.js'
 import * as Seating from './seating.js'
+import * as Timeline from './timeline.js'
 
 export function mount(container, sessionId, participants, topic, styles, api) {
   container.innerHTML = `
@@ -21,18 +22,25 @@ export function mount(container, sessionId, participants, topic, styles, api) {
       <div class="seats-bar" id="seats-bar"></div>
 
       <div class="debate-layout">
-        <div class="convo-pane" id="convo-pane"></div>
+        <div class="left-col">
+          <div class="convo-pane" id="convo-pane"></div>
+          <div class="timeline-strip" id="timeline-strip"></div>
+        </div>
         <div class="sidebar" id="sidebar"></div>
       </div>
     </div>
   `
 
-  const seatsBar  = container.querySelector('#seats-bar')
-  const convoPane = container.querySelector('#convo-pane')
-  const sidebar   = container.querySelector('#sidebar')
+  const seatsBar      = container.querySelector('#seats-bar')
+  const convoPane     = container.querySelector('#convo-pane')
+  const sidebar       = container.querySelector('#sidebar')
+  const timelineStrip = container.querySelector('#timeline-strip')
 
   let currentStyle = 'socratic'
   let closeStream  = null
+  let lastState    = { turn: 0, heat: 0, partial_agreements: [], remaining_disagreements: [], drift_topic: '' }
+
+  const timeline = Timeline.create(timelineStrip)
 
   const seating = Seating.create(seatsBar, participants)
   renderSidebar(sidebar, {
@@ -62,7 +70,13 @@ export function mount(container, sessionId, participants, topic, styles, api) {
 
       case 'state':
         currentStyle = data.moderator_style
+        lastState = data
         renderSidebar(sidebar, { topic, ...data })
+        timeline.addPoint({
+          turn:       data.turn,
+          heat:       data.heat,
+          agreements: (data.partial_agreements || []).length + (data.points_of_agreement || []).length,
+        })
         break
 
       case 'steer_needed':
@@ -73,10 +87,11 @@ export function mount(container, sessionId, participants, topic, styles, api) {
           appendSystem(convoPane,
             `   original topic: ${topic}`)
         }
-        openSteerModal(currentStyle, styles).then(result => {
+        openSteerModal(currentStyle, styles, debateSummary(lastState, participants)).then(result => {
           if (result === null) {
             quit()
           } else {
+            timeline.markSteered()
             api.steer(sessionId, result.text, result.style)
               .catch(err => appendSystem(convoPane, `Steer error: ${err.message}`))
           }
@@ -348,4 +363,41 @@ function heatLabel_(h) {
   if (h <= 6) return 'charged'
   if (h <= 8) return 'heated'
   return 'flashpoint'
+}
+
+function debateSummary(state, participants) {
+  const { turn, heat, partial_agreements, remaining_disagreements, drift_topic } = state
+
+  if (!turn) return 'The debate is just getting started.'
+
+  if (drift_topic) {
+    return `The conversation has drifted from the original topic toward ${drift_topic}.`
+  }
+
+  const agreements = partial_agreements || []
+  const tensions   = remaining_disagreements || []
+
+  if (agreements.length && tensions.length) {
+    const a = agreements[0]
+    const t = tensions[0]
+    const aNames = a.participants.join(' and ')
+    const tTopic = typeof t === 'object' ? t.topic : String(t)
+    return `${aNames} are finding common ground, but the group remains divided on ${tTopic}.`
+  }
+
+  if (agreements.length) {
+    const a = agreements[0]
+    return `${a.participants.join(' and ')} are converging on ${a.on}, ${heat >= 6 ? 'though tempers are running high' : 'with the room following closely'}.`
+  }
+
+  if (tensions.length) {
+    const t = tensions[0]
+    if (typeof t === 'object') {
+      return `${t.participant_a} and ${t.participant_b} are sharply divided over ${t.topic}.`
+    }
+    return `The room is deadlocked — ${String(t)}.`
+  }
+
+  const heatPhrase = heat >= 8 ? 'at flashpoint' : heat >= 5 ? 'heating up' : heat >= 3 ? 'warming up' : 'still feeling each other out'
+  return `${turn} turns in, no clear alignments yet — the room is ${heatPhrase}.`
 }

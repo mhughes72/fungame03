@@ -28,4 +28,5 @@ if __name__ == "__main__":
         port=port,
         reload=dev,
         reload_dirs=[ROOT] if dev else None,
+        timeout_graceful_shutdown=3,
     )

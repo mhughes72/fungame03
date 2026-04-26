@@ -38,7 +38,7 @@ cd client && npm run build && cd ..
 | `server/app.py` | FastAPI routes, SSE stream, static file serving |
 | `server/session.py` | `SessionStore`, per-session state, `run_batch()` thread runner |
 | `server/events.py` | SSE event constructors and serialiser |
-| `client/src/` | Vanilla JS frontend (Vite) — `main.js`, `setup.js`, `debate.js`, `seating.js`, `steer.js` |
+| `client/src/` | Vanilla JS frontend (Vite) — `main.js`, `setup.js`, `debate.js`, `seating.js`, `steer.js`, `timeline.js` |
 | `client/dist/` | Pre-built frontend — committed to git, served by FastAPI in production |
 
 ## Graph shape
@@ -157,6 +157,16 @@ The consensus checker's structured output includes a `drifted_topic` field. If t
 | `last call` | All-out push for consensus — names slivers of agreement and forces commitment or explanation |
 
 > **Cheat code idea:** hidden/unlockable styles triggered by a specific word or number at the style prompt — e.g. a style that forces immediate consensus or does something absurd.
+
+## UI ideas / roadmap
+
+| Feature | Status | Notes |
+|---|---|---|
+| Seating chart with portraits | Done | Oval table, DALL-E 3 portraits, pulse/glow seat states |
+| Debate summary in steer modal | Done | One-sentence state summary above text input |
+| Debate timeline strip | Done | Heat bars per turn, agreement dots, steer ticks, hover tooltips |
+| End-of-debate report | TODO | Full report after consensus: all agreements reached, who shifted, heat arc, turn-by-turn highlights |
+| Stage direction graphics | TODO | Visual treatment for `*[action]*` asides — e.g. brief seat animation, overlay flash, or distinct styled block in the convo pane |
 
 ## Persona manipulation (TODO)
 

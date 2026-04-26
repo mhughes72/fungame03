@@ -11,13 +11,15 @@ function escHtml(str) {
     .replace(/"/g, '&quot;')
 }
 
-export function open(currentStyle, styles) {
+export function open(currentStyle, styles, summary = '') {
   return new Promise((resolve) => {
     const overlay = document.createElement('div')
     overlay.className = 'steer-overlay'
     overlay.innerHTML = `
       <div class="steer-box">
         <div class="steer-title">── STEER THE DEBATE ──</div>
+
+        ${summary ? `<div class="steer-summary">${escHtml(summary)}</div>` : ''}
 
         <label class="steer-field-label" for="steer-text-input">
           Speak directly into the debate:
