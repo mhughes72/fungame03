@@ -49,19 +49,20 @@
         <button class="steer-submit-btn" id="steer-submit">Steer ▶</button>
       </div>
 
-      <div class="steer-styles-row">
-        <span class="steer-or">approach:</span>
-        <div class="style-chips" id="style-chips">
-          ${s.map(r=>`
-            <button
-              class="style-chip${r.style===e?" style-selected":""}"
-              data-style="${E(r.style)}"
-              title="${E(r.description)}"
-            >${E(r.style)}</button>
-          `).join("")}
-        </div>
+      <div class="steer-or">── choose a moderator approach ──</div>
+
+      <div class="style-list" id="style-list">
+        ${s.map(r=>`
+          <button
+            class="style-item${r.style===e?" style-selected":""}"
+            data-style="${E(r.style)}"
+          >
+            <span class="style-name">${E(r.style)}</span>
+            <span class="style-desc">${E(r.description)}</span>
+          </button>
+        `).join("")}
       </div>
-    `,(a||document.body).appendChild(t);const o=t.querySelector("#steer-text-input");o.focus();let d=e;t.querySelectorAll(".style-chip").forEach(r=>{r.addEventListener("click",()=>{t.querySelectorAll(".style-chip").forEach(p=>p.classList.remove("style-selected")),r.classList.add("style-selected"),d=r.dataset.style})});function i(){const r=o.value.trim();t.remove(),c({text:r,style:d})}t.querySelector("#steer-submit").addEventListener("click",i),t.querySelector("#steer-quit").addEventListener("click",()=>{t.remove(),c(null)}),o.addEventListener("keydown",r=>{r.key==="Enter"&&i()})})}const _={2:[[18,50],[82,50]],3:[[14,24],[86,24],[50,84]],4:[[14,20],[86,20],[14,80],[86,80]]};function Q(e,s){const n=Math.min(s.length,4),a=_[n]||_[4];e.innerHTML=`
+    `,(a||document.body).appendChild(t);const o=t.querySelector("#steer-text-input");o.focus();let d=e;t.querySelectorAll(".style-item").forEach(r=>{r.addEventListener("click",()=>{t.querySelectorAll(".style-item").forEach(p=>p.classList.remove("style-selected")),r.classList.add("style-selected"),d=r.dataset.style})});function i(){const r=o.value.trim();t.remove(),c({text:r,style:d})}t.querySelector("#steer-submit").addEventListener("click",i),t.querySelector("#steer-quit").addEventListener("click",()=>{t.remove(),c(null)}),o.addEventListener("keydown",r=>{r.key==="Enter"&&i()})})}const _={2:[[18,50],[82,50]],3:[[14,24],[86,24],[50,84]],4:[[14,20],[86,20],[14,80],[86,80]]};function Q(e,s){const n=Math.min(s.length,4),a=_[n]||_[4];e.innerHTML=`
     <div class="seating-area">
       <div class="seating-table">
         <span class="seating-table-label">THE BAR</span>

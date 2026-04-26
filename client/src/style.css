@@ -562,6 +562,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  max-height: 50vh;
   animation: drawer-in 0.18s ease-out;
 }
 
@@ -641,35 +642,43 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   gap: 0.6rem;
 }
 
+.steer-styles-row { display: none; }
+
 .steer-or {
   color: var(--text-dim);
   font-size: 0.75rem;
   letter-spacing: 0.03em;
-  white-space: nowrap;
-  flex-shrink: 0;
+  text-align: center;
 }
 
-/* style chips — horizontal scrollable row */
-.style-chips {
-  display: flex;
-  gap: 0.35rem;
-  overflow-x: auto;
-  scrollbar-width: none;
-  padding-bottom: 2px;
-}
-.style-chips::-webkit-scrollbar { display: none; }
-
-.style-chip {
-  flex-shrink: 0;
-  background: none;
+/* style list — vertical, scrollable */
+.style-list {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--bg-dark);
   border: 1px solid var(--border);
+  scrollbar-color: var(--border-hi) var(--bg-dark);
+  min-height: 0;
+}
+
+.style-item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 0.35rem 0.75rem;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border);
   color: var(--text-dim);
   font-family: var(--mono);
-  font-size: 0.75rem;
-  padding: 0.2rem 0.6rem;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background 0.1s, color 0.1s, border-color 0.1s;
+  transition: background 0.1s;
 }
-.style-chip:hover { background: var(--bg); color: var(--amber); border-color: var(--border-hi); }
-.style-chip.style-selected { border-color: var(--gold); color: var(--gold); background: var(--bg-dark); }
+.style-item:last-child { border-bottom: none; }
+.style-item:hover { background: var(--bg); }
+.style-item.style-selected { color: var(--gold); background: var(--bg); }
+
+.style-name { font-weight: 700; min-width: 130px; flex-shrink: 0; font-size: 0.85rem; }
+.style-desc { font-size: 0.8rem; opacity: 0.7; line-height: 1.4; }

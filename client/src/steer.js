@@ -34,17 +34,18 @@ export function open(currentStyle, styles, summary = '', drawerContainer) {
         <button class="steer-submit-btn" id="steer-submit">Steer ▶</button>
       </div>
 
-      <div class="steer-styles-row">
-        <span class="steer-or">approach:</span>
-        <div class="style-chips" id="style-chips">
-          ${styles.map(s => `
-            <button
-              class="style-chip${s.style === currentStyle ? ' style-selected' : ''}"
-              data-style="${escHtml(s.style)}"
-              title="${escHtml(s.description)}"
-            >${escHtml(s.style)}</button>
-          `).join('')}
-        </div>
+      <div class="steer-or">── choose a moderator approach ──</div>
+
+      <div class="style-list" id="style-list">
+        ${styles.map(s => `
+          <button
+            class="style-item${s.style === currentStyle ? ' style-selected' : ''}"
+            data-style="${escHtml(s.style)}"
+          >
+            <span class="style-name">${escHtml(s.style)}</span>
+            <span class="style-desc">${escHtml(s.description)}</span>
+          </button>
+        `).join('')}
       </div>
     `
 
@@ -56,11 +57,11 @@ export function open(currentStyle, styles, summary = '', drawerContainer) {
 
     let selectedStyle = currentStyle
 
-    drawer.querySelectorAll('.style-chip').forEach(chip => {
-      chip.addEventListener('click', () => {
-        drawer.querySelectorAll('.style-chip').forEach(c => c.classList.remove('style-selected'))
-        chip.classList.add('style-selected')
-        selectedStyle = chip.dataset.style
+    drawer.querySelectorAll('.style-item').forEach(item => {
+      item.addEventListener('click', () => {
+        drawer.querySelectorAll('.style-item').forEach(i => i.classList.remove('style-selected'))
+        item.classList.add('style-selected')
+        selectedStyle = item.dataset.style
       })
     })
 
