@@ -32,8 +32,7 @@ def turns_per_batch(participant_count: int) -> int:
     return participant_count * 2
 
 def turns_per_consensus(participant_count: int) -> int:
-    """Philosopher turns between full consensus checks (every 3 batches)."""
-    return participant_count * 6
+    return participant_count * 2
 
 
 # --------------------------------------------------------------------------- #
@@ -45,6 +44,7 @@ def _philosopher_system_prompt(
     participants: list[str],
     partial_agreements: list[dict],
     own_summary: str = "",
+    heat: int = 0,
 ) -> str:
     char = CHARACTERS[name]
 
@@ -86,11 +86,19 @@ def _philosopher_system_prompt(
             f"What fires you up:\n{char['hot_topics']}\n"
         )
 
+    heat_line = f"\nAtmosphere: {_heat_description(heat)}\n" if heat > 0 else ""
+    jab_line = (
+        "\n- The room is tense. A sharp personal jab is fair game — their manner, "
+        "their contradiction, their record. Make it pointed.\n"
+        if heat >= 6 else ""
+    )
+
     return (
         f"You are {name} ({char['era']}).\n\n"
         f"Known for: {char['known_for']}\n\n"
         f"{reference_sections}"
-        f"{coalition_section}\n\n"
+        f"{coalition_section}"
+        f"{heat_line}\n"
         "You are seated in a room with these specific thinkers, engaging in open discussion.\n"
         "Rules:\n"
         "- Stay completely in character. Do not break the fourth wall or mention being an AI.\n"
@@ -102,7 +110,10 @@ def _philosopher_system_prompt(
         "- Do not assume the answer to the question. If the topic is a question, treat it as genuinely open.\n"
         "- Deploy your signature rhetorical style every response, not just occasionally.\n"
         "- When someone touches your hot topics, let your conviction show.\n"
-        "- Use your cited works naturally, as a thinker would — not as a list."
+        "- Use your cited works naturally, as a thinker would — not as a list.\n"
+        "- Occasionally — not every turn — include a brief stage direction in the format *[action]* "
+        "e.g. *[laughs]*, *[sets down glass]*, *[long pause]*. Only when it feels natural for the setting."
+        f"{jab_line}"
     )
 
 
@@ -112,7 +123,27 @@ _CONCESSION_SIGNALS = {
     "well said", "you make a point", "i'll grant", "i cannot deny",
 }
 
+_COMBATIVE_SIGNALS = {
+    "wrong", "absurd", "nonsense", "false", "ridiculous", "contradiction",
+    "mistaken", "naive", "foolish", "preposterous", "you fail", "precisely wrong",
+    "you have not", "you cannot", "that is not", "that is simply",
+}
+
+
+def _heat_description(heat: int) -> str:
+    if heat <= 2:
+        return "The room is cool — the debate is measured and exploratory."
+    elif heat <= 4:
+        return "The room is warm — positions are being staked."
+    elif heat <= 6:
+        return "The room is charged — disagreement runs deep."
+    elif heat <= 8:
+        return "The room is heated — tempers are close to the surface."
+    else:
+        return "The room is at flashpoint — the argument has become personal."
+
 _CONCESSION_THRESHOLD = 8  # turns before no-concession pressure kicks in
+_BACKCHANNEL_CHANCE   = 0.5
 
 
 def _philosopher_user_prompt(
@@ -125,7 +156,24 @@ def _philosopher_user_prompt(
 ) -> str:
     safe_name = name.replace(" ", "_")
 
-    last_msg = history[-1] if history else None
+    # Skip backchannel asides when deciding what to respond to
+    last_msg = None
+    for m in reversed(history):
+        if hasattr(m, "name") and (m.name or "").endswith("_bc"):
+            continue
+        last_msg = m
+        break
+
+    verbosity = CHARACTERS[name].get("verbosity", "normal")
+
+    # Detect rapid-fire cadence: last 3+ messages all under 40 words
+    recent_msgs = [m for m in history[-4:] if hasattr(m, "content")]
+    rapid_fire = (
+        len(recent_msgs) >= 3
+        and all(len(m.content.split()) < 40 for m in recent_msgs)
+        and verbosity != "terse"
+    )
+
     if last_msg and hasattr(last_msg, "content") and last_msg.name != safe_name:
         last_speaker = (last_msg.name or "Someone").replace("_", " ")
         last_said = last_msg.content[:300]
@@ -134,22 +182,42 @@ def _philosopher_user_prompt(
             f"Respond directly to THIS argument. Do not restate your own position — "
             f"engage with what {last_speaker} specifically argued."
         )
-        # Calibrate response length to the nature of the last message
         last_content = last_msg.content.strip()
         is_question = last_content.endswith("?") or last_content.count("?") >= 2
         is_short = len(last_content.split()) < 30
         is_long = len(last_content.split()) > 120
+
         if is_question and is_short:
             length_instruction = "LENGTH: Pointed question — answer in 1 short sentence. Blunt and direct. No qualifications."
         elif is_short:
-            length_instruction = "LENGTH: Short provocation — match the energy. 1 to 2 short sentences maximum."
+            if verbosity == "terse":
+                length_instruction = "LENGTH: 1 sentence. Match the energy."
+            else:
+                length_instruction = "LENGTH: Short provocation — match the energy. 1 to 2 short sentences maximum."
         elif is_long:
-            length_instruction = "LENGTH: A substantial argument was made. Respond fully — 3 to 4 sentences."
+            if verbosity == "terse":
+                length_instruction = "LENGTH: A substantial argument was made. Respond in 2 to 3 sentences — be precise."
+            elif verbosity == "expansive":
+                length_instruction = "LENGTH: A substantial argument was made. Match the depth — 4 to 5 sentences."
+            else:
+                length_instruction = "LENGTH: A substantial argument was made. Respond fully — 3 to 4 sentences."
+        elif rapid_fire:
+            length_instruction = "LENGTH: The room has been trading short jabs. Step back and develop your argument — 3 to 4 sentences."
         else:
-            length_instruction = "LENGTH: 2 to 3 sentences."
+            if verbosity == "terse":
+                length_instruction = "LENGTH: 1 to 2 sentences. Stay sharp."
+            elif verbosity == "expansive":
+                length_instruction = "LENGTH: 3 to 4 sentences. Build the argument properly."
+            else:
+                length_instruction = "LENGTH: 2 to 3 sentences."
     else:
         respond_to = "It is your turn to open or advance the debate."
-        length_instruction = "LENGTH: Open with a clear position — 2 to 3 sentences."
+        if verbosity == "terse":
+            length_instruction = "LENGTH: Open with a clear position — 1 to 2 sentences."
+        elif verbosity == "expansive":
+            length_instruction = "LENGTH: Open with a clear position — 3 to 4 sentences."
+        else:
+            length_instruction = "LENGTH: Open with a clear position — 2 to 3 sentences."
 
     past_claims = (argument_log or {}).get(name, [])
     if past_claims:
@@ -168,9 +236,22 @@ def _philosopher_user_prompt(
             "find something true in what was just said.\n"
         )
 
+    callback_lines = []
+    for other, claims in (argument_log or {}).items():
+        if other == name or not claims:
+            continue
+        oldest = claims[0]
+        callback_lines.append(f'  {other}: "{oldest[:150]}{"…" if len(oldest) > 150 else ""}"')
+    callbacks = (
+        "Earlier on record — pin them to these if it serves your argument:\n"
+        + "\n".join(callback_lines) + "\n\n"
+        if callback_lines else ""
+    )
+
     return (
         f'Central question being debated: "{topic}"\n\n'
         f"{no_repeat}"
+        f"{callbacks}"
         f"{concession_pressure}"
         f"{respond_to}\n\n"
         f'Ensure your response connects back to the central question: "{topic}". '
@@ -186,6 +267,26 @@ def _philosopher_user_prompt(
 class _SelectorDecision(BaseModel):
     chosen_speaker: str
     reason: str
+
+
+def _generate_backchannel(reactor: str, winner_content: str) -> str | None:
+    """Generate a short aside from a non-speaking participant. Returns None to skip."""
+    system = (
+        f"You are {reactor}. Someone else is speaking in a debate and you are listening. "
+        f"React to what they just said with a brief aside — scorn, amusement, surprise, or a sharp one-liner. "
+        f"Maximum 8 words. Can be just a word or two. Stay completely in character. No full paragraphs."
+    )
+    try:
+        response = _chat_llm().invoke([
+            SystemMessage(content=system),
+            HumanMessage(content=f'They just said: "{winner_content[:300]}"'),
+        ])
+        content = response.content.strip().strip('"')
+        if len(content.split()) > 12:
+            return None
+        return content
+    except Exception:
+        return None
 
 
 def _relevance_score(name: str, last_content: str) -> int:
@@ -237,7 +338,8 @@ def _generate_candidate(name: str, state: RoomState) -> dict:
     character_summaries = state.get("character_summaries") or {}
     turn_count          = state.get("turn_count") or 0
     own_summary         = character_summaries.get(name, "")
-    system_prompt = _philosopher_system_prompt(name, participants, partial_agreements, own_summary)
+    heat          = state.get("heat") or 0
+    system_prompt = _philosopher_system_prompt(name, participants, partial_agreements, own_summary, heat)
     user_prompt   = _philosopher_user_prompt(
         name, state["messages"], topic, argument_log, turn_count, concession_counts
     )
@@ -396,19 +498,30 @@ def parallel_turn_node(state: RoomState) -> dict:
     turn_count      = state.get("turn_count") or 0
     last_speaker    = recent_speakers[-1] if recent_speakers else ""
 
-    # Everyone except the last speaker is eligible
-    eligible = [p for p in participants if p != last_speaker]
+    messages_list = state.get("messages") or []
+    forced = state.get("forced_speaker", "")
 
-    # Narrow to top-2 by hot-topic relevance to keep token usage manageable
-    messages_list  = state.get("messages") or []
-    last_content   = messages_list[-1].content if messages_list else ""
-    candidates_names = _top_candidates(eligible, last_content)
+    # Skip backchannel messages when scoring relevance
+    last_content = ""
+    for m in reversed(messages_list):
+        if hasattr(m, "name") and (m.name or "").endswith("_bc"):
+            continue
+        if hasattr(m, "content"):
+            last_content = m.content
+            break
 
-    dbg.dlog("MODERATOR", "Parallel generation", {
-        "eligible":   eligible,
-        "candidates": candidates_names,
-        "excluded":   last_speaker or "(none)",
-    })
+    if forced and forced in participants:
+        candidates_names = [forced]
+        dbg.dlog("MODERATOR", f"Forced speaker: {forced}")
+    else:
+        # Everyone except the last speaker is eligible
+        eligible = [p for p in participants if p != last_speaker]
+        candidates_names = _top_candidates(eligible, last_content)
+        dbg.dlog("MODERATOR", "Parallel generation", {
+            "eligible":   eligible,
+            "candidates": candidates_names,
+            "excluded":   last_speaker or "(none)",
+        })
 
     # Generate all responses in parallel
     with ThreadPoolExecutor(max_workers=len(candidates_names)) as executor:
@@ -427,17 +540,35 @@ def parallel_turn_node(state: RoomState) -> dict:
     argument_log[winner["name"]] = (prev + [winner["content"]])[-3:]
 
     concession_counts = dict(state.get("concession_counts") or {})
-    if any(signal in winner["content"].lower() for signal in _CONCESSION_SIGNALS):
+    content_lower = winner["content"].lower()
+    heat = state.get("heat") or 0
+    if any(signal in content_lower for signal in _CONCESSION_SIGNALS):
         concession_counts[winner["name"]] = concession_counts.get(winner["name"], 0) + 1
         dbg.dlog("PHILOSOPHER", f"{winner['name']} conceded — total {concession_counts[winner['name']]}")
+        heat = max(0, heat - 1)
+    elif any(signal in content_lower for signal in _COMBATIVE_SIGNALS) or winner["content"].count("!") >= 2:
+        heat = min(10, heat + 1)
+    dbg.dlog("MODERATOR", f"Heat: {heat}")
+
+    out_msgs = [AIMessage(content=winner["content"], name=winner["safe_name"])]
+    if turn_count > 0:
+        reactors = [p for p in participants if p != winner["name"]]
+        if reactors and random.random() < _BACKCHANNEL_CHANCE:
+            reactor = random.choice(reactors)
+            bc = _generate_backchannel(reactor, winner["content"])
+            if bc:
+                out_msgs.append(AIMessage(content=bc, name=reactor.replace(" ", "_") + "_bc"))
+                dbg.dlog("PHILOSOPHER", f"{reactor} [aside]: {bc}")
 
     return {
-        "messages":          [AIMessage(content=winner["content"], name=winner["safe_name"])],
+        "messages":          out_msgs,
         "current_speaker":    winner["name"],
         "recent_speakers":    new_recent,
         "turn_count":         turn_count + 1,
         "argument_log":       argument_log,
         "concession_counts":  concession_counts,
+        "forced_speaker":     "",
+        "heat":               heat,
     }
 
 
@@ -465,6 +596,7 @@ class _ConsensusResult(BaseModel):
     dissenters: list[str]
     points_of_agreement: list[str]
     remaining_disagreements: list[_Tension]
+    drifted_topic: str  # empty if on-topic; short phrase describing actual subject if drifted
 
 
 def consensus_checker_node(state: RoomState) -> dict:
@@ -493,7 +625,10 @@ def consensus_checker_node(state: RoomState) -> dict:
         "4. What are the remaining points of contention ABOUT THE MAIN TOPIC specifically? "
         "For each tension, name the two participants on opposing sides and capture each person's actual stance in a short phrase.\n\n"
         f"IMPORTANT: `points_of_agreement` must only contain things ALL {len(participants)} participants agree on. "
-        "If only a subset agrees, it belongs in `partial_agreements` only — not both."
+        "If only a subset agrees, it belongs in `partial_agreements` only — not both.\n"
+        f"5. Has the conversation significantly drifted from the original topic (\"{topic}\")? "
+        "If the last several exchanges are primarily about a clearly different subject, set `drifted_topic` to a short phrase "
+        "describing what the conversation has actually been about. If it is still on-topic, leave `drifted_topic` empty."
     )
 
     dbg.dlog("CONSENSUS", f"Checking at turn {turn_count}", {
@@ -527,6 +662,7 @@ def consensus_checker_node(state: RoomState) -> dict:
         "partial_agreements":      partial or "(none)",
         "dissenters":              result.dissenters or "(none)",
         "remaining_disagreements": tensions or "(none)",
+        "drifted_topic":           result.drifted_topic or "(none)",
     })
 
     return {
@@ -535,6 +671,7 @@ def consensus_checker_node(state: RoomState) -> dict:
         "partial_agreements":      partial,
         "points_of_agreement":     result.points_of_agreement,
         "remaining_disagreements": tensions,
+        "drift_topic":             result.drifted_topic,
     }
 
 
@@ -676,6 +813,9 @@ def generate_moderator_steer(state: RoomState) -> str:
             f"argument to a position {entrenched} might be able to accept — without asking them to abandon their core view.\n"
         )
 
+    heat = state.get("heat") or 0
+    heat_context = f"Room atmosphere: {_heat_description(heat)}\n\n"
+
     style = state.get("moderator_style") or "socratic"
 
     _style_configs = {
@@ -745,6 +885,7 @@ def generate_moderator_steer(state: RoomState) -> str:
         f'Debate topic: "{topic}"\n'
         f"Participants: {', '.join(participants)}\n"
         f"Turn: {turn_count}\n\n"
+        f"{heat_context}"
         f"{agreement_context}"
         f"Recent exchange:\n{recent_text}\n"
         f"{targeting}\n"

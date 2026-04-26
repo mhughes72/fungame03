@@ -2,7 +2,7 @@
 
 ## What this project is
 
-A terminal game where 2–4 historical figures debate a topic using LangGraph + OpenAI. Each turn, candidates are scored by hot-topic keyword overlap with the last message; the top scorer speaks (or top 2 if tied, then a selector LLM picks). A consensus checker runs periodically to detect full and partial agreements.
+A terminal game where 2–4 historical figures debate a topic using LangGraph + OpenAI. Each turn, candidates are scored by hot-topic keyword overlap with the last message; the top scorer speaks (or top 2 if tied, then a selector LLM picks). A consensus checker runs at every steer break to detect full and partial agreements.
 
 ## How to run
 
@@ -10,6 +10,8 @@ A terminal game where 2–4 historical figures debate a topic using LangGraph + 
 python main.py           # CLI
 python main.py --ui      # Textual bar UI (recommended)
 python main.py --debug   # with debug output to stderr
+python generate_portraits.py            # generate all character portraits via DALL-E 3
+python generate_portraits.py Newton     # generate specific character(s)
 ```
 
 Requires `OPENAI_API_KEY` in `.env`.
@@ -25,6 +27,7 @@ Requires `OPENAI_API_KEY` in `.env`.
 | `state.py` | `RoomState` TypedDict — single source of truth for graph state |
 | `personas.py` | Character definitions — the only file to edit when adding characters |
 | `debug.py` | Per-channel debug logging (`dlog`, `toggle`, `status`) |
+| `generate_portraits.py` | Standalone CLI — generates DALL-E 3 portrait PNGs into `portraits/` |
 
 ## Graph shape
 
@@ -35,7 +38,7 @@ START → moderator ─┬─ consensus_checker → END
 ```
 
 - The `moderator` node only routes — no LLM call.
-- Steer exit fires every `N×2` turns; consensus check fires every `N×6` turns (N = participant count).
+- Both steer exit and consensus check fire every `N×2` turns (N = participant count).
 - The graph runs one full batch (until `__steer__` or `consensus_checker` → END) per `graph.stream()` call. `main.py`/`ui.py` handles user input between batches.
 - Moderator steer is generated *outside* the graph (in `main.py` or `ui.py`) and injected as a `HumanMessage` before the next batch.
 
@@ -54,10 +57,13 @@ START → moderator ─┬─ consensus_checker → END
 | `partial_agreements` | `list[dict]` | `{participants, on}` — subgroup alignments |
 | `points_of_agreement` | `list[str]` | Bullet points of what everyone agrees on |
 | `remaining_disagreements` | `list[dict]` | `{topic, participant_a, stance_a, participant_b, stance_b}` — open tensions with attribution |
-| `argument_log` | `dict` | `{name: [claim1, …]}` — last 3 responses per character, used for no-repeat guard |
+| `argument_log` | `dict` | `{name: [claim1, …]}` — last 3 responses per character, used for no-repeat guard and callbacks |
 | `concession_counts` | `dict` | `{name: int}` — times each character has granted a point |
 | `character_summaries` | `dict` | `{name: str}` — first-person debate arc, generated at history compression |
 | `moderator_style` | `str` | One of 8 styles: `socratic`, `combative`, `devil's advocate`, `koan`, `journalist`, `straw man`, `steel man`, `last call` |
+| `forced_speaker` | `str` | If set, bypasses keyword scorer and forces this character next; cleared after use |
+| `heat` | `int` | 0–10 mood meter — rises on combative signals/exclamation marks, falls on concessions |
+| `drift_topic` | `str` | Non-empty when the consensus checker detects the conversation has wandered from the original topic |
 
 ## Models used
 
@@ -66,6 +72,7 @@ START → moderator ─┬─ consensus_checker → END
 | Philosopher (candidate generation) | `gpt-4o-mini` |
 | Selector (when scores tie) | `gpt-4o-mini` |
 | Moderator steer | `gpt-4o-mini` |
+| Backchannel reactions | `gpt-4o-mini` |
 | Character arc summaries | `gpt-4o-mini` |
 | Consensus checker | `gpt-4o` |
 | History summarizer | `gpt-4o` |
@@ -82,9 +89,49 @@ START → moderator ─┬─ consensus_checker → END
 1. Zero concessions past turn 8 → nudge in user prompt to find merit in opponent's argument.
 2. Moderator steer targets the most entrenched participant by name.
 
+## Heat / mood state
+
+`heat` (0–10) is tracked in state and updated by `parallel_turn_node`:
+- +1 for combative keyword hits (`_COMBATIVE_SIGNALS`) or exclamation marks in the response
+- -1 for concession phrases
+- Clamped to [0, 10]
+
+Effects:
+- `_philosopher_system_prompt` receives `heat` and injects a heat description line
+- At heat ≥ 6, a jab instruction is added: characters are told to land a pointed personal shot
+- `generate_moderator_steer` prepends a heat context line to the prompt
+- UI right pane shows a `█`/`░` bar color-coded by intensity
+
+## Backchannel reactions
+
+After each main turn, `_generate_backchannel(reactor, winner_content)` has a 50% chance (`_BACKCHANNEL_CHANCE`) of firing. It produces a single short interjection from a non-speaking participant. These messages use the `_bc` name suffix (e.g. `Newton_bc`) and are rendered dim/italic in the UI. They are skipped when scoring the next speaker's keyword relevance.
+
+## Variable response length
+
+`_philosopher_user_prompt` detects context to set cadence:
+- **rapid-fire** — last message was very short (≤ 30 chars) → one punchy sentence
+- **normal** — default
+- **verbosity** — each persona has a `verbosity` field (`"terse"` / `"normal"` / `"expansive"`) that biases length
+
+## Callbacks
+
+`argument_log` stores the last 3 responses per character. The oldest entry (`claims[0]`) is fed back into a character's own prompt as a "your earlier words" callback — lets characters self-reference or be pinned by opponents on prior statements.
+
+## Stage directions
+
+Characters are instructed (in the system prompt) to occasionally include a brief italicised stage direction in `*[asterisks]*`. The UI renders these as dim brown italic text. The bar itself emits atmosphere beats (from `_BAR_BEATS`) in dark amber every completed batch.
+
+## Topic drift
+
+The consensus checker's structured output includes a `drifted_topic` field. If the LLM detects the conversation has wandered, `drift_topic` is set in state. The UI surfaces a notice before the steer modal; the CLI shows it at the steer prompt. Players can pursue the new thread or steer back.
+
+## Direct calling-out
+
+`_detect_forced_speaker(text)` scans user input for participant name parts (> 3 chars). If found, `forced_speaker` is set in state and `parallel_turn_node` bypasses the keyword scorer for that turn.
+
 ## Moderator styles
 
-7 styles switchable at every steer break (number input in CLI or UI):
+8 styles switchable at every steer break:
 
 | Style | Approach |
 |---|---|
@@ -97,7 +144,7 @@ START → moderator ─┬─ consensus_checker → END
 | `steel man` | Forces a participant to argue their opponent's case at its strongest |
 | `last call` | All-out push for consensus — names slivers of agreement and forces commitment or explanation |
 
-> **Cheat code idea:** the moderator style picker is a natural place for hidden/unlockable styles — e.g. a secret style that forces immediate consensus, skips the debate, or does something absurd. Could be triggered by typing a specific number or word at the style prompt.
+> **Cheat code idea:** hidden/unlockable styles triggered by a specific word or number at the style prompt — e.g. a style that forces immediate consensus or does something absurd.
 
 ## Persona manipulation (TODO)
 
@@ -105,7 +152,6 @@ Mid-debate overrides for persona data — to be designed. Ideas:
 - Temporarily override a character's `core_beliefs`, `rhetorical_moves`, or `hot_topics` for one or more turns (e.g. "make Feynman combative", "make Stalin concede more")
 - Inject a one-off instruction into a specific character's next system prompt without permanently changing their persona
 - Player-facing command (e.g. `!nudge Feynman aggressive`) or a hidden moderator trigger
-- Could tie into the cheat code system above
 - State field would hold `persona_overrides: dict` — `{name: {field: value}}` — cleared after N turns or on demand
 
 ## Textual UI (`ui.py`)
@@ -113,7 +159,11 @@ Mid-debate overrides for persona data — to be designed. Ideas:
 - `SetupScreen` — character picker (`SelectionList`), topic `Input`, "Open the bar" `Button`. Defaults: Lincoln (index 5) + Tesla (index 8).
 - Uses `self.dismiss((chosen, topic))` to return result; parent uses `push_screen(SetupScreen(), callback=self._start_debate)`. **Do not use the `post_message`/`Message` pattern for pushed screens in Textual — it doesn't work.**
 - `PhilosopherBar` runs `graph.stream()` in a `@work(thread=True)` worker; all UI updates go through `call_from_thread()`.
-- Right pane shows topic, turn count, full agreements, partial alignments, open tensions (with participant attribution), and the style selector.
+- `SteerModal` opens at every steer break — contains a text input, a `RadioSet` of all 8 styles, and Quit + Steer buttons. Returns `(text, style)` tuple via `dismiss()`. Background is 60% transparent black (`background: #000000 60%`).
+- Header bar contains a Quit button alongside the title.
+- Right pane shows topic, turn count, heat bar (`█`/`░`, color-coded), full agreements, partial alignments, open tensions (with participant attribution), and the style selector.
+- `_render_content(text)` converts `*[action]*` patterns to dim brown italic Rich markup for stage directions and bar beats.
+- Backchannel messages (`_bc` suffix) render as a single dim italic line without a speaker header.
 
 ## Adding a character
 
@@ -122,6 +172,7 @@ Add an entry to `CHARACTERS` in `personas.py`. All fields are required:
 ```python
 "Name": {
     "era":             "dates and location",
+    "verbosity":       "terse" | "normal" | "expansive",
     "known_for":       "what they are famous for",
     "core_beliefs":    "their key philosophical positions",
     "rhetorical_moves":"how they argue and speak",
@@ -135,7 +186,9 @@ Add an entry to `CHARACTERS` in `personas.py`. All fields are required:
 
 `dynamics` is defined but not currently injected into prompts — characters react based on what is actually said.
 
-Current characters: Socrates, Nietzsche, Marx, Simone de Beauvoir, Sun Tzu, Abraham Lincoln, Marie Curie, Cleopatra VII, Nikola Tesla, Frederick Douglass, John Lennon, Wolfgang Amadeus Mozart, Elon Musk, Bill Gates, Steve Jobs, Vladimir Lenin, Adolf Hitler, Joseph Stalin, Mao Zedong, Pol Pot, Isaac Newton, Albert Einstein, Niels Bohr, Werner Heisenberg, Richard Feynman, Roger Penrose.
+Current characters: Socrates, Nietzsche, Marx, Sun Tzu, Abraham Lincoln, Nikola Tesla, Frederick Douglass, John Lennon, Wolfgang Amadeus Mozart, Elon Musk, Bill Gates, Steve Jobs, Vladimir Lenin, Adolf Hitler, Joseph Stalin, Mao Zedong, Pol Pot, Isaac Newton, Albert Einstein, Niels Bohr, Werner Heisenberg, Richard Feynman, Roger Penrose.
+
+Good candidates to add: Hannah Arendt (essential with the authoritarian cast), Machiavelli, Thomas Jefferson, Dostoevsky, Oscar Wilde, Voltaire, Napoleon, Confucius, Ibn Khaldun.
 
 ## Runtime `!` commands
 
@@ -159,26 +212,6 @@ Debug output goes to **stderr**: `python main.py --debug 2>debug.log`
 - **Partial consensus** — Partial agreements are fed back into each philosopher's system prompt so characters are aware of forming coalitions and who to challenge.
 - **Graph reruns per batch** — No LangGraph checkpointer. `main.py`/`ui.py` holds the full state dict and passes it to `graph.stream()` each batch. Intentional simplicity.
 - **`STATE` debug channel** is off by default — very verbose (fires after every node).
-- **Degenerate output guard** — `_generate_candidate` retries if response is < 30 chars or equals the sanitized speaker name.
-
-## Future ideas — making it feel like a real conversation
-
-The biggest tell that this is a game and not a real debate is the uniform cadence: every speaker takes equal turns at equal length. Ideas to break that, ranked by expected impact:
-
-**High impact (changes the rhythm)**
-- **Variable response length** — sometimes one sentence, sometimes a paragraph. Add a "weight" instruction to the user prompt: *"this turn is a quick reaction, 1 sentence"* vs. *"this is a major argument, develop it fully"* based on context (was the last message a question? a jab? a long monologue?).
-- **Backchannel reactions** — short interjections that don't take the floor: *"Hah."* / *"Wait — say that again."* / *"Mozart, no."* Generate a 1-line reaction from a non-speaker before the next full turn fires. Cheap (`gpt-4o-mini`, ~10 tokens) but enormously real-feeling.
-- **Direct calling-out** ⬅ NEXT — detect a participant name in the user's message and force that character to respond, bypassing the keyword scorer. Touches `nodes.py` (scorer bypass), `state.py` (no new field needed — just pass forced speaker), and `main.py`/`ui.py` (detect name before injecting message). **Remind the user about this at the start of the next session.**
-
-**Medium impact (texture)**
-- **Stage directions in italics** — *[sets down glass]*, *[laughs]*, *[long pause]*. Cheap atmosphere; the bar setting begs for it.
-- **Mood/energy state** — track a global "heat" value that rises with disagreement and falls with concession. Inject into prompts: *"the room is tense"* vs. *"the room has cooled"*. Makes the moderator's job dynamic too.
-- **Topic drift** — currently the topic is fixed forever; real bar arguments wander. Detect drift in the consensus checker and surface "the conversation has moved to X — pursue or steer back?"
-- **Callbacks** — feed each character their own earlier verbatim quotes so they can self-reference or be pinned by others.
-
-**Lower impact but flavorful**
-- **Asymmetric engagement** — some characters speak less by design (Mozart isn't a debater, he's a provocateur). Add a `verbosity` persona field.
-- **Drink/setting beats** — every N turns, a stage direction from "the bar" itself: *"someone orders another round"*, *"the candle gutters"*. Pure atmosphere.
-- **Humor/jabs** — explicit prompt slot for personal shots, not just ideas. Lincoln roasting Nietzsche lands differently than Lincoln rebutting him.
-
-If picking two to start: **variable length** + **backchannel reactions**.
+- **Degenerate output guard** — `_generate_candidate` retries if response is < 8 chars or equals the sanitized speaker name.
+- **`_bc` suffix** — backchannel AIMessages use `Name_bc` in the `name` field so they can be identified and skipped by the scorer without a separate state field.
+- **LangSmith disabled by default** — `os.environ.setdefault("LANGCHAIN_TRACING_V2", "false")` is set at the very top of `main.py`, before any langchain imports, so LangSmith never spins up its background thread (which caused a shutdown crash).

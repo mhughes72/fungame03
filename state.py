@@ -19,3 +19,6 @@ class RoomState(TypedDict):
     concession_counts: dict    # {name: int} — times each character has granted a point
     character_summaries: dict  # {name: str} — first-person debate arc, generated at compression
     moderator_style: str       # "socratic" or "combative"
+    forced_speaker: str        # if set, bypass scorer and force this character next
+    heat: int                  # 0–10, rises with disagreement, falls with concession
+    drift_topic: str           # non-empty when conversation has wandered from original topic

@@ -1,15 +1,34 @@
 """Textual bar UI for The Philosopher's Room."""
 from __future__ import annotations
 
+import re
 from langchain_core.messages import AIMessage, HumanMessage
 
 from textual.app import App, ComposeResult, on
 from textual.containers import Horizontal, Vertical, ScrollableContainer
 from textual.reactive import reactive
-from textual.screen import Screen
-from textual.widgets import Button, Footer, Input, Label, RichLog, SelectionList, Static
+from textual.screen import ModalScreen, Screen
+from textual.widgets import Button, Footer, Input, Label, RadioButton, RadioSet, RichLog, SelectionList, Static
 from textual.widgets.selection_list import Selection
 from textual import work
+
+_BAR_BEATS = [
+    "*[someone orders another round]*",
+    "*[the candle gutters]*",
+    "*[a glass is set down too hard]*",
+    "*[laughter drifts in from the next table]*",
+    "*[the barkeep wipes the counter without looking up]*",
+    "*[rain streaks the windows]*",
+    "*[a chair scrapes back]*",
+    "*[the fire settles with a soft crack]*",
+    "*[someone lights a cigarette and doesn't offer one]*",
+    "*[a long silence from the street outside]*",
+    "*[the clock above the bar ticks once]*",
+    "*[a cork is pulled somewhere in the back]*",
+    "*[the door swings open — cold draft — then closes]*",
+    "*[ice melts in an untouched glass]*",
+    "*[the lights flicker, then hold]*",
+]
 
 from graph import build_graph
 from nodes import (
@@ -36,9 +55,28 @@ Screen {
     background: #2d1a00;
     border-bottom: solid #5c3a00;
     padding: 0 2;
+    align: left middle;
+}
+
+#header-title {
+    width: 1fr;
     content-align: left middle;
     color: #f5c842;
     text-style: bold;
+}
+
+#quit-btn {
+    width: auto;
+    height: 1;
+    background: #2d1a00;
+    color: #6b3030;
+    border: none;
+    margin: 0 0 0 2;
+}
+
+#quit-btn:hover {
+    color: #f07070;
+    background: #4a1a1a;
 }
 
 #turn-counter {
@@ -181,6 +219,95 @@ SelectionList {
 """
 
 
+STEER_CSS = """
+SteerModal {
+    align: center middle;
+    background: #000000 60%;
+}
+
+#steer-box {
+    width: 72;
+    height: auto;
+    max-height: 90vh;
+    background: #2d1a00;
+    border: solid #5c3a00;
+    padding: 2 3;
+}
+
+#steer-title {
+    text-align: center;
+    color: #f5c842;
+    text-style: bold;
+    margin-bottom: 1;
+}
+
+#steer-input-label {
+    color: #8a7040;
+    margin-bottom: 0;
+}
+
+#steer-input {
+    background: #1a0f00;
+    border: solid #3a2400;
+    color: #f5e6c0;
+    margin-bottom: 1;
+}
+
+#steer-or {
+    text-align: center;
+    color: #5c3a00;
+    margin: 1 0;
+}
+
+#style-radio {
+    height: 12;
+    border: solid #3a2400;
+    background: #0d0700;
+    padding: 0 1;
+    margin-bottom: 1;
+    overflow-y: auto;
+}
+
+RadioButton {
+    color: #c8a86b;
+    background: #0d0700;
+}
+
+RadioButton:focus {
+    background: #1a0f00;
+}
+
+RadioButton.-on {
+    color: #f5c842;
+}
+
+#steer-buttons {
+    height: auto;
+    margin-top: 1;
+}
+
+#steer-btn {
+    width: 1fr;
+    background: #3a2400;
+    color: #f5c842;
+    border: solid #5c3a00;
+    text-style: bold;
+}
+
+#steer-btn:hover { background: #5c3a00; }
+
+#steer-quit-btn {
+    width: auto;
+    background: #2d1a00;
+    color: #6b3030;
+    border: solid #3a2400;
+    margin-right: 1;
+}
+
+#steer-quit-btn:hover { color: #f07070; background: #4a1a1a; }
+"""
+
+
 # --------------------------------------------------------------------------- #
 # Setup screen                                                                  #
 # --------------------------------------------------------------------------- #
@@ -227,10 +354,58 @@ class SetupScreen(Screen):
 
     def on_key(self, event) -> None:
         if event.key == "enter":
-            # Only trigger start if focus is on the button or topic input
             focused = self.focused
             if isinstance(focused, (Button, Input)):
                 self.start()
+
+
+# --------------------------------------------------------------------------- #
+# Steer modal                                                                   #
+# --------------------------------------------------------------------------- #
+
+class SteerModal(ModalScreen):
+    CSS = STEER_CSS
+
+    def __init__(self, current_style: str, styles: list[tuple[str, str]]) -> None:
+        super().__init__()
+        self._current_style = current_style
+        self._styles = styles
+
+    def compose(self) -> ComposeResult:
+        with Vertical(id="steer-box"):
+            yield Static("── STEER THE DEBATE ──", id="steer-title")
+            yield Label("Speak directly into the debate:", id="steer-input-label")
+            yield Input(placeholder="Leave blank to let the moderator intervene…", id="steer-input")
+            yield Static("── or choose a moderator approach ──", id="steer-or")
+            with RadioSet(id="style-radio"):
+                for style, desc in self._styles:
+                    label = f"[b]{style}[/b]  {desc}"
+                    yield RadioButton(label, value=(style == self._current_style))
+            with Horizontal(id="steer-buttons"):
+                yield Button("Quit game", id="steer-quit-btn")
+                yield Button("Steer  ▶", id="steer-btn", variant="default")
+
+    def on_mount(self) -> None:
+        self.query_one("#steer-input", Input).focus()
+
+    def _submit(self) -> None:
+        text = self.query_one("#steer-input", Input).value.strip()
+        radio = self.query_one("#style-radio", RadioSet)
+        idx = radio.pressed_index
+        style = self._styles[idx][0] if idx is not None and idx >= 0 else self._current_style
+        self.dismiss((text, style))
+
+    @on(Button.Pressed, "#steer-btn")
+    def on_steer(self) -> None:
+        self._submit()
+
+    @on(Button.Pressed, "#steer-quit-btn")
+    def on_quit(self) -> None:
+        self.app.exit()
+
+    def on_key(self, event) -> None:
+        if event.key == "enter" and isinstance(self.focused, (Button, Input)):
+            self._submit()
 
 
 # --------------------------------------------------------------------------- #
@@ -278,7 +453,6 @@ class PhilosopherBar(App):
         self._displayed_count = 0
         self._prev_partial: list = []
         self._waiting_for_input = False
-        self._picking_style = False
         self._new_topic_mode = False
 
     # ---------------------------------------------------------------------- #
@@ -286,7 +460,9 @@ class PhilosopherBar(App):
     # ---------------------------------------------------------------------- #
 
     def compose(self) -> ComposeResult:
-        yield Static("[bold yellow]THE PHILOSOPHER'S BAR[/]", id="header-bar")
+        with Horizontal(id="header-bar"):
+            yield Static("[bold yellow]THE PHILOSOPHER'S BAR[/]", id="header-title")
+            yield Button("Quit", id="quit-btn")
         yield Static("", id="seats-bar")
         with Horizontal():
             with Vertical(id="left-pane"):
@@ -325,8 +501,11 @@ class PhilosopherBar(App):
             "concession_counts": {},
             "character_summaries": {},
             "moderator_style": "socratic",
+            "forced_speaker": "",
+            "heat": 0,
+            "drift_topic": "",
         }
-        self.query_one("#header-bar", Static).update(
+        self.query_one("#header-title", Static).update(
             f"[bold yellow]THE PHILOSOPHER'S BAR[/]   [#5c3a00]{self.topic}[/]"
         )
         self._update_seats_bar()
@@ -375,6 +554,13 @@ class PhilosopherBar(App):
         self._update_debate_state()
         self._set_active_speaker("")
 
+        turn = self.state.get("turn_count", 0)
+        n = len(self.participants)
+        if turn > 0 and n > 0:
+            batch_num = turn // (n * 2)
+            if batch_num > 0:
+                self._log_bar_beat(_BAR_BEATS[(batch_num - 1) % len(_BAR_BEATS)])
+
         if self.state.get("consensus"):
             self._log_system("━━━ CONSENSUS REACHED ━━━")
             self._log_system(self.state.get("consensus_summary", ""))
@@ -382,53 +568,58 @@ class PhilosopherBar(App):
                 self._log_system(f"  ✓ {pt}")
             self._prompt_new_topic()
         else:
-            self._enable_input()
+            drift = self.state.get("drift_topic", "")
+            if drift:
+                self._log_system(f"── DRIFT ── the conversation has shifted to: {drift}")
+                self._log_system(f"  original topic: {self.state['topic']}")
+            self._open_steer_modal()
 
     # ---------------------------------------------------------------------- #
-    # Input handling                                                           #
+    # Steer modal                                                              #
     # ---------------------------------------------------------------------- #
 
-    def _enable_input(self) -> None:
-        style = self.state.get("moderator_style", "socratic")
-        inp = self.query_one("#user-input", Input)
-        inp.placeholder = f"Enter to steer [{style}], type a number to switch approach, or type to join…"
-        inp.disabled = False
-        inp.focus()
-        self._waiting_for_input = True
+    def _open_steer_modal(self) -> None:
+        from main import _MODERATOR_STYLES
+        current_style = self.state.get("moderator_style", "socratic")
+        self.push_screen(
+            SteerModal(current_style, _MODERATOR_STYLES),
+            callback=self._on_steer_result,
+        )
 
-    def on_input_submitted(self, event: Input.Submitted) -> None:
-        if not self._waiting_for_input:
-            return
-        self._waiting_for_input = False
-        user_text = event.value.strip()
-        event.input.clear()
-        event.input.disabled = True
+    def _detect_forced_speaker(self, text: str) -> str | None:
+        text_lower = text.lower()
+        for name in self.participants:
+            for part in name.lower().split():
+                if len(part) > 3 and part in text_lower:
+                    return name
+        return None
 
-        if self._picking_style:
-            self._apply_style_pick(user_text)
-            self._enable_input()
-            return
-
-        # Number input — change style then fire moderator
-        if user_text.isdigit():
-            self._apply_style_pick(user_text)
-            user_text = ""  # fall through to moderator steer
-
-        if user_text.startswith("!"):
-            self._handle_command(user_text)
-            self._enable_input()
+    def _on_steer_result(self, result: tuple | None) -> None:
+        if result is None:
+            self._inject_moderator_steer()
+            self.run_batch()
             return
 
-        if user_text:
-            import debug as dbg
-            dbg.dlog("STATE", "User message injected", {"content": user_text})
+        text, new_style = result
+
+        if new_style != self.state.get("moderator_style"):
+            self.state = {**self.state, "moderator_style": new_style}
+            self._log_system(f"Moderator approach → {new_style}")
+            self._update_debate_state()
+
+        if text:
+            dbg.dlog("STATE", "User message injected", {"content": text})
+            forced = self._detect_forced_speaker(text)
+            if forced:
+                dbg.dlog("STATE", f"Calling out {forced}")
             self.state = {
                 **self.state,
+                "forced_speaker": forced or "",
                 "messages": list(self.state["messages"]) + [
-                    HumanMessage(content=user_text, name="User")
+                    HumanMessage(content=text, name="User")
                 ],
             }
-            self._display_message(HumanMessage(content=user_text, name="User"))
+            self._display_message(HumanMessage(content=text, name="User"))
         else:
             self._inject_moderator_steer()
 
@@ -444,6 +635,10 @@ class PhilosopherBar(App):
             ],
         }
 
+    # ---------------------------------------------------------------------- #
+    # New topic input (bottom bar)                                             #
+    # ---------------------------------------------------------------------- #
+
     def _prompt_new_topic(self) -> None:
         inp = self.query_one("#user-input", Input)
         inp.placeholder = "Type a new topic and press Enter, or leave blank to quit…"
@@ -452,16 +647,72 @@ class PhilosopherBar(App):
         self._waiting_for_input = True
         self._new_topic_mode = True
 
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        if not self._waiting_for_input:
+            return
+        self._waiting_for_input = False
+        user_text = event.value.strip()
+        event.input.clear()
+        event.input.disabled = True
+
+        if not self._new_topic_mode:
+            return
+
+        self._new_topic_mode = False
+        if user_text:
+            self._reset_for_new_topic(user_text)
+        else:
+            self.exit()
+
+    def _reset_for_new_topic(self, topic: str) -> None:
+        self.topic = topic
+        self.state = {
+            **self.state,
+            "topic": topic,
+            "messages": [],
+            "recent_speakers": [],
+            "turn_count": 0,
+            "consensus": False,
+            "consensus_summary": "",
+            "partial_agreements": [],
+            "points_of_agreement": [],
+            "remaining_disagreements": [],
+            "argument_log": {},
+            "concession_counts": {},
+            "character_summaries": {},
+            "forced_speaker": "",
+            "heat": 0,
+            "drift_topic": "",
+        }
+        self.query_one("#header-title", Static).update(
+            f"[bold yellow]THE PHILOSOPHER'S BAR[/]   [#5c3a00]{topic}[/]"
+        )
+        self._update_debate_state()
+        self.run_batch()
+
     # ---------------------------------------------------------------------- #
     # Display helpers                                                          #
     # ---------------------------------------------------------------------- #
 
+    @staticmethod
+    def _render_content(text: str) -> str:
+        """Convert *[stage directions]* to dim italic Rich markup."""
+        return re.sub(
+            r"\*\[([^\]]+)\]\*",
+            r"[#6b5030 italic][\1][/]",
+            text,
+        )
+
     def _display_message(self, msg) -> None:
         log = self.query_one("#conversation", RichLog)
         if isinstance(msg, AIMessage) and msg.name:
-            display_name = msg.name.replace("_", " ")
-            log.write(f"\n[bold yellow]{display_name}[/]")
-            log.write(msg.content.strip())
+            if msg.name.endswith("_bc"):
+                display_name = msg.name[:-3].replace("_", " ")
+                log.write(f"[#5c4020 italic]  {display_name}: {msg.content.strip()}[/]")
+            else:
+                display_name = msg.name.replace("_", " ")
+                log.write(f"\n[bold yellow]{display_name}[/]")
+                log.write(self._render_content(msg.content.strip()))
         elif isinstance(msg, HumanMessage):
             name = getattr(msg, "name", None) or "You"
             if name == "Moderator":
@@ -479,6 +730,11 @@ class PhilosopherBar(App):
     def _log_system(self, text: str) -> None:
         log = self.query_one("#conversation", RichLog)
         log.write(f"[#5c3a00]{text}[/]")
+
+    def _log_bar_beat(self, text: str) -> None:
+        log = self.query_one("#conversation", RichLog)
+        rendered = self._render_content(text)
+        log.write(f"\n[#3a2000]{rendered}[/]\n")
 
     def _set_active_speaker(self, name: str) -> None:
         clean = name.replace("_", " ") if name not in ("__turn__", "__steer__", "consensus_check", "") else ""
@@ -527,15 +783,23 @@ class PhilosopherBar(App):
                     lines.append(f"[#c06040]• {t}[/]")
             lines.append("")
 
-        # Style selector
+        heat = self.state.get("heat", 0)
+        if heat <= 2:
+            heat_color, heat_label = "#4a7ab5", "cool"
+        elif heat <= 4:
+            heat_color, heat_label = "#8a9040", "warm"
+        elif heat <= 6:
+            heat_color, heat_label = "#c8a030", "charged"
+        elif heat <= 8:
+            heat_color, heat_label = "#c86030", "heated"
+        else:
+            heat_color, heat_label = "#c83030", "flashpoint"
+        bar = f"[{heat_color}]{'█' * heat}[/][#2a1800]{'░' * (10 - heat)}[/]"
+        lines.append(f"[bold #5c3a00]── HEAT ──[/]")
+        lines.append(f"{bar}  [{heat_color}]{heat_label}[/]\n")
+
         current = self.state.get("moderator_style", "socratic")
-        lines.append("[bold #5c3a00]── MODERATOR APPROACH ──[/]")
-        lines.append("[#3a2400]type a number to switch[/]\n")
-        for i, (style, desc) in enumerate(_MODERATOR_STYLES, 1):
-            if style == current:
-                lines.append(f"[bold yellow]● {i}. {style}[/]\n   [#8a7040]{desc}[/]")
-            else:
-                lines.append(f"[#4a3020]  {i}. {style}[/]\n   [#3a2400]{desc}[/]")
+        lines.append(f"[bold #5c3a00]── APPROACH: {current.upper()} ──[/]")
 
         panel.update("\n".join(lines))
 
@@ -553,8 +817,6 @@ class PhilosopherBar(App):
         cmd = parts[0] if parts else ""
         if cmd in ("quit", "exit"):
             self.exit()
-        elif cmd == "style":
-            self._show_style_picker()
         elif cmd == "debug":
             if len(parts) == 1:
                 on = dbg.toggle()
@@ -564,29 +826,9 @@ class PhilosopherBar(App):
             else:
                 dbg.toggle(parts[1].upper())
 
-    def _show_style_picker(self) -> None:
-        from main import _MODERATOR_STYLES
-        self._log_system("── Moderator styles ──")
-        for i, (style, desc) in enumerate(_MODERATOR_STYLES, 1):
-            self._log_system(f"  {i}.  {style:<20}  {desc}")
-        self._log_system("Type a number and press Enter to switch.")
-        self._picking_style = True
-        self._enable_input()
-
-    def _apply_style_pick(self, raw: str) -> None:
-        from main import _MODERATOR_STYLES
-        self._picking_style = False
-        try:
-            idx = int(raw.strip()) - 1
-            if 0 <= idx < len(_MODERATOR_STYLES):
-                new_style = _MODERATOR_STYLES[idx][0]
-                self.state = {**self.state, "moderator_style": new_style}
-                self._log_system(f"Moderator style → {new_style}")
-                self._update_debate_state()
-                return
-        except (ValueError, IndexError):
-            pass
-        self._log_system("Invalid choice — style unchanged.")
+    @on(Button.Pressed, "#quit-btn")
+    def on_quit_btn(self) -> None:
+        self.exit()
 
     def action_toggle_debug(self) -> None:
         on = dbg.toggle()

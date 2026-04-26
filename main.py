@@ -1,6 +1,8 @@
 import os
 import sys
 
+os.environ.setdefault("LANGCHAIN_TRACING_V2", "false")
+
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 if hasattr(sys.stderr, "reconfigure"):
