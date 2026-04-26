@@ -140,13 +140,13 @@ def _philosopher_user_prompt(
         is_short = len(last_content.split()) < 30
         is_long = len(last_content.split()) > 120
         if is_question and is_short:
-            length_instruction = "LENGTH: This was a pointed question. Answer it sharply — 1 or 2 sentences maximum."
+            length_instruction = "LENGTH: Pointed question — answer in 1 short sentence. Blunt and direct. No qualifications."
         elif is_short:
-            length_instruction = "LENGTH: That was a short provocation. Match the energy — 1 to 3 sentences."
+            length_instruction = "LENGTH: Short provocation — match the energy. 1 to 2 short sentences maximum."
         elif is_long:
-            length_instruction = "LENGTH: A substantial argument was just made. Develop your response fully — 3 to 5 sentences."
+            length_instruction = "LENGTH: A substantial argument was made. Respond fully — 3 to 4 sentences."
         else:
-            length_instruction = "LENGTH: 2 to 4 sentences."
+            length_instruction = "LENGTH: 2 to 3 sentences."
     else:
         respond_to = "It is your turn to open or advance the debate."
         length_instruction = "LENGTH: Open with a clear position — 2 to 3 sentences."
