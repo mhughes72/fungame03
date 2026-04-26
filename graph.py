@@ -19,7 +19,7 @@ def build_graph(participants: list[str]):
         speaker = state["current_speaker"]
         if speaker == "consensus_check":
             destination = "consensus_checker"
-        elif speaker == "__steer__":
+        elif speaker == "__steer__" or speaker == "__max_turns__":
             destination = END
         else:
             destination = "parallel_turn"

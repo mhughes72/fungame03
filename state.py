@@ -10,6 +10,7 @@ class RoomState(TypedDict):
     current_speaker: str
     recent_speakers: list[str]   # last N speakers — used for recency penalty
     turn_count: int
+    max_turns: int             # debate ends when turn_count reaches this
     consensus: bool
     consensus_summary: str
     partial_agreements: list[dict]   # [{participants, on}] — updated each check

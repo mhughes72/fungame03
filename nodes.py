@@ -477,7 +477,13 @@ def moderator_node(state: RoomState) -> dict:
     """Decide whether to continue, steer-exit, or trigger a consensus check."""
     participants = state["participants"]
     turn_count   = state.get("turn_count") or 0
+    max_turns    = state.get("max_turns") or 20
     n            = len(participants)
+
+    # Check if max turns reached — end the debate
+    if turn_count >= max_turns:
+        dbg.dlog("MODERATOR", f"Turn {turn_count} — max turns reached, ending debate")
+        return {"current_speaker": "__max_turns__", "turn_count": turn_count + 1}
 
     if turn_count > 0 and turn_count % turns_per_consensus(n) == 0:
         dbg.dlog("MODERATOR", f"Turn {turn_count} — triggering consensus check")

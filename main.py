@@ -242,6 +242,14 @@ def run_game():
     if not topic:
         topic = "What is the nature of justice?"
 
+    max_turns_input = input("  Maximum turns before debate ends? [20] > ").strip()
+    try:
+        max_turns = int(max_turns_input) if max_turns_input else 20
+        if max_turns < 1:
+            max_turns = 20
+    except ValueError:
+        max_turns = 20
+
     moderator_style = "socratic"
 
     graph = build_graph(participants)
@@ -259,6 +267,7 @@ def run_game():
         "current_speaker": "",
         "recent_speakers": [],
         "turn_count": 0,
+        "max_turns": max_turns,
         "consensus": False,
         "consensus_summary": "",
         "partial_agreements": [],
@@ -313,6 +322,7 @@ def run_game():
             state = {**state, "messages": condensed, "character_summaries": char_summaries}
 
         is_steer_exit = state.get("current_speaker") == "__steer__"
+        is_max_turns = state.get("current_speaker") == "__max_turns__"
 
         # Show consensus analysis
         if state.get("consensus"):
@@ -327,6 +337,34 @@ def run_game():
                     "messages": [],
                     "recent_speakers": [],
                     "turn_count": 0,
+                    "consensus": False,
+                    "consensus_summary": "",
+                    "partial_agreements": [],
+                    "points_of_agreement": [],
+                    "remaining_disagreements": [],
+                    "argument_log": {},
+                    "concession_counts": {},
+                    "character_summaries": {},
+                    "moderator_style": state.get("moderator_style", "socratic"),
+                }
+                _header(f'NEW TOPIC: "{topic}"')
+            else:
+                break
+        elif is_max_turns:
+            _display_no_consensus(state)
+            print()
+            print(f"  [Debate ended after reaching {state['turn_count']} turns]")
+            print()
+            again = input("  Start a new topic? (y/n): ").strip().lower()
+            if again == "y":
+                topic = input("  New topic > ").strip()
+                state = {
+                    **state,
+                    "topic": topic,
+                    "messages": [],
+                    "recent_speakers": [],
+                    "turn_count": 0,
+                    "max_turns": state.get("max_turns", 20),
                     "consensus": False,
                     "consensus_summary": "",
                     "partial_agreements": [],
