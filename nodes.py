@@ -729,6 +729,14 @@ def generate_moderator_steer(state: RoomState) -> str:
             "before they are allowed to respond with their own view. "
             "Address them by name. 1–2 sentences only."
         ),
+        "last call": (
+            "You are a consensus moderator making one final, all-out push to close the debate.",
+            "This is the last chance to find agreement. Identify every point — however small — where the participants "
+            "have moved toward each other, even if they haven't admitted it. "
+            "Name those slivers of common ground explicitly and force each participant to either commit to them or explain precisely why they cannot. "
+            "Do not ask open questions — issue a direct challenge: 'You both agree on X. Say so, or explain what stops you.' "
+            "Name names. Be urgent. 2–3 sentences."
+        ),
     }
 
     system_msg, style_instruction = _style_configs.get(style, _style_configs["socratic"])

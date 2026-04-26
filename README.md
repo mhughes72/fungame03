@@ -141,6 +141,7 @@ Seven moderator styles are available and switchable at any break:
 | **Journalist** | Demands one concrete sentence — no metaphor, no abstraction, no history |
 | **Straw Man** | Misrepresents a position to force the speaker to clarify and sharpen it |
 | **Steel Man** | Forces a participant to argue their opponent's case at its strongest before replying |
+| **Last Call** | All-out push for consensus — names every sliver of agreement and forces commitment or explanation |
 
 ### Consensus checker
 

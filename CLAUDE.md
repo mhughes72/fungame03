@@ -57,7 +57,7 @@ START → moderator ─┬─ consensus_checker → END
 | `argument_log` | `dict` | `{name: [claim1, …]}` — last 3 responses per character, used for no-repeat guard |
 | `concession_counts` | `dict` | `{name: int}` — times each character has granted a point |
 | `character_summaries` | `dict` | `{name: str}` — first-person debate arc, generated at history compression |
-| `moderator_style` | `str` | One of 7 styles: `socratic`, `combative`, `devil's advocate`, `koan`, `journalist`, `straw man`, `steel man` |
+| `moderator_style` | `str` | One of 8 styles: `socratic`, `combative`, `devil's advocate`, `koan`, `journalist`, `straw man`, `steel man`, `last call` |
 
 ## Models used
 
@@ -95,6 +95,7 @@ START → moderator ─┬─ consensus_checker → END
 | `journalist` | Demands one concrete sentence — no abstraction |
 | `straw man` | Misrepresents a position to force clarification |
 | `steel man` | Forces a participant to argue their opponent's case at its strongest |
+| `last call` | All-out push for consensus — names slivers of agreement and forces commitment or explanation |
 
 ## Textual UI (`ui.py`)
 

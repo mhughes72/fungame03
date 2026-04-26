@@ -189,6 +189,7 @@ _MODERATOR_STYLES = [
     ("journalist",      "Demands one concrete sentence — no abstraction"),
     ("straw man",       "Misrepresents a position to force the speaker to clarify it"),
     ("steel man",       "Forces a participant to argue their opponent's case at its strongest"),
+    ("last call",       "All-out push for consensus — finds every sliver of agreement and forces commitment"),
 ]
 
 def _pick_moderator_style() -> str:
