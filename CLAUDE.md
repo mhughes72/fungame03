@@ -148,3 +148,25 @@ Debug output goes to **stderr**: `python main.py --debug 2>debug.log`
 - **Graph reruns per batch** — No LangGraph checkpointer. `main.py`/`ui.py` holds the full state dict and passes it to `graph.stream()` each batch. Intentional simplicity.
 - **`STATE` debug channel** is off by default — very verbose (fires after every node).
 - **Degenerate output guard** — `_generate_candidate` retries if response is < 30 chars or equals the sanitized speaker name.
+
+## Future ideas — making it feel like a real conversation
+
+The biggest tell that this is a game and not a real debate is the uniform cadence: every speaker takes equal turns at equal length. Ideas to break that, ranked by expected impact:
+
+**High impact (changes the rhythm)**
+- **Variable response length** — sometimes one sentence, sometimes a paragraph. Add a "weight" instruction to the user prompt: *"this turn is a quick reaction, 1 sentence"* vs. *"this is a major argument, develop it fully"* based on context (was the last message a question? a jab? a long monologue?).
+- **Backchannel reactions** — short interjections that don't take the floor: *"Hah."* / *"Wait — say that again."* / *"Mozart, no."* Generate a 1-line reaction from a non-speaker before the next full turn fires. Cheap (`gpt-4o-mini`, ~10 tokens) but enormously real-feeling.
+- **Direct calling-out** — let a character explicitly address another by name and pass them the mic: *"Marx, you'd disagree — say it."* Override the keyword scorer when this happens.
+
+**Medium impact (texture)**
+- **Stage directions in italics** — *[sets down glass]*, *[laughs]*, *[long pause]*. Cheap atmosphere; the bar setting begs for it.
+- **Mood/energy state** — track a global "heat" value that rises with disagreement and falls with concession. Inject into prompts: *"the room is tense"* vs. *"the room has cooled"*. Makes the moderator's job dynamic too.
+- **Topic drift** — currently the topic is fixed forever; real bar arguments wander. Detect drift in the consensus checker and surface "the conversation has moved to X — pursue or steer back?"
+- **Callbacks** — feed each character their own earlier verbatim quotes so they can self-reference or be pinned by others.
+
+**Lower impact but flavorful**
+- **Asymmetric engagement** — some characters speak less by design (Mozart isn't a debater, he's a provocateur). Add a `verbosity` persona field.
+- **Drink/setting beats** — every N turns, a stage direction from "the bar" itself: *"someone orders another round"*, *"the candle gutters"*. Pure atmosphere.
+- **Humor/jabs** — explicit prompt slot for personal shots, not just ideas. Lincoln roasting Nietzsche lands differently than Lincoln rebutting him.
+
+If picking two to start: **variable length** + **backchannel reactions**.
