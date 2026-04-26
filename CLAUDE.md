@@ -97,6 +97,8 @@ START → moderator ─┬─ consensus_checker → END
 | `steel man` | Forces a participant to argue their opponent's case at its strongest |
 | `last call` | All-out push for consensus — names slivers of agreement and forces commitment or explanation |
 
+> **Cheat code idea:** the moderator style picker is a natural place for hidden/unlockable styles — e.g. a secret style that forces immediate consensus, skips the debate, or does something absurd. Could be triggered by typing a specific number or word at the style prompt.
+
 ## Textual UI (`ui.py`)
 
 - `SetupScreen` — character picker (`SelectionList`), topic `Input`, "Open the bar" `Button`. Defaults: Lincoln (index 5) + Tesla (index 8).
