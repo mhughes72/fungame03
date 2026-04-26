@@ -256,7 +256,7 @@ def _generate_candidate(name: str, state: RoomState) -> dict:
             response = _chat_llm().invoke(messages)
             content = response.content.strip()
             # Reject degenerate outputs: too short or just echoing the character's name
-            if len(content) < 30 or content.replace(" ", "_") == safe_name:
+            if len(content) < 8 or content.replace(" ", "_") == safe_name:
                 dbg.dlog("PHILOSOPHER", f"{name} — degenerate output, retrying (attempt {attempt + 1}): {content!r}")
                 continue
             break
