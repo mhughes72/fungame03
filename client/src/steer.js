@@ -55,10 +55,10 @@ export function open(currentStyle, styles, summary = '') {
     document.body.appendChild(overlay)
 
     // Hover to toggle backdrop opacity
-    overlay.addEventListener('mouseenter', () => {
+    overlay.addEventListener('mouseover', () => {
       overlay.classList.add('overlay-focused')
     })
-    overlay.addEventListener('mouseleave', () => {
+    overlay.addEventListener('mouseout', () => {
       overlay.classList.remove('overlay-focused')
     })
 
