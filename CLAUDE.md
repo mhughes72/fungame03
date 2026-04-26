@@ -157,7 +157,6 @@ The biggest tell that this is a game and not a real debate is the uniform cadenc
 - **Variable response length** — sometimes one sentence, sometimes a paragraph. Add a "weight" instruction to the user prompt: *"this turn is a quick reaction, 1 sentence"* vs. *"this is a major argument, develop it fully"* based on context (was the last message a question? a jab? a long monologue?).
 - **Backchannel reactions** — short interjections that don't take the floor: *"Hah."* / *"Wait — say that again."* / *"Mozart, no."* Generate a 1-line reaction from a non-speaker before the next full turn fires. Cheap (`gpt-4o-mini`, ~10 tokens) but enormously real-feeling.
 - **Direct calling-out** ⬅ NEXT — detect a participant name in the user's message and force that character to respond, bypassing the keyword scorer. Touches `nodes.py` (scorer bypass), `state.py` (no new field needed — just pass forced speaker), and `main.py`/`ui.py` (detect name before injecting message). **Remind the user about this at the start of the next session.**
-- **Revert TextArea → RichLog** — swapping RichLog for TextArea to enable text selection killed the amber/colour aesthetics (TextArea is plain text only). Revert `ui.py` back to RichLog. For text selection, just tell the user to hold Shift while dragging in Windows Terminal. **Remind the user about this at the start of the next session.**
 
 **Medium impact (texture)**
 - **Stage directions in italics** — *[sets down glass]*, *[laughs]*, *[long pause]*. Cheap atmosphere; the bar setting begs for it.

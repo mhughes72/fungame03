@@ -7,7 +7,7 @@ from textual.app import App, ComposeResult, on
 from textual.containers import Horizontal, Vertical, ScrollableContainer
 from textual.reactive import reactive
 from textual.screen import Screen
-from textual.widgets import Button, Footer, Input, Label, SelectionList, Static, TextArea
+from textual.widgets import Button, Footer, Input, Label, RichLog, SelectionList, Static
 from textual.widgets.selection_list import Selection
 from textual import work
 
@@ -66,11 +66,6 @@ Screen {
     background: #0d0700;
     padding: 1 2;
     scrollbar-color: #5c3a00 #1a0f00;
-    border: none;
-}
-
-#conversation:focus {
-    border: none;
 }
 
 #right-pane {
@@ -295,7 +290,7 @@ class PhilosopherBar(App):
         yield Static("", id="seats-bar")
         with Horizontal():
             with Vertical(id="left-pane"):
-                yield TextArea("", id="conversation", read_only=True)
+                yield RichLog(id="conversation", highlight=False, markup=True, wrap=True)
             yield Static("", id="right-pane")
         with Horizontal(id="input-bar"):
             yield Label("[#5c3a00]>[/] ", id="input-prompt")
@@ -382,9 +377,9 @@ class PhilosopherBar(App):
 
         if self.state.get("consensus"):
             self._log_system("━━━ CONSENSUS REACHED ━━━")
-            self._append(self.state.get("consensus_summary", "") + "\n")
+            self._log_system(self.state.get("consensus_summary", ""))
             for pt in self.state.get("points_of_agreement") or []:
-                self._append(f"  ✓ {pt}\n")
+                self._log_system(f"  ✓ {pt}")
             self._prompt_new_topic()
         else:
             self._enable_input()
@@ -461,27 +456,29 @@ class PhilosopherBar(App):
     # Display helpers                                                          #
     # ---------------------------------------------------------------------- #
 
-    def _append(self, text: str) -> None:
-        ta = self.query_one("#conversation", TextArea)
-        ta.load_text(ta.text + text)
-        ta.scroll_end(animate=False)
-
     def _display_message(self, msg) -> None:
+        log = self.query_one("#conversation", RichLog)
         if isinstance(msg, AIMessage) and msg.name:
             display_name = msg.name.replace("_", " ")
-            self._append(f"\n{display_name}\n{msg.content.strip()}\n")
+            log.write(f"\n[bold yellow]{display_name}[/]")
+            log.write(msg.content.strip())
         elif isinstance(msg, HumanMessage):
             name = getattr(msg, "name", None) or "You"
             if name == "Moderator":
                 self._log_moderator(msg.content)
             else:
-                self._append(f"\n[{name}]\n{msg.content.strip()}\n")
+                log.write(f"\n[bold green]{name}[/]")
+                log.write(msg.content.strip())
 
     def _log_moderator(self, text: str) -> None:
-        self._append(f"\n── Moderator ──\n{text.strip()}\n\n")
+        log = self.query_one("#conversation", RichLog)
+        log.write(f"\n[bold #7ab8f5]― Moderator ―[/]")
+        log.write(f"[#7ab8f5]{text.strip()}[/]")
+        log.write("")
 
     def _log_system(self, text: str) -> None:
-        self._append(f"[{text}]\n")
+        log = self.query_one("#conversation", RichLog)
+        log.write(f"[#5c3a00]{text}[/]")
 
     def _set_active_speaker(self, name: str) -> None:
         clean = name.replace("_", " ") if name not in ("__turn__", "__steer__", "consensus_check", "") else ""
