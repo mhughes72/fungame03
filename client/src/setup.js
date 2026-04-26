@@ -6,6 +6,8 @@
  *   onStart    : ({ characters: string[], topic: string }) => void
  */
 
+import { openAbout, openHelp } from './info.js'
+
 export function mount(container, characters, onStart) {
   container.innerHTML = `
     <div class="setup-overlay">
@@ -37,6 +39,11 @@ export function mount(container, characters, onStart) {
 
         <button class="start-btn" id="start-btn" disabled>Open the bar ▶</button>
         <p class="setup-error" id="setup-error"></p>
+        <div class="setup-footer">
+          <button class="setup-info-btn" id="setup-about">About</button>
+          <span class="setup-footer-sep">·</span>
+          <button class="setup-info-btn" id="setup-help">Help</button>
+        </div>
       </div>
     </div>
   `
@@ -83,6 +90,9 @@ export function mount(container, characters, onStart) {
   container.querySelector('#topic-input').addEventListener('keydown', e => {
     if (e.key === 'Enter' && !startBtn.disabled) startBtn.click()
   })
+
+  container.querySelector('#setup-about').addEventListener('click', openAbout)
+  container.querySelector('#setup-help').addEventListener('click', openHelp)
 
   // Expose a way to show errors without tearing down the screen
   return {

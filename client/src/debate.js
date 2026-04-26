@@ -8,6 +8,7 @@
 
 import { open as openSteerModal } from './steer.js'
 import * as Seating from './seating.js'
+import { openAbout, openHelp } from './info.js'
 
 export function mount(container, sessionId, participants, topic, styles, api) {
   container.innerHTML = `
@@ -15,6 +16,8 @@ export function mount(container, sessionId, participants, topic, styles, api) {
       <header class="debate-header">
         <span class="debate-title">THE PHILOSOPHER'S BAR</span>
         <span class="debate-topic">${escHtml(topic)}</span>
+        <button class="info-btn" id="about-btn">About</button>
+        <button class="info-btn" id="help-btn">Help</button>
         <button class="quit-btn" id="quit-btn">Quit</button>
       </header>
 
@@ -121,6 +124,9 @@ export function mount(container, sessionId, participants, topic, styles, api) {
     api.deleteSession(sessionId).catch(() => {})
     container.dispatchEvent(new CustomEvent('debate:quit', { bubbles: true }))
   }
+
+  container.querySelector('#about-btn').addEventListener('click', openAbout)
+  container.querySelector('#help-btn').addEventListener('click', openHelp)
 
   container.querySelector('#quit-btn').addEventListener('click', () => {
     if (lastState.turn > 0) {
