@@ -336,6 +336,11 @@ class SetupScreen(Screen):
                 placeholder="What is the nature of justice?",
                 id="topic-input",
             )
+            yield Label("Maximum turns before debate ends?", id="max-turns-label")
+            yield Input(
+                placeholder="20",
+                id="max-turns-input",
+            )
             yield Button("Open the bar  ▶", id="start-btn", variant="default")
             yield Static("", id="setup-error")
 
@@ -354,7 +359,14 @@ class SetupScreen(Screen):
         topic = self.query_one("#topic-input", Input).value.strip()
         if not topic:
             topic = "What is the nature of justice?"
-        self.dismiss((chosen, topic))
+        max_turns_str = self.query_one("#max-turns-input", Input).value.strip()
+        try:
+            max_turns = int(max_turns_str) if max_turns_str else 20
+            if max_turns < 1:
+                max_turns = 20
+        except ValueError:
+            max_turns = 20
+        self.dismiss((chosen, topic, max_turns))
 
     def on_key(self, event) -> None:
         if event.key == "enter":
@@ -492,7 +504,7 @@ class PhilosopherBar(App):
         if not result:
             self.exit()
             return
-        participants, topic = result
+        participants, topic, max_turns = result
         self.participants = participants
         self.topic = topic
         self.graph = build_graph(self.participants)
@@ -503,6 +515,7 @@ class PhilosopherBar(App):
             "current_speaker": "",
             "recent_speakers": [],
             "turn_count": 0,
+            "max_turns": max_turns,
             "consensus": False,
             "consensus_summary": "",
             "partial_agreements": [],
@@ -577,6 +590,14 @@ class PhilosopherBar(App):
             self._log_system(self.state.get("consensus_summary", ""))
             for pt in self.state.get("points_of_agreement") or []:
                 self._log_system(f"  ✓ {pt}")
+            self._prompt_new_topic()
+        elif self.state.get("current_speaker") == "__max_turns__":
+            self._log_system(f"━━━ MAX TURNS REACHED ({self.state.get('turn_count')} turns) ━━━")
+            if self.state.get("partial_agreements"):
+                self._log_system("Partial agreements:")
+                for a in self.state.get("partial_agreements", []):
+                    names = " + ".join(a["participants"])
+                    self._log_system(f"  • {names}: {a['on']}")
             self._prompt_new_topic()
         else:
             drift = self.state.get("drift_topic", "")
