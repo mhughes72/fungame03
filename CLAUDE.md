@@ -123,7 +123,7 @@ Add an entry to `CHARACTERS` in `personas.py`. All fields are required:
 
 `dynamics` is defined but not currently injected into prompts — characters react based on what is actually said.
 
-Current characters: Socrates, Nietzsche, Marx, Simone de Beauvoir, Sun Tzu, Abraham Lincoln, Marie Curie, Cleopatra VII, Nikola Tesla, Frederick Douglass, John Lennon, Wolfgang Amadeus Mozart, Elon Musk, Bill Gates, Steve Jobs, Joseph Stalin, Mao Zedong.
+Current characters: Socrates, Nietzsche, Marx, Simone de Beauvoir, Sun Tzu, Abraham Lincoln, Marie Curie, Cleopatra VII, Nikola Tesla, Frederick Douglass, John Lennon, Wolfgang Amadeus Mozart, Elon Musk, Bill Gates, Steve Jobs, Adolf Hitler, Joseph Stalin, Mao Zedong.
 
 ## Runtime `!` commands
 
