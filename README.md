@@ -6,7 +6,9 @@ A terminal game powered by LangGraph and OpenAI where famous thinkers from histo
 
 You pick 2–4 historical figures, give them a topic, and watch them argue. Each turn the most likely candidate to react (scored by hot-topic keyword overlap with the last message) generates a response — a second candidate is generated only when scores are tied, and a selector LLM picks the winner. The debate runs in structured rounds: every 4 turns a moderator automatically steers the conversation toward common ground; every 12 turns a consensus checker evaluates whether the room has converged. You can jump in at any point to guide the conversation yourself.
 
-Characters include Socrates, Nietzsche, Marx, Simone de Beauvoir, Sun Tzu, Abraham Lincoln, Marie Curie, Cleopatra VII, Nikola Tesla, Frederick Douglass, John Lennon, and Mozart.
+**26 characters** spanning philosophy, physics, politics, and tech — including Socrates, Nietzsche, Marx, Lenin, Stalin, Mao, Pol Pot, Hitler, Newton, Einstein, Bohr, Heisenberg, Feynman, Penrose, Musk, Gates, Jobs, and more.
+
+Response length adapts to context: a short pointed question gets a blunt one-liner; a long developed argument gets a full response.
 
 ## Setup
 
