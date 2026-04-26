@@ -176,19 +176,119 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 .quit-btn:hover { border-color: var(--red); color: var(--red); }
 
 /* ── seats bar ──────────────────────────────────────────────────────── */
+/* ── seats bar — now hosts the seating chart ────────────────────────── */
 .seats-bar {
-  display: flex;
-  gap: 1.5rem;
-  padding: 0.35rem 1.25rem;
   background: #120a00;
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
-  font-size: 0.82rem;
-  letter-spacing: 0.02em;
+  height: 170px;
+  overflow: hidden;
 }
 
-.seat       { color: var(--text-dim); transition: color 0.2s; }
-.seat-active { color: var(--gold); font-weight: 700; }
+/* ── seating chart ──────────────────────────────────────────────────── */
+.seating-area {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* oval bar table */
+.seating-table {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 200px;
+  height: 72px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 40% 35%, #3a2200, #1a0d00);
+  border: 2px solid var(--border-hi);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.seating-table-label {
+  color: var(--text-dim);
+  font-family: var(--serif);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  opacity: 0.5;
+  user-select: none;
+}
+
+/* individual seat */
+.seat {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 68px;
+}
+
+.seat-portrait-wrap {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid var(--border);
+  background: var(--bg-mid);
+  transition: border-color 0.25s, box-shadow 0.25s, filter 0.25s;
+  filter: brightness(0.6) saturate(0.4);
+  flex-shrink: 0;
+}
+
+.seat-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.seat-initials {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--serif);
+  font-size: 1.1rem;
+  color: var(--gold-dim);
+  background: var(--bg-mid);
+}
+
+.seat-name {
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  text-align: center;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  transition: color 0.25s;
+}
+
+/* thinking — pulsing gold ring */
+.seat-thinking .seat-portrait-wrap {
+  border-color: var(--gold);
+  filter: brightness(1) saturate(1);
+  animation: seat-pulse 1.2s ease-in-out infinite;
+}
+.seat-thinking .seat-name { color: var(--gold); }
+
+/* speaking — solid gold ring, no animation */
+.seat-speaking .seat-portrait-wrap {
+  border-color: var(--gold);
+  filter: brightness(1) saturate(1);
+  box-shadow: 0 0 10px 2px rgba(245, 200, 66, 0.25);
+}
+.seat-speaking .seat-name { color: var(--gold); }
+
+@keyframes seat-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 200, 66, 0.5); }
+  50%       { box-shadow: 0 0 0 6px rgba(245, 200, 66, 0); }
+}
 
 /* ── two-pane layout ────────────────────────────────────────────────── */
 .debate-layout {

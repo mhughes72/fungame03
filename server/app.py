@@ -71,9 +71,13 @@ store = SessionStore()
 # Static frontend — mounted AFTER all API routes so /api/* routes win          #
 # --------------------------------------------------------------------------- #
 
+_PORTRAITS = Path(__file__).parent.parent / "portraits"
+
 def _mount_static() -> None:
     if _DIST.exists():
         app.mount("/assets", StaticFiles(directory=str(_DIST / "assets")), name="assets")
+    if _PORTRAITS.exists():
+        app.mount("/portraits", StaticFiles(directory=str(_PORTRAITS)), name="portraits")
 
 _mount_static()
 

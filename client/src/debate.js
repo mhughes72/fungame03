@@ -7,6 +7,7 @@
  */
 
 import { open as openSteerModal } from './steer.js'
+import * as Seating from './seating.js'
 
 export function mount(container, sessionId, participants, topic, styles, api) {
   container.innerHTML = `
@@ -33,7 +34,7 @@ export function mount(container, sessionId, participants, topic, styles, api) {
   let currentStyle = 'socratic'
   let closeStream  = null
 
-  renderSeats(seatsBar, participants, '')
+  const seating = Seating.create(seatsBar, participants)
   renderSidebar(sidebar, {
     topic,
     turn: 0,
@@ -49,13 +50,13 @@ export function mount(container, sessionId, participants, topic, styles, api) {
   function onEvent({ type, data }) {
     switch (type) {
       case 'speaker':
-        renderSeats(seatsBar, participants, data.name)
+        seating.setThinking(data.name)
         showTyping(convoPane, data.name)
         break
 
       case 'message':
         clearTyping(convoPane)
-        renderSeats(seatsBar, participants, '')
+        if (!data.backchannel) seating.setSpeaking(data.name)
         appendMessage(convoPane, data)
         break
 
@@ -84,7 +85,7 @@ export function mount(container, sessionId, participants, topic, styles, api) {
 
       case 'consensus':
         clearTyping(convoPane)
-        renderSeats(seatsBar, participants, '')
+        seating.clearAll()
         appendConsensus(convoPane, data, {
           onNewTopic(newTopic) {
             api.newTopic(sessionId, newTopic)
@@ -217,17 +218,6 @@ function showTyping(el, name) {
 
 function clearTyping(el) {
   el.querySelector('#typing-indicator')?.remove()
-}
-
-
-// ── seats bar ─────────────────────────────────────────────────────────── //
-
-function renderSeats(el, participants, activeName) {
-  el.innerHTML = participants.map(p => {
-    const active = p === activeName
-    const short  = p.split(' ').at(-1)
-    return `<span class="seat${active ? ' seat-active' : ''}">${active ? '●' : '○'} ${escHtml(short)}</span>`
-  }).join('')
 }
 
 

@@ -10,11 +10,17 @@ A terminal game where 2–4 historical figures debate a topic using LangGraph + 
 python main.py           # CLI
 python main.py --ui      # Textual bar UI (recommended)
 python main.py --debug   # with debug output to stderr
+python run_server.py     # web server → http://localhost:8000
 python generate_portraits.py            # generate all character portraits via DALL-E 3
 python generate_portraits.py Newton     # generate specific character(s)
 ```
 
 Requires `OPENAI_API_KEY` in `.env`.
+
+After editing any file in `client/src/`, rebuild before testing via the web server:
+```bash
+cd client && npm run build && cd ..
+```
 
 ## File map
 
@@ -28,6 +34,12 @@ Requires `OPENAI_API_KEY` in `.env`.
 | `personas.py` | Character definitions — the only file to edit when adding characters |
 | `debug.py` | Per-channel debug logging (`dlog`, `toggle`, `status`) |
 | `generate_portraits.py` | Standalone CLI — generates DALL-E 3 portrait PNGs into `portraits/` |
+| `run_server.py` | Web server entry point — reads `PORT` env var, disables reload in production |
+| `server/app.py` | FastAPI routes, SSE stream, static file serving |
+| `server/session.py` | `SessionStore`, per-session state, `run_batch()` thread runner |
+| `server/events.py` | SSE event constructors and serialiser |
+| `client/src/` | Vanilla JS frontend (Vite) — `main.js`, `setup.js`, `debate.js`, `seating.js`, `steer.js` |
+| `client/dist/` | Pre-built frontend — committed to git, served by FastAPI in production |
 
 ## Graph shape
 
