@@ -173,9 +173,9 @@ def _philosopher_user_prompt(
         f"{no_repeat}"
         f"{concession_pressure}"
         f"{respond_to}\n\n"
-        f"{length_instruction}\n\n"
         f'Ensure your response connects back to the central question: "{topic}". '
-        f"Do not assume the answer — engage with whether it is true."
+        f"Do not assume the answer — engage with whether it is true.\n\n"
+        f"IMPORTANT — {length_instruction}"
     )
 
 
