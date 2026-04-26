@@ -222,6 +222,10 @@ SelectionList {
 STEER_CSS = """
 SteerModal {
     align: center middle;
+    background: #000000 20%;
+}
+
+SteerModal.-mouse-over {
     background: #000000 60%;
 }
 
@@ -365,6 +369,7 @@ class SetupScreen(Screen):
 
 class SteerModal(ModalScreen):
     CSS = STEER_CSS
+    mouse_over: reactive[bool] = reactive(False)
 
     def __init__(self, current_style: str, styles: list[tuple[str, str]]) -> None:
         super().__init__()
@@ -406,6 +411,12 @@ class SteerModal(ModalScreen):
     def on_key(self, event) -> None:
         if event.key == "enter" and isinstance(self.focused, (Button, Input)):
             self._submit()
+
+    def on_enter(self) -> None:
+        self.mouse_over = True
+
+    def on_leave(self) -> None:
+        self.mouse_over = False
 
 
 # --------------------------------------------------------------------------- #
