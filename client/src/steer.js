@@ -54,6 +54,14 @@ export function open(currentStyle, styles, summary = '') {
 
     document.body.appendChild(overlay)
 
+    // Hover to toggle backdrop opacity
+    overlay.addEventListener('mouseenter', () => {
+      overlay.classList.add('overlay-focused')
+    })
+    overlay.addEventListener('mouseleave', () => {
+      overlay.classList.remove('overlay-focused')
+    })
+
     const textInput = overlay.querySelector('#steer-text-input')
     textInput.focus()
 
