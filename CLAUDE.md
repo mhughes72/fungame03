@@ -99,6 +99,15 @@ START → moderator ─┬─ consensus_checker → END
 
 > **Cheat code idea:** the moderator style picker is a natural place for hidden/unlockable styles — e.g. a secret style that forces immediate consensus, skips the debate, or does something absurd. Could be triggered by typing a specific number or word at the style prompt.
 
+## Persona manipulation (TODO)
+
+Mid-debate overrides for persona data — to be designed. Ideas:
+- Temporarily override a character's `core_beliefs`, `rhetorical_moves`, or `hot_topics` for one or more turns (e.g. "make Feynman combative", "make Stalin concede more")
+- Inject a one-off instruction into a specific character's next system prompt without permanently changing their persona
+- Player-facing command (e.g. `!nudge Feynman aggressive`) or a hidden moderator trigger
+- Could tie into the cheat code system above
+- State field would hold `persona_overrides: dict` — `{name: {field: value}}` — cleared after N turns or on demand
+
 ## Textual UI (`ui.py`)
 
 - `SetupScreen` — character picker (`SelectionList`), topic `Input`, "Open the bar" `Button`. Defaults: Lincoln (index 5) + Tesla (index 8).
