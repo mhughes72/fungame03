@@ -38,7 +38,7 @@ from pydantic import BaseModel, Field
 import server.events as evt
 from server.session import SessionStore, _SENTINEL
 from personas import CHARACTERS
-from main import _MODERATOR_STYLES
+from nodes import MODERATOR_STYLES as _MODERATOR_STYLES
 
 
 # --------------------------------------------------------------------------- #

@@ -23,3 +23,54 @@ class RoomState(TypedDict):
     forced_speaker: str        # if set, bypass scorer and force this character next
     heat: int                  # 0–10, rises with disagreement, falls with concession
     drift_topic: str           # non-empty when conversation has wandered from original topic
+
+
+def new_room_state(
+    participants: list[str],
+    topic: str,
+    max_turns: int = 20,
+    moderator_style: str = "socratic",
+) -> RoomState:
+    return {
+        "messages": [],
+        "topic": topic,
+        "participants": participants,
+        "current_speaker": "",
+        "recent_speakers": [],
+        "turn_count": 0,
+        "max_turns": max_turns,
+        "consensus": False,
+        "consensus_summary": "",
+        "partial_agreements": [],
+        "points_of_agreement": [],
+        "remaining_disagreements": [],
+        "argument_log": {},
+        "concession_counts": {},
+        "character_summaries": {},
+        "moderator_style": moderator_style,
+        "forced_speaker": "",
+        "heat": 0,
+        "drift_topic": "",
+    }
+
+
+def reset_for_new_topic(state: RoomState, topic: str) -> RoomState:
+    """Reset per-topic fields while keeping participants, max_turns, and moderator_style."""
+    return {
+        **state,
+        "topic": topic,
+        "messages": [],
+        "recent_speakers": [],
+        "turn_count": 0,
+        "consensus": False,
+        "consensus_summary": "",
+        "partial_agreements": [],
+        "points_of_agreement": [],
+        "remaining_disagreements": [],
+        "argument_log": {},
+        "concession_counts": {},
+        "character_summaries": {},
+        "forced_speaker": "",
+        "heat": 0,
+        "drift_topic": "",
+    }

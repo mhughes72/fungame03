@@ -13,8 +13,8 @@ from langchain_core.messages import HumanMessage, AIMessage
 
 from personas import CHARACTERS
 from graph import build_graph, save_graph_image
-from nodes import summarize_history, generate_character_summaries, generate_moderator_steer
-from state import RoomState
+from nodes import summarize_history, generate_character_summaries, generate_moderator_steer, detect_forced_speaker, MODERATOR_STYLES as _MODERATOR_STYLES
+from state import RoomState, new_room_state, reset_for_new_topic
 import debug as dbg
 
 load_dotenv()
@@ -173,8 +173,6 @@ def _handle_debug_command(raw: str) -> None:
             dbg.status()
         else:
             dbg.toggle(parts[1].upper())
-    elif cmd == "style":
-        return "pick_style"
     else:
         print(f"  Unknown command: {raw!r}  (type !help for options)\n")
 
@@ -182,17 +180,6 @@ def _handle_debug_command(raw: str) -> None:
 # --------------------------------------------------------------------------- #
 # Moderator style picker                                                        #
 # --------------------------------------------------------------------------- #
-
-_MODERATOR_STYLES = [
-    ("socratic",        "Builds bridges, seeks common ground"),
-    ("combative",       "Exposes contradictions, demands concessions"),
-    ("devil's advocate","Attacks whatever position is gaining momentum"),
-    ("koan",            "Oblique, unanswerable questions to disrupt overconfidence"),
-    ("journalist",      "Demands one concrete sentence — no abstraction"),
-    ("straw man",       "Misrepresents a position to force the speaker to clarify it"),
-    ("steel man",       "Forces a participant to argue their opponent's case at its strongest"),
-    ("last call",       "All-out push for consensus — finds every sliver of agreement and forces commitment"),
-]
 
 def _pick_moderator_style() -> str:
     print("\n  Moderator style:\n")
@@ -250,8 +237,6 @@ def run_game():
     except ValueError:
         max_turns = 20
 
-    moderator_style = "socratic"
-
     graph = build_graph(participants)
 
     try:
@@ -260,24 +245,7 @@ def run_game():
     except Exception as e:
         print(f"  (Graph image unavailable: {e})\n")
 
-    state: RoomState = {
-        "messages": [],
-        "topic": topic,
-        "participants": participants,
-        "current_speaker": "",
-        "recent_speakers": [],
-        "turn_count": 0,
-        "max_turns": max_turns,
-        "consensus": False,
-        "consensus_summary": "",
-        "partial_agreements": [],
-        "points_of_agreement": [],
-        "remaining_disagreements": [],
-        "argument_log": {},
-        "concession_counts": {},
-        "character_summaries": {},
-        "moderator_style": moderator_style,
-    }
+    state: RoomState = new_room_state(participants, topic, max_turns)
 
     _header(f'TOPIC: "{topic}"')
 
@@ -331,22 +299,7 @@ def run_game():
             again = input("  Start a new topic? (y/n): ").strip().lower()
             if again == "y":
                 topic = input("  New topic > ").strip()
-                state = {
-                    **state,
-                    "topic": topic,
-                    "messages": [],
-                    "recent_speakers": [],
-                    "turn_count": 0,
-                    "consensus": False,
-                    "consensus_summary": "",
-                    "partial_agreements": [],
-                    "points_of_agreement": [],
-                    "remaining_disagreements": [],
-                    "argument_log": {},
-                    "concession_counts": {},
-                    "character_summaries": {},
-                    "moderator_style": state.get("moderator_style", "socratic"),
-                }
+                state = reset_for_new_topic(state, topic)
                 _header(f'NEW TOPIC: "{topic}"')
             else:
                 break
@@ -358,23 +311,7 @@ def run_game():
             again = input("  Start a new topic? (y/n): ").strip().lower()
             if again == "y":
                 topic = input("  New topic > ").strip()
-                state = {
-                    **state,
-                    "topic": topic,
-                    "messages": [],
-                    "recent_speakers": [],
-                    "turn_count": 0,
-                    "max_turns": state.get("max_turns", 20),
-                    "consensus": False,
-                    "consensus_summary": "",
-                    "partial_agreements": [],
-                    "points_of_agreement": [],
-                    "remaining_disagreements": [],
-                    "argument_log": {},
-                    "concession_counts": {},
-                    "character_summaries": {},
-                    "moderator_style": state.get("moderator_style", "socratic"),
-                }
+                state = reset_for_new_topic(state, topic)
                 _header(f'NEW TOPIC: "{topic}"')
             else:
                 break
@@ -405,8 +342,12 @@ def run_game():
 
             if user_input:
                 dbg.dlog("STATE", "User message injected", {"content": user_input})
+                forced = detect_forced_speaker(user_input, participants)
+                if forced:
+                    dbg.dlog("STATE", f"Calling out {forced}")
                 state = {
                     **state,
+                    "forced_speaker": forced or "",
                     "messages": list(state["messages"]) + [
                         HumanMessage(content=user_input, name="User")
                     ],

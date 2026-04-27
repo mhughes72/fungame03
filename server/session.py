@@ -34,32 +34,16 @@ from langchain_core.messages import AIMessage, HumanMessage
 
 import server.events as evt
 from graph import build_graph
-from personas import CHARACTERS
 from nodes import (
     generate_character_summaries,
     generate_moderator_steer,
     summarize_history,
+    detect_forced_speaker,
+    BAR_BEATS as _BAR_BEATS,
 )
-from state import RoomState
+from state import RoomState, new_room_state, reset_for_new_topic
 
 
-_BAR_BEATS = [
-    "*[someone orders another round]*",
-    "*[the candle gutters]*",
-    "*[a glass is set down too hard]*",
-    "*[laughter drifts in from the next table]*",
-    "*[the barkeep wipes the counter without looking up]*",
-    "*[rain streaks the windows]*",
-    "*[a chair scrapes back]*",
-    "*[the fire settles with a soft crack]*",
-    "*[someone lights a cigarette and doesn't offer one]*",
-    "*[a long silence from the street outside]*",
-    "*[the clock above the bar ticks once]*",
-    "*[a cork is pulled somewhere in the back]*",
-    "*[the door swings open — cold draft — then closes]*",
-    "*[ice melts in an untouched glass]*",
-    "*[the lights flicker, then hold]*",
-]
 
 _SENTINEL = object()  # signals the SSE generator that the stream is done
 
@@ -207,13 +191,7 @@ class Session:
             self._put(evt.system(f"Moderator approach → {new_style}"))
 
         if text:
-            # Build aliases map from persona definitions
-            aliases_map = {}
-            for name in participants:
-                if name in CHARACTERS and "aliases" in CHARACTERS[name]:
-                    aliases_map[name] = CHARACTERS[name]["aliases"]
-
-            forced = _detect_forced_speaker(text, participants, aliases_map)
+            forced = detect_forced_speaker(text, participants)
             if forced:
                 self._put(evt.system(f"Calling out {forced}"))
             self.state = {
@@ -236,24 +214,7 @@ class Session:
 
     def new_topic(self, topic: str) -> None:
         """Reset state for a new topic, keeping the same participants and graph."""
-        self.state = {
-            **self.state,
-            "topic": topic,
-            "messages": [],
-            "recent_speakers": [],
-            "turn_count": 0,
-            "consensus": False,
-            "consensus_summary": "",
-            "partial_agreements": [],
-            "points_of_agreement": [],
-            "remaining_disagreements": [],
-            "argument_log": {},
-            "concession_counts": {},
-            "character_summaries": {},
-            "forced_speaker": "",
-            "heat": 0,
-            "drift_topic": "",
-        }
+        self.state = reset_for_new_topic(self.state, topic)
         self._batch_count = 0
 
 
@@ -269,27 +230,7 @@ class SessionStore:
     def create(self, participants: list[str], topic: str) -> Session:
         session_id = uuid.uuid4().hex
         graph = build_graph(participants)
-        state: RoomState = {
-            "messages": [],
-            "topic": topic,
-            "participants": participants,
-            "current_speaker": "",
-            "recent_speakers": [],
-            "turn_count": 0,
-            "consensus": False,
-            "consensus_summary": "",
-            "partial_agreements": [],
-            "points_of_agreement": [],
-            "remaining_disagreements": [],
-            "argument_log": {},
-            "concession_counts": {},
-            "character_summaries": {},
-            "moderator_style": "socratic",
-            "forced_speaker": "",
-            "heat": 0,
-            "drift_topic": "",
-            "max_turns": 24,
-        }
+        state = new_room_state(participants, topic, max_turns=24)
         session = Session(id=session_id, state=state, graph=graph)
         with self._lock:
             self._sessions[session_id] = session
@@ -305,37 +246,3 @@ class SessionStore:
         if session:
             session.stop_event.set()
 
-
-# --------------------------------------------------------------------------- #
-# Helpers                                                                       #
-# --------------------------------------------------------------------------- #
-
-def _detect_forced_speaker(text: str, participants: list[str], aliases_map: dict = None) -> Optional[str]:
-    """
-    Detect if text mentions a participant by name, nickname, or alias.
-
-    Args:
-        text: Player input text
-        participants: List of participant names
-        aliases_map: Dict mapping participant name → list of aliases (e.g., {"Franklin Delano Roosevelt": ["FDR"]})
-
-    Returns:
-        Participant name if detected, else None
-    """
-    text_lower = text.lower()
-    if aliases_map is None:
-        aliases_map = {}
-
-    for name in participants:
-        # Check full name parts (e.g., "Franklin" in "Franklin Delano Roosevelt")
-        for part in name.lower().split():
-            if len(part) >= 3 and part in text_lower:
-                return name
-
-        # Check aliases for this participant
-        if name in aliases_map:
-            for alias in aliases_map[name]:
-                if alias.lower() in text_lower:
-                    return name
-
-    return None
