@@ -174,6 +174,15 @@ class Session:
                 points=self.state.get("points_of_agreement") or [],
             ))
             self._put_sentinel()
+        elif self.state.get("current_speaker") == "__max_turns__":
+            # Max turns reached — show end-of-game report
+            self._put(evt.game_over(
+                turn=self.state.get("turn_count", 0),
+                heat=self.state.get("heat", 0),
+                partial_agreements=self.state.get("partial_agreements") or [],
+                remaining_disagreements=self.state.get("remaining_disagreements") or [],
+            ))
+            self._put_sentinel()
         else:
             self._put(evt.steer_needed(
                 current_style=self.state.get("moderator_style", "socratic"),
@@ -279,6 +288,7 @@ class SessionStore:
             "forced_speaker": "",
             "heat": 0,
             "drift_topic": "",
+            "max_turns": 24,
         }
         session = Session(id=session_id, state=state, graph=graph)
         with self._lock:

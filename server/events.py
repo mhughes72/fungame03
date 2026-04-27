@@ -65,6 +65,16 @@ def consensus(summary: str, points: list[str]) -> dict:
     return _evt("consensus", {"summary": summary, "points": points})
 
 
+def game_over(turn: int, heat: int, partial_agreements: list, remaining_disagreements: list) -> dict:
+    """Max turns reached — show end-of-game report."""
+    return _evt("game_over", {
+        "turn": turn,
+        "heat": heat,
+        "partial_agreements": partial_agreements,
+        "remaining_disagreements": remaining_disagreements,
+    })
+
+
 def bar_beat(text: str) -> dict:
     """Atmosphere stage direction between batches."""
     return _evt("bar_beat", {"text": text})

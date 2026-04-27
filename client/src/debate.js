@@ -103,6 +103,12 @@ export function mount(container, sessionId, participants, topic, styles, api) {
         }, lastState)
         break
 
+      case 'game_over':
+        clearTyping(convoPane)
+        seating.clearAll()
+        appendGameOver(convoPane, data, participants, quit)
+        break
+
       case 'bar_beat':
         appendBarBeat(convoPane, data.text)
         break
