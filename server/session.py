@@ -34,6 +34,7 @@ from langchain_core.messages import AIMessage, HumanMessage
 
 import server.events as evt
 from graph import build_graph
+from personas import CHARACTERS
 from nodes import (
     generate_character_summaries,
     generate_moderator_steer,
@@ -197,7 +198,13 @@ class Session:
             self._put(evt.system(f"Moderator approach → {new_style}"))
 
         if text:
-            forced = _detect_forced_speaker(text, participants)
+            # Build aliases map from persona definitions
+            aliases_map = {}
+            for name in participants:
+                if name in CHARACTERS and "aliases" in CHARACTERS[name]:
+                    aliases_map[name] = CHARACTERS[name]["aliases"]
+
+            forced = _detect_forced_speaker(text, participants, aliases_map)
             if forced:
                 self._put(evt.system(f"Calling out {forced}"))
             self.state = {
@@ -293,17 +300,32 @@ class SessionStore:
 # Helpers                                                                       #
 # --------------------------------------------------------------------------- #
 
-def _detect_forced_speaker(text: str, participants: list[str]) -> Optional[str]:
+def _detect_forced_speaker(text: str, participants: list[str], aliases_map: dict = None) -> Optional[str]:
+    """
+    Detect if text mentions a participant by name, nickname, or alias.
+
+    Args:
+        text: Player input text
+        participants: List of participant names
+        aliases_map: Dict mapping participant name → list of aliases (e.g., {"Franklin Delano Roosevelt": ["FDR"]})
+
+    Returns:
+        Participant name if detected, else None
+    """
     text_lower = text.lower()
+    if aliases_map is None:
+        aliases_map = {}
+
     for name in participants:
         # Check full name parts (e.g., "Franklin" in "Franklin Delano Roosevelt")
         for part in name.lower().split():
             if len(part) >= 3 and part in text_lower:
                 return name
 
-        # Check initials (e.g., "FDR" for "Franklin Delano Roosevelt")
-        initials = ''.join(word[0] for word in name.split()).lower()
-        if len(initials) >= 2 and initials in text_lower:
-            return name
+        # Check aliases for this participant
+        if name in aliases_map:
+            for alias in aliases_map[name]:
+                if alias.lower() in text_lower:
+                    return name
 
     return None

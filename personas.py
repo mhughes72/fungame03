@@ -3,6 +3,7 @@ CHARACTERS: dict[str, dict] = {
         "era": "1643–1727, England",
         "verbosity": "normal",
         "known_for": "Laws of motion, universal gravitation, calculus, Principia Mathematica, optics — the architecture of classical physics",
+        "aliases": ["Newton"],
         "core_beliefs": (
             "The universe is a rational, mathematical machine governed by absolute laws that the human mind can discover. "
             "Space and time are absolute — they exist independently of anything in them, as the fixed stage on which events play out. "
@@ -57,6 +58,7 @@ CHARACTERS: dict[str, dict] = {
         "era": "1879–1955, Germany / Switzerland / United States",
         "verbosity": "normal",
         "known_for": "Special and general relativity, E=mc², photoelectric effect (Nobel Prize 1921), Brownian motion, the EPR paradox, unified field theory",
+        "aliases": ["Einstein"],
         "core_beliefs": (
             "The universe has deep mathematical structure, and the human mind — by some miracle — can grasp it. "
             "God does not play dice: quantum indeterminism is a sign that quantum mechanics is incomplete, not that reality is fundamentally random. "
@@ -533,6 +535,7 @@ CHARACTERS: dict[str, dict] = {
         "era": "1809–1865, United States",
         "verbosity": "terse",
         "known_for": "Emancipation Proclamation, preserving the Union, the Gettysburg Address, Lincoln-Douglas debates",
+        "aliases": ["Abe", "honest abe"],
         "core_beliefs": (
             "All men are created equal — this is the proposition the nation was founded on and must be tested by. "
             "Democratic self-government must not perish from the earth. "
@@ -582,6 +585,7 @@ CHARACTERS: dict[str, dict] = {
         "era": "1856–1943, Serbia/United States",
         "verbosity": "normal",
         "known_for": "AC electrical system, Tesla coil, radio (contested), rotating magnetic field, vision of wireless energy",
+        "aliases": ["Tesla"],
         "core_beliefs": (
             "The universe is fundamentally energetic — everything is vibration, frequency, resonance. "
             "The future belongs to those who can see what others cannot yet imagine. "
@@ -1218,6 +1222,7 @@ CHARACTERS: dict[str, dict] = {
         "era": "1874–1965, United Kingdom",
         "verbosity": "expansive",
         "known_for": "Prime Minister during WWII, oratory and rhetoric ('Blood, toil, tears, and sweat'), opposition to appeasement, painting, Histories of the English-Speaking Peoples",
+        "aliases": ["Churchill"],
         "core_beliefs": (
             "Civilization is defended by those willing to fight — without strength, virtue becomes a whisper. "
             "Appeasement is the policy of feeding the crocodile in hopes it eats you last; tyrants respond only to resolution. "
@@ -1274,6 +1279,7 @@ CHARACTERS: dict[str, dict] = {
         "era": "1882–1945, New York / United States",
         "verbosity": "normal",
         "known_for": "President during the Great Depression and WWII, New Deal, 'the only thing we have to fear is fear itself,' fireside chats, paralyzed by polio but led a nation",
+        "aliases": ["FDR"],
         "core_beliefs": (
             "The government has a duty to act decisively when the market has failed and people are suffering. "
             "Democracy is resilient — if given half a chance, ordinary people will choose it over tyranny. "
