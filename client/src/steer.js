@@ -62,6 +62,7 @@ export function open(currentStyle, styles, summary = '', drawerContainer) {
         drawer.querySelectorAll('.style-item').forEach(i => i.classList.remove('style-selected'))
         item.classList.add('style-selected')
         selectedStyle = item.dataset.style
+        submit()
       })
     })
 

@@ -67,11 +67,11 @@
         <p class="setup-sub">Select 2–4 thinkers for tonight's debate</p>
 
         <div class="char-list" id="char-list">
-          ${n.map(o=>`
-            <label class="char-row" data-name="${o.name}">
-              <input type="checkbox" value="${o.name}" />
-              <span class="char-name">${o.name}</span>
-              <span class="char-era">${o.era}</span>
+          ${n.map(r=>`
+            <label class="char-row" data-name="${r.name}">
+              <input type="checkbox" value="${r.name}" />
+              <span class="char-name">${r.name}</span>
+              <span class="char-era">${r.era}</span>
             </label>
           `).join("")}
         </div>
@@ -97,7 +97,7 @@
         </div>
       </div>
     </div>
-  `;const a=e.querySelectorAll("input[type=checkbox]"),i=new Set(["Abraham Lincoln","Nikola Tesla"]);a.forEach(o=>{i.has(o.value)&&(o.checked=!0)});const s=e.querySelector("#selection-hint"),l=e.querySelector("#start-btn"),c=e.querySelector("#setup-error");function u(){const o=[...a].filter(r=>r.checked).length;o<2?(s.textContent=`Select ${2-o} more`,s.classList.remove("hint-ok","hint-warn")):o>4?(s.textContent=`Too many — deselect ${o-4}`,s.classList.add("hint-warn"),s.classList.remove("hint-ok")):(s.textContent=`${o} selected`,s.classList.add("hint-ok"),s.classList.remove("hint-warn")),l.disabled=o<2||o>4}return u(),a.forEach(o=>o.addEventListener("change",u)),l.addEventListener("click",()=>{const o=[...a].filter(d=>d.checked).map(d=>d.value),r=e.querySelector("#topic-input").value.trim()||"What is the nature of justice?";c.textContent="",t({characters:o,topic:r})}),e.querySelector("#topic-input").addEventListener("keydown",o=>{o.key==="Enter"&&!l.disabled&&l.click()}),e.querySelector("#setup-about").addEventListener("click",j),e.querySelector("#setup-help").addEventListener("click",M),{showError(o){c.textContent=o}}}function w(e){return String(e).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}function Z(e,n,t="",a){return new Promise(i=>{const s=document.createElement("div");s.className="steer-drawer",s.innerHTML=`
+  `;const a=e.querySelectorAll("input[type=checkbox]"),i=new Set(["Abraham Lincoln","Nikola Tesla"]);a.forEach(r=>{i.has(r.value)&&(r.checked=!0)});const s=e.querySelector("#selection-hint"),l=e.querySelector("#start-btn"),c=e.querySelector("#setup-error");function u(){const r=[...a].filter(o=>o.checked).length;r<2?(s.textContent=`Select ${2-r} more`,s.classList.remove("hint-ok","hint-warn")):r>4?(s.textContent=`Too many — deselect ${r-4}`,s.classList.add("hint-warn"),s.classList.remove("hint-ok")):(s.textContent=`${r} selected`,s.classList.add("hint-ok"),s.classList.remove("hint-warn")),l.disabled=r<2||r>4}return u(),a.forEach(r=>r.addEventListener("change",u)),l.addEventListener("click",()=>{const r=[...a].filter(d=>d.checked).map(d=>d.value),o=e.querySelector("#topic-input").value.trim()||"What is the nature of justice?";c.textContent="",t({characters:r,topic:o})}),e.querySelector("#topic-input").addEventListener("keydown",r=>{r.key==="Enter"&&!l.disabled&&l.click()}),e.querySelector("#setup-about").addEventListener("click",j),e.querySelector("#setup-help").addEventListener("click",M),{showError(r){c.textContent=r}}}function w(e){return String(e).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}function Z(e,n,t="",a){return new Promise(i=>{const s=document.createElement("div");s.className="steer-drawer",s.innerHTML=`
       <div class="steer-drawer-header">
         <div class="steer-title">── STEER THE DEBATE ──</div>
         <button class="steer-quit-btn" id="steer-quit">Quit game</button>
@@ -119,34 +119,34 @@
       <div class="steer-or">── choose a moderator approach ──</div>
 
       <div class="style-list" id="style-list">
-        ${n.map(r=>`
+        ${n.map(o=>`
           <button
-            class="style-item${r.style===e?" style-selected":""}"
-            data-style="${w(r.style)}"
+            class="style-item${o.style===e?" style-selected":""}"
+            data-style="${w(o.style)}"
           >
-            <span class="style-name">${w(r.style)}</span>
-            <span class="style-desc">${w(r.description)}</span>
+            <span class="style-name">${w(o.style)}</span>
+            <span class="style-desc">${w(o.description)}</span>
           </button>
         `).join("")}
       </div>
-    `,(a||document.body).appendChild(s);const c=s.querySelector("#steer-text-input");c.focus();let u=e;s.querySelectorAll(".style-item").forEach(r=>{r.addEventListener("click",()=>{s.querySelectorAll(".style-item").forEach(d=>d.classList.remove("style-selected")),r.classList.add("style-selected"),u=r.dataset.style})});function o(){const r=c.value.trim();s.remove(),i({text:r,style:u})}s.querySelector("#steer-submit").addEventListener("click",o),s.querySelector("#steer-quit").addEventListener("click",()=>{s.remove(),i(null)}),c.addEventListener("keydown",r=>{r.key==="Enter"&&o()})})}const _={2:[[18,50],[82,50]],3:[[14,24],[86,24],[50,84]],4:[[14,20],[86,20],[14,80],[86,80]]};function V(e,n){const t=Math.min(n.length,4),a=_[t]||_[4];e.innerHTML=`
+    `,(a||document.body).appendChild(s);const c=s.querySelector("#steer-text-input");c.focus();let u=e;s.querySelectorAll(".style-item").forEach(o=>{o.addEventListener("click",()=>{s.querySelectorAll(".style-item").forEach(d=>d.classList.remove("style-selected")),o.classList.add("style-selected"),u=o.dataset.style,r()})});function r(){const o=c.value.trim();s.remove(),i({text:o,style:u})}s.querySelector("#steer-submit").addEventListener("click",r),s.querySelector("#steer-quit").addEventListener("click",()=>{s.remove(),i(null)}),c.addEventListener("keydown",o=>{o.key==="Enter"&&r()})})}const _={2:[[18,50],[82,50]],3:[[14,24],[86,24],[50,84]],4:[[14,20],[86,20],[14,80],[86,80]]};function V(e,n){const t=Math.min(n.length,4),a=_[t]||_[4];e.innerHTML=`
     <div class="seating-area">
       <div class="seating-table">
         <span class="seating-table-label">THE BAR</span>
       </div>
-      ${n.map((o,r)=>{const[d,g]=a[r]||[50,50],v=X(o),h=ee(o);return`
-          <div class="seat" id="seat-${A(o)}"
+      ${n.map((r,o)=>{const[d,g]=a[o]||[50,50],v=X(r),h=ee(r);return`
+          <div class="seat" id="seat-${A(r)}"
                style="left:${d}%;top:${g}%">
             <div class="seat-portrait-wrap">
-              <img class="seat-img" src="${v}" alt="${H(o)}"
+              <img class="seat-img" src="${v}" alt="${H(r)}"
                    onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
               <div class="seat-initials" style="display:none">${H(h)}</div>
             </div>
-            <div class="seat-name">${H(te(o))}</div>
+            <div class="seat-name">${H(te(r))}</div>
           </div>
         `}).join("")}
     </div>
-  `;let i=null;function s(o){return e.querySelector(`#seat-${A(o)}`)}function l(){clearTimeout(i),e.querySelectorAll(".seat").forEach(o=>{o.classList.remove("seat-thinking","seat-speaking")})}function c(o){var r;l(),(r=s(o))==null||r.classList.add("seat-thinking")}function u(o){l();const r=s(o);r&&(r.classList.add("seat-speaking"),i=setTimeout(()=>r.classList.remove("seat-speaking"),3e3))}return{setThinking:c,setSpeaking:u,clearAll:l}}function X(e){return`/portraits/${e.replace(/ /g,"_")}.png`}function ee(e){return e.split(" ").map(n=>n[0]).join("").slice(0,2).toUpperCase()}function te(e){return e.split(" ").at(-1)}function A(e){return e.replace(/[^a-zA-Z0-9]/g,"-").toLowerCase()}function H(e){return String(e).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}function se(e,n,t,a,i,s){e.innerHTML=`
+  `;let i=null;function s(r){return e.querySelector(`#seat-${A(r)}`)}function l(){clearTimeout(i),e.querySelectorAll(".seat").forEach(r=>{r.classList.remove("seat-thinking","seat-speaking")})}function c(r){var o;l(),(o=s(r))==null||o.classList.add("seat-thinking")}function u(r){l();const o=s(r);o&&(o.classList.add("seat-speaking"),i=setTimeout(()=>o.classList.remove("seat-speaking"),3e3))}return{setThinking:c,setSpeaking:u,clearAll:l}}function X(e){return`/portraits/${e.replace(/ /g,"_")}.png`}function ee(e){return e.split(" ").map(n=>n[0]).join("").slice(0,2).toUpperCase()}function te(e){return e.split(" ").at(-1)}function A(e){return e.replace(/[^a-zA-Z0-9]/g,"-").toLowerCase()}function H(e){return String(e).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}function se(e,n,t,a,i,s){e.innerHTML=`
     <div class="debate-shell">
       <header class="debate-header">
         <span class="debate-title">THE PHILOSOPHER'S BAR</span>
@@ -165,7 +165,7 @@
         <div class="sidebar" id="sidebar"></div>
       </div>
     </div>
-  `;const l=e.querySelector("#seats-bar"),c=e.querySelector("#convo-pane"),u=e.querySelector("#sidebar"),o=e.querySelector("#left-col");let r="socratic",d=null,g={turn:0,heat:0,partial_agreements:[],remaining_disagreements:[],drift_topic:""};const v=V(l,t);N(u,{topic:a,turn:0,heat:0,moderator_style:"socratic",partial_agreements:[],points_of_agreement:[],remaining_disagreements:[]});function h({type:U,data:m}){switch(U){case"speaker":v.setThinking(m.name),re(c,m.name);break;case"message":k(c),m.backchannel||v.setSpeaking(m.name),ne(c,m);break;case"state":r=m.moderator_style,g=m,N(u,{topic:a,...m});break;case"steer_needed":r=m.current_style,m.drift_topic&&(f(c,`── DRIFT ── conversation has shifted to: ${m.drift_topic}`),f(c,`   original topic: ${a}`)),Z(r,i,oe(g),o).then(y=>{y===null?C(c,g,t,S):s.steer(n,y.text,y.style).catch(L=>f(c,`Steer error: ${L.message}`))});break;case"consensus":k(c),v.clearAll(),ie(c,m,{onNewTopic(y){s.newTopic(n,y).catch(L=>f(c,`Error: ${L.message}`))},onQuit:S},g);break;case"bar_beat":ae(c,m.text);break;case"system":f(c,m.text);break;case"error":f(c,`⚠ ${m.text}`);break}}function S(){d&&d(),s.deleteSession(n).catch(()=>{}),e.dispatchEvent(new CustomEvent("debate:quit",{bubbles:!0}))}e.querySelector("#about-btn").addEventListener("click",j),e.querySelector("#help-btn").addEventListener("click",M),e.querySelector("#quit-btn").addEventListener("click",()=>{g.turn>0?C(c,g,t,S):S()}),d=s.openStream(n,h)}function ne(e,{role:n,name:t,content:a,backchannel:i}){const s=document.createElement("div");i?(s.className="msg msg-bc",s.innerHTML=`<span class="bc-name">${p(t)}:</span> <em>${$(a)}</em>`):n==="moderator"?(s.className="msg msg-moderator",s.innerHTML=`<div class="msg-mod-label">― Moderator ―</div><div class="msg-content">${$(a)}</div>`):n==="user"?(s.className="msg msg-user",s.innerHTML=`<div class="msg-name msg-name-user">You</div><div class="msg-content">${$(a)}</div>`):(s.className="msg msg-philosopher",s.innerHTML=`<div class="msg-name">${p(t)}</div><div class="msg-content">${$(a)}</div>`),b(e,s)}function ae(e,n){const t=document.createElement("div");t.className="msg msg-beat",t.innerHTML=$(n),b(e,t)}function f(e,n){const t=document.createElement("div");t.className="msg msg-system",t.textContent=n,b(e,t)}function ie(e,{summary:n,points:t},{onNewTopic:a,onQuit:i},s={}){const l=document.createElement("div");l.className="consensus-panel",l.innerHTML=`
+  `;const l=e.querySelector("#seats-bar"),c=e.querySelector("#convo-pane"),u=e.querySelector("#sidebar"),r=e.querySelector("#left-col");let o="socratic",d=null,g={turn:0,heat:0,partial_agreements:[],remaining_disagreements:[],drift_topic:""};const v=V(l,t);N(u,{topic:a,turn:0,heat:0,moderator_style:"socratic",partial_agreements:[],points_of_agreement:[],remaining_disagreements:[]});function h({type:U,data:m}){switch(U){case"speaker":v.setThinking(m.name),re(c,m.name);break;case"message":k(c),m.backchannel||v.setSpeaking(m.name),ne(c,m);break;case"state":o=m.moderator_style,g=m,N(u,{topic:a,...m});break;case"steer_needed":o=m.current_style,m.drift_topic&&(f(c,`── DRIFT ── conversation has shifted to: ${m.drift_topic}`),f(c,`   original topic: ${a}`)),Z(o,i,oe(g),r).then(y=>{y===null?C(c,g,t,S):s.steer(n,y.text,y.style).catch(L=>f(c,`Steer error: ${L.message}`))});break;case"consensus":k(c),v.clearAll(),ie(c,m,{onNewTopic(y){s.newTopic(n,y).catch(L=>f(c,`Error: ${L.message}`))},onQuit:S},g);break;case"bar_beat":ae(c,m.text);break;case"system":f(c,m.text);break;case"error":f(c,`⚠ ${m.text}`);break}}function S(){d&&d(),s.deleteSession(n).catch(()=>{}),e.dispatchEvent(new CustomEvent("debate:quit",{bubbles:!0}))}e.querySelector("#about-btn").addEventListener("click",j),e.querySelector("#help-btn").addEventListener("click",M),e.querySelector("#quit-btn").addEventListener("click",()=>{g.turn>0?C(c,g,t,S):S()}),d=s.openStream(n,h)}function ne(e,{role:n,name:t,content:a,backchannel:i}){const s=document.createElement("div");i?(s.className="msg msg-bc",s.innerHTML=`<span class="bc-name">${p(t)}:</span> <em>${$(a)}</em>`):n==="moderator"?(s.className="msg msg-moderator",s.innerHTML=`<div class="msg-mod-label">― Moderator ―</div><div class="msg-content">${$(a)}</div>`):n==="user"?(s.className="msg msg-user",s.innerHTML=`<div class="msg-name msg-name-user">You</div><div class="msg-content">${$(a)}</div>`):(s.className="msg msg-philosopher",s.innerHTML=`<div class="msg-name">${p(t)}</div><div class="msg-content">${$(a)}</div>`),b(e,s)}function ae(e,n){const t=document.createElement("div");t.className="msg msg-beat",t.innerHTML=$(n),b(e,t)}function f(e,n){const t=document.createElement("div");t.className="msg msg-system",t.textContent=n,b(e,t)}function ie(e,{summary:n,points:t},{onNewTopic:a,onQuit:i},s={}){const l=document.createElement("div");l.className="consensus-panel",l.innerHTML=`
     <div class="consensus-title">━━━ CONSENSUS REACHED ━━━</div>
     <div class="consensus-summary">${p(n)}</div>
     ${t.length?`
@@ -180,24 +180,24 @@
       <button class="consensus-continue-btn" id="consensus-continue">Continue ▶</button>
       <button class="consensus-end-btn" id="consensus-end">End the evening</button>
     </div>
-  `,b(e,l);const c=l.querySelector("#consensus-topic-input");c.focus(),l.querySelector("#consensus-continue").addEventListener("click",()=>{const u=c.value.trim();u&&a(u)}),c.addEventListener("keydown",u=>{if(u.key==="Enter"){const o=c.value.trim();o&&a(o)}}),l.querySelector("#consensus-end").addEventListener("click",i)}function C(e,n,t,a){k(e);const i=document.createElement("div");i.className="game-over-panel";const s=n.turn||0,l=s?`${s} turn${s!==1?"s":""} — no consensus reached`:"The evening ends before it really began.";i.innerHTML=`
+  `,b(e,l);const c=l.querySelector("#consensus-topic-input");c.focus(),l.querySelector("#consensus-continue").addEventListener("click",()=>{const u=c.value.trim();u&&a(u)}),c.addEventListener("keydown",u=>{if(u.key==="Enter"){const r=c.value.trim();r&&a(r)}}),l.querySelector("#consensus-end").addEventListener("click",i)}function C(e,n,t,a){k(e);const i=document.createElement("div");i.className="game-over-panel";const s=n.turn||0,l=s?`${s} turn${s!==1?"s":""} — no consensus reached`:"The evening ends before it really began.";i.innerHTML=`
     <div class="game-over-title">━━━ LAST CALL ━━━</div>
     <div class="game-over-subtitle">${p(l)}</div>
     ${P(n)}
     <div class="game-over-actions">
       <button class="consensus-end-btn" id="game-over-leave">Leave the bar</button>
     </div>
-  `,b(e,i),i.querySelector("#game-over-leave").addEventListener("click",a)}function P(e){const{turn:n=0,heat:t=0,partial_agreements:a=[],points_of_agreement:i=[],remaining_disagreements:s=[]}=e;if(!n)return"";const l=I(t),c=R(t),u="█".repeat(t),o="░".repeat(10-t);let r='<div class="report-stats">';return r+=`<div class="report-stat-row">
+  `,b(e,i),i.querySelector("#game-over-leave").addEventListener("click",a)}function P(e){const{turn:n=0,heat:t=0,partial_agreements:a=[],points_of_agreement:i=[],remaining_disagreements:s=[]}=e;if(!n)return"";const l=I(t),c=R(t),u="█".repeat(t),r="░".repeat(10-t);let o='<div class="report-stats">';return o+=`<div class="report-stat-row">
     <span class="report-stat-label">turns</span>
     <span class="report-stat-value">${n}</span>
-  </div>`,r+=`<div class="report-stat-row">
+  </div>`,o+=`<div class="report-stat-row">
     <span class="report-stat-label">heat at close</span>
-    <span class="report-stat-value" style="color:${c}">${u}<span style="color:var(--text-dim)">${o}</span> ${l}</span>
-  </div>`,i.length&&(r+='<div class="report-section-label">agreements reached</div>',r+=i.map(d=>`<div class="report-agree-item">✓ ${p(d)}</div>`).join("")),a.length&&(r+='<div class="report-section-label">alignments that formed</div>',r+=a.map(d=>`<div class="report-partial"><span class="report-partial-names">${p(d.participants.join(" + "))}</span> — <span class="report-partial-on">${p(d.on)}</span></div>`).join("")),s.length&&(r+='<div class="report-section-label">still unresolved</div>',r+=s.map(d=>typeof d=="object"&&d!==null?`<div class="report-tension">
+    <span class="report-stat-value" style="color:${c}">${u}<span style="color:var(--text-dim)">${r}</span> ${l}</span>
+  </div>`,i.length&&(o+='<div class="report-section-label">agreements reached</div>',o+=i.map(d=>`<div class="report-agree-item">✓ ${p(d)}</div>`).join("")),a.length&&(o+='<div class="report-section-label">alignments that formed</div>',o+=a.map(d=>`<div class="report-partial"><span class="report-partial-names">${p(d.participants.join(" + "))}</span> — <span class="report-partial-on">${p(d.on)}</span></div>`).join("")),s.length&&(o+='<div class="report-section-label">still unresolved</div>',o+=s.map(d=>typeof d=="object"&&d!==null?`<div class="report-tension">
           <span class="report-tension-topic">${p(d.topic)}</span>
           <span class="report-tension-stance">${p(d.participant_a)}: ${p(d.stance_a)}</span>
           <span class="report-tension-stance">${p(d.participant_b)}: ${p(d.stance_b)}</span>
-        </div>`:`<div class="report-tension">${p(String(d))}</div>`).join("")),r+="</div>",r}function re(e,n){k(e);const t=document.createElement("div");t.className="msg msg-typing",t.id="typing-indicator",t.innerHTML=`<span class="typing-name">${p(n)}</span><span class="typing-dots"><span>.</span><span>.</span><span>.</span></span>`,b(e,t)}function k(e){var n;(n=e.querySelector("#typing-indicator"))==null||n.remove()}function N(e,n){const{topic:t,turn:a=0,heat:i=0,moderator_style:s="socratic",partial_agreements:l=[],points_of_agreement:c=[],remaining_disagreements:u=[]}=n,o=R(i),r=I(i),d="█".repeat(i),g="░".repeat(10-i);let v=`
+        </div>`:`<div class="report-tension">${p(String(d))}</div>`).join("")),o+="</div>",o}function re(e,n){k(e);const t=document.createElement("div");t.className="msg msg-typing",t.id="typing-indicator",t.innerHTML=`<span class="typing-name">${p(n)}</span><span class="typing-dots"><span>.</span><span>.</span><span>.</span></span>`,b(e,t)}function k(e){var n;(n=e.querySelector("#typing-indicator"))==null||n.remove()}function N(e,n){const{topic:t,turn:a=0,heat:i=0,moderator_style:s="socratic",partial_agreements:l=[],points_of_agreement:c=[],remaining_disagreements:u=[]}=n,r=R(i),o=I(i),d="█".repeat(i),g="░".repeat(10-i);let v=`
     <div class="sb-section">
       <div class="sb-label">TONIGHT'S QUESTION</div>
       <div class="sb-topic">${p(t)}</div>
@@ -234,8 +234,8 @@
     <div class="sb-section">
       <div class="sb-label">── HEAT ──</div>
       <div class="sb-heat">
-        <span style="color:${o}">${d}</span><span class="sb-heat-empty">${g}</span>
-        <span class="sb-heat-label" style="color:${o}">${r}</span>
+        <span style="color:${r}">${d}</span><span class="sb-heat-empty">${g}</span>
+        <span class="sb-heat-label" style="color:${r}">${o}</span>
       </div>
     </div>
 
@@ -243,4 +243,4 @@
       <div class="sb-label">── APPROACH ──</div>
       <div class="sb-style">${p(s)}</div>
     </div>
-  `,e.innerHTML=v}function $(e){return p(e).replace(/\n/g,"<br>").replace(/\*\[([^\]]+)\]\*/g,'<em class="stage-dir">[$1]</em>')}function b(e,n){const t=e.scrollHeight-e.scrollTop-e.clientHeight<120;e.appendChild(n),t&&(e.scrollTop=e.scrollHeight)}function p(e){return String(e).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}function R(e){return e<=2?"#4a7ab5":e<=4?"#8a9040":e<=6?"#c8a030":e<=8?"#c86030":"#c83030"}function I(e){return e<=2?"cool":e<=4?"warm":e<=6?"charged":e<=8?"heated":"flashpoint"}function oe(e,n){const{turn:t,heat:a,partial_agreements:i,remaining_disagreements:s,drift_topic:l}=e;if(!t)return"The debate is just getting started.";if(l)return`The conversation has drifted from the original topic toward ${l}.`;const c=i||[],u=s||[];if(c.length&&u.length){const r=c[0],d=u[0],g=r.participants.join(" and "),v=typeof d=="object"?d.topic:String(d);return`${g} are finding common ground, but the group remains divided on ${v}.`}if(c.length){const r=c[0];return`${r.participants.join(" and ")} are converging on ${r.on}, ${a>=6?"though tempers are running high":"with the room following closely"}.`}if(u.length){const r=u[0];return typeof r=="object"?`${r.participant_a} and ${r.participant_b} are sharply divided over ${r.topic}.`:`The room is deadlocked — ${String(r)}.`}const o=a>=8?"at flashpoint":a>=5?"heating up":a>=3?"warming up":"still feeling each other out";return`${t} turns in, no clear alignments yet — the room is ${o}.`}const T=document.querySelector("#app");async function B(){let e,n;try{[e,n]=await Promise.all([G(),W()])}catch(a){T.innerHTML=`<div class="fatal-error">Could not reach the server.<br/>${a.message}</div>`;return}const t=z(T,e,async({characters:a,topic:i})=>{try{const s=await F(a,i);ce(s.session_id,a,i,n)}catch(s){t.showError(`Could not start session: ${s.message}`)}})}function ce(e,n,t,a){se(T,e,n,t,a,{steer:Q,deleteSession:K,newTopic:Y,openStream:J}),T.addEventListener("debate:quit",()=>B(),{once:!0})}B();
+  `,e.innerHTML=v}function $(e){return p(e).replace(/\n/g,"<br>").replace(/\*\[([^\]]+)\]\*/g,'<em class="stage-dir">[$1]</em>')}function b(e,n){const t=e.scrollHeight-e.scrollTop-e.clientHeight<120;e.appendChild(n),t&&(e.scrollTop=e.scrollHeight)}function p(e){return String(e).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}function R(e){return e<=2?"#4a7ab5":e<=4?"#8a9040":e<=6?"#c8a030":e<=8?"#c86030":"#c83030"}function I(e){return e<=2?"cool":e<=4?"warm":e<=6?"charged":e<=8?"heated":"flashpoint"}function oe(e,n){const{turn:t,heat:a,partial_agreements:i,remaining_disagreements:s,drift_topic:l}=e;if(!t)return"The debate is just getting started.";if(l)return`The conversation has drifted from the original topic toward ${l}.`;const c=i||[],u=s||[];if(c.length&&u.length){const o=c[0],d=u[0],g=o.participants.join(" and "),v=typeof d=="object"?d.topic:String(d);return`${g} are finding common ground, but the group remains divided on ${v}.`}if(c.length){const o=c[0];return`${o.participants.join(" and ")} are converging on ${o.on}, ${a>=6?"though tempers are running high":"with the room following closely"}.`}if(u.length){const o=u[0];return typeof o=="object"?`${o.participant_a} and ${o.participant_b} are sharply divided over ${o.topic}.`:`The room is deadlocked — ${String(o)}.`}const r=a>=8?"at flashpoint":a>=5?"heating up":a>=3?"warming up":"still feeling each other out";return`${t} turns in, no clear alignments yet — the room is ${r}.`}const T=document.querySelector("#app");async function B(){let e,n;try{[e,n]=await Promise.all([G(),W()])}catch(a){T.innerHTML=`<div class="fatal-error">Could not reach the server.<br/>${a.message}</div>`;return}const t=z(T,e,async({characters:a,topic:i})=>{try{const s=await F(a,i);ce(s.session_id,a,i,n)}catch(s){t.showError(`Could not start session: ${s.message}`)}})}function ce(e,n,t,a){se(T,e,n,t,a,{steer:Q,deleteSession:K,newTopic:Y,openStream:J}),T.addEventListener("debate:quit",()=>B(),{once:!0})}B();
