@@ -81,7 +81,10 @@ export function mount(container, sessionId, participants, topic, styles, api) {
           appendSystem(convoPane,
             `   original topic: ${topic}`)
         }
+        seatsBar.style.display = 'none'
+        convoPane.scrollTop = convoPane.scrollHeight
         openSteerModal(currentStyle, styles, debateSummary(lastState, participants), leftCol).then(result => {
+          seatsBar.style.display = ''
           if (result === null) {
             appendGameOver(convoPane, lastState, participants, quit)
           } else {
