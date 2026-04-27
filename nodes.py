@@ -90,13 +90,16 @@ def _generate_candidate(name: str, state: RoomState) -> dict:
 
     argument_log        = state.get("argument_log") or {}
     concession_counts   = state.get("concession_counts") or {}
+    concession_log      = state.get("concession_log") or {}
+    challenge_counts    = state.get("challenge_counts") or {}
     character_summaries = state.get("character_summaries") or {}
     turn_count          = state.get("turn_count") or 0
     own_summary         = character_summaries.get(name, "")
     heat          = state.get("heat") or 0
     system_prompt = _philosopher_system_prompt(name, participants, partial_agreements, own_summary, heat)
     user_prompt   = _philosopher_user_prompt(
-        name, state["messages"], topic, argument_log, turn_count, concession_counts
+        name, state["messages"], topic, argument_log, turn_count, concession_counts,
+        concession_log, challenge_counts,
     )
 
     messages = (
@@ -231,14 +234,26 @@ def parallel_turn_node(state: RoomState) -> dict:
     argument_log[winner["name"]] = (prev + [winner["content"]])[-3:]
 
     concession_counts = dict(state.get("concession_counts") or {})
+    concession_log    = dict(state.get("concession_log") or {})
+    challenge_counts  = dict(state.get("challenge_counts") or {})
     content_lower = winner["content"].lower()
     heat = state.get("heat") or 0
+    prev_speaker = recent_speakers[-1] if recent_speakers else ""
     if any(signal in content_lower for signal in _CONCESSION_SIGNALS):
         concession_counts[winner["name"]] = concession_counts.get(winner["name"], 0) + 1
         dbg.dlog("PHILOSOPHER", f"{winner['name']} conceded — total {concession_counts[winner['name']]}")
         heat = max(0, heat - 1)
+        # Log what was conceded so it can be fed back into future prompts
+        prev = list(concession_log.get(winner["name"], []))
+        concession_log[winner["name"]] = (prev + [winner["content"][:160]])[-3:]
+        # Conceding resets the challenge pressure on this character
+        challenge_counts[winner["name"]] = 0
     elif any(signal in content_lower for signal in _COMBATIVE_SIGNALS) or winner["content"].count("!") >= 2:
         heat = min(10, heat + 1)
+        # Track that the previous speaker is being pushed — they haven't resolved this yet
+        if prev_speaker and prev_speaker != winner["name"]:
+            challenge_counts[prev_speaker] = challenge_counts.get(prev_speaker, 0) + 1
+            dbg.dlog("PHILOSOPHER", f"{prev_speaker} challenged — pressure count {challenge_counts[prev_speaker]}")
     dbg.dlog("MODERATOR", f"Heat: {heat}")
 
     out_msgs = [AIMessage(content=winner["content"], name=winner["safe_name"])]
@@ -258,6 +273,8 @@ def parallel_turn_node(state: RoomState) -> dict:
         "turn_count":         turn_count + 1,
         "argument_log":       argument_log,
         "concession_counts":  concession_counts,
+        "concession_log":     concession_log,
+        "challenge_counts":   challenge_counts,
         "forced_speaker":     "",
         "heat":               heat,
     }
@@ -287,7 +304,8 @@ class _ConsensusResult(BaseModel):
     dissenters: list[str]
     points_of_agreement: list[str]
     remaining_disagreements: list[_Tension]
-    drifted_topic: str  # empty if on-topic; short phrase describing actual subject if drifted
+    drifted_topic: str    # empty if on-topic; short phrase describing actual subject if drifted
+    suggested_bridge: str # one concrete sentence of latent common ground to force a yes/no commitment
 
 
 def consensus_checker_node(state: RoomState) -> dict:
@@ -319,7 +337,13 @@ def consensus_checker_node(state: RoomState) -> dict:
         "If only a subset agrees, it belongs in `partial_agreements` only — not both.\n"
         f"5. Has the conversation significantly drifted from the original topic (\"{topic}\")? "
         "If the last several exchanges are primarily about a clearly different subject, set `drifted_topic` to a short phrase "
-        "describing what the conversation has actually been about. If it is still on-topic, leave `drifted_topic` empty."
+        "describing what the conversation has actually been about. If it is still on-topic, leave `drifted_topic` empty.\n"
+        f"6. Identify one minimal, concrete sliver of common ground that ALL {len(participants)} participants plausibly share "
+        "but have not yet explicitly committed to — even if they are still in sharp disagreement overall. "
+        "Write it as a single declarative sentence naming the participants and the claim "
+        "(e.g. 'Newton and Einstein both accept that mathematics correctly predicts observable phenomena, even if they disagree about what that implies.'). "
+        "This will be used to force a yes/no commitment. Set `suggested_bridge` to this sentence. "
+        "If no such common ground exists, leave it empty."
     )
 
     dbg.dlog("CONSENSUS", f"Checking at turn {turn_count}", {
@@ -354,6 +378,7 @@ def consensus_checker_node(state: RoomState) -> dict:
         "dissenters":              result.dissenters or "(none)",
         "remaining_disagreements": tensions or "(none)",
         "drifted_topic":           result.drifted_topic or "(none)",
+        "suggested_bridge":        result.suggested_bridge or "(none)",
     })
 
     return {
@@ -363,6 +388,7 @@ def consensus_checker_node(state: RoomState) -> dict:
         "points_of_agreement":     result.points_of_agreement,
         "remaining_disagreements": tensions,
         "drift_topic":             result.drifted_topic,
+        "bridge":                  result.suggested_bridge,
     }
 
 
@@ -510,8 +536,22 @@ def generate_moderator_steer(state: RoomState) -> str:
     heat = state.get("heat") or 0
     heat_context = f"Room atmosphere: {_heat_description(heat)}\n\n"
 
+    bridge = state.get("bridge") or ""
+    bridge_context = (
+        f"\nSuggested common ground (from debate analysis): {bridge}\n"
+        if bridge else ""
+    )
+
     style = state.get("moderator_style") or "socratic"
     system_msg, style_instruction = _STYLE_CONFIGS.get(style, _STYLE_CONFIGS["socratic"])
+
+    binary_close = (
+        "\n\nRegardless of style: end your steer with one binary commitment question. "
+        "Name at least two specific participants and state one concrete claim they plausibly share — "
+        "then ask them to affirm or deny it explicitly. "
+        "Format: '[Name] and [Name] — do you both agree that [specific claim]? Say yes or explain why not.' "
+        "Use the suggested common ground above if it fits."
+    )
 
     prompt = (
         f'Debate topic: "{topic}"\n'
@@ -519,9 +559,11 @@ def generate_moderator_steer(state: RoomState) -> str:
         f"Turn: {turn_count}\n\n"
         f"{heat_context}"
         f"{agreement_context}"
+        f"{bridge_context}"
         f"Recent exchange:\n{recent_text}\n"
         f"{targeting}\n"
         f"{style_instruction}"
+        f"{binary_close}"
     )
 
     dbg.dlog("MODERATOR", f"Generating steer at turn {turn_count} (style: {style})")

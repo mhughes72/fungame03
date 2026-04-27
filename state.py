@@ -18,7 +18,10 @@ class RoomState(TypedDict):
     remaining_disagreements: list[str]
     argument_log: dict         # {name: [claim1, claim2, ...]} — last 3 claims per character
     concession_counts: dict    # {name: int} — times each character has granted a point
+    concession_log: dict       # {name: [snippet, ...]} — last 3 things each character has conceded
+    challenge_counts: dict     # {name: int} — times challenged without conceding since last concession
     character_summaries: dict  # {name: str} — first-person debate arc, generated at compression
+    bridge: str                # suggested common ground from last consensus check, injected into next steer
     moderator_style: str       # "socratic" or "combative"
     forced_speaker: str        # if set, bypass scorer and force this character next
     heat: int                  # 0–10, rises with disagreement, falls with concession
@@ -46,7 +49,10 @@ def new_room_state(
         "remaining_disagreements": [],
         "argument_log": {},
         "concession_counts": {},
+        "concession_log": {},
+        "challenge_counts": {},
         "character_summaries": {},
+        "bridge": "",
         "moderator_style": moderator_style,
         "forced_speaker": "",
         "heat": 0,
@@ -69,7 +75,10 @@ def reset_for_new_topic(state: RoomState, topic: str) -> RoomState:
         "remaining_disagreements": [],
         "argument_log": {},
         "concession_counts": {},
+        "concession_log": {},
+        "challenge_counts": {},
         "character_summaries": {},
+        "bridge": "",
         "forced_speaker": "",
         "heat": 0,
         "drift_topic": "",

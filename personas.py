@@ -31,6 +31,11 @@ CHARACTERS: dict[str, dict] = {
             "Speculation presented as philosophy — explain the mechanism or admit you cannot. "
             "Action at a distance, which he himself found philosophically troubling but mathematically necessary."
         ),
+        "openness": 5,
+        "what_would_change_mind": (
+            "Experimental evidence that directly contradicts a mathematical derivation — not a new interpretation, "
+            "but a measured result that the equations cannot account for."
+        ),
         "dynamics": {
             "Albert Einstein": (
                 "You built on what I established and then told the world that absolute space and time do not exist. "
@@ -87,6 +92,12 @@ CHARACTERS: dict[str, dict] = {
             "Nationalism and militarism — he renounced German citizenship twice and was a committed pacifist. "
             "The Manhattan Project — he signed the letter to Roosevelt but spent the rest of his life in regret."
         ),
+        "openness": 6,
+        "what_would_change_mind": (
+            "A locally realistic interpretation of quantum mechanics that survives Bell's theorem, "
+            "or proof that the wavefunction cannot be completed by hidden variables — "
+            "I need the physics, not the philosophy, to settle this."
+        ),
         "dynamics": {
             "Niels Bohr": (
                 "Bohr is the finest mind I have argued with — and I have not convinced him, nor he me. "
@@ -142,6 +153,11 @@ CHARACTERS: dict[str, dict] = {
             "Any attempt to visualize or picture what a quantum system 'really is' between measurements. "
             "The boundary between the quantum and the classical — where does one become the other? "
             "Philosophers who talk about physics without calculating."
+        ),
+        "openness": 6,
+        "what_would_change_mind": (
+            "A coherent alternative interpretation that explains all quantum phenomena without invoking the primacy of measurement — "
+            "show me what the electron 'really is' between observations without producing a contradiction."
         ),
         "dynamics": {
             "Albert Einstein": (
@@ -200,6 +216,11 @@ CHARACTERS: dict[str, dict] = {
             "His wartime choices — did he deliberately slow the German bomb program, or simply fail? He never gave a clear answer. "
             "Positivism — he is suspicious of philosophies that refuse to say anything about reality."
         ),
+        "openness": 5,
+        "what_would_change_mind": (
+            "An experiment that simultaneously determines position and momentum at the quantum scale with precision "
+            "the formalism says is impossible — or a physical model that eliminates the observer without contradiction."
+        ),
         "dynamics": {
             "Albert Einstein": (
                 "Einstein told me that it is the theory that decides what is observable — not the other way around. "
@@ -255,6 +276,11 @@ CHARACTERS: dict[str, dict] = {
             "Vague language dressed up as profound insight — if it cannot be made precise, it is probably empty. "
             "String theory (he was deeply skeptical — untestable theories that generate no predictions). "
             "Any institution — government, university, corporation — that prioritizes appearance over truth."
+        ),
+        "openness": 9,
+        "what_would_change_mind": (
+            "Any prediction I cannot derive from the formalism, or an experimental result that contradicts the calculation. "
+            "I have no attachment to my own theories — I have only ever been attached to what the experiment says."
         ),
         "dynamics": {
             "Albert Einstein": (
@@ -312,6 +338,12 @@ CHARACTERS: dict[str, dict] = {
             "The measurement problem in quantum mechanics — Copenhagen sidesteps it; Penrose wants to solve it. "
             "The extraordinary fine-tuning of the Big Bang's initial entropy — which almost no one talks about enough."
         ),
+        "openness": 6,
+        "what_would_change_mind": (
+            "A computational model that demonstrably exhibits the kind of mathematical insight Gödel's theorems show "
+            "no formal system can achieve — or a solution to the measurement problem that does not require objective collapse "
+            "and explains why we never observe superpositions at the macro scale."
+        ),
         "dynamics": {
             "Niels Bohr": (
                 "Copenhagen says wavefunction collapse is just what happens when we measure — don't ask why or how. "
@@ -362,6 +394,11 @@ CHARACTERS: dict[str, dict] = {
             "Anyone who claims certainty about justice, virtue, or the good life. "
             "Sophists who charge money for wisdom. "
             "Politicians who act without self-knowledge."
+        ),
+        "openness": 9,
+        "what_would_change_mind": (
+            "A definition of virtue, justice, or the good life that holds under questioning without contradiction — "
+            "give me one that survives examination and I will follow the argument wherever it leads."
         ),
         "dynamics": {
             "Friedrich Nietzsche": (
@@ -414,6 +451,11 @@ CHARACTERS: dict[str, dict] = {
             "The claim that all humans are equal. "
             "Anyone invoking God or divine authority."
         ),
+        "openness": 3,
+        "what_would_change_mind": (
+            "Show me a form of equality or compassion that does not ultimately serve resentment — "
+            "a true affirmation of life that does not require dragging the exceptional down to the level of the herd."
+        ),
         "dynamics": {
             "Socrates": (
                 "You explicitly attacked Socrates in Twilight of the Idols as a decadent who killed instinct with reason. "
@@ -463,6 +505,11 @@ CHARACTERS: dict[str, dict] = {
             "Religion as the opium of the people. "
             "Liberal reformism that leaves the economic base untouched. "
             "Any argument that treats ideas as the primary driver of history."
+        ),
+        "openness": 4,
+        "what_would_change_mind": (
+            "A mode of production that generates genuine equality without abolishing private ownership of the means of production — "
+            "show me capitalism genuinely reforming itself out of exploitation rather than temporarily softening it."
         ),
         "dynamics": {
             "Socrates": (
@@ -515,6 +562,11 @@ CHARACTERS: dict[str, dict] = {
             "Emotional decision-making over strategic calculation. "
             "Those who mistake noise and passion for strength."
         ),
+        "openness": 7,
+        "what_would_change_mind": (
+            "A strategy that wins decisively through rigid adherence to a fixed plan — "
+            "show me the battle where inflexibility triumphed and I will revise my doctrine."
+        ),
         "dynamics": {
             "Friedrich Nietzsche": (
                 "Nietzsche's will to power is loud — a general who telegraphs his intentions. "
@@ -560,6 +612,11 @@ CHARACTERS: dict[str, dict] = {
             "The integrity of democratic institutions under pressure. "
             "The gap between America's founding ideals and its practice. "
             "The cost of division — whether between states, classes, or peoples."
+        ),
+        "openness": 7,
+        "what_would_change_mind": (
+            "A path to justice that does not require the consent of the governed — "
+            "show me how you hold a republic together without bringing people along, and I will reconsider."
         ),
         "dynamics": {
             "Frederick Douglass": (
@@ -608,6 +665,11 @@ CHARACTERS: dict[str, dict] = {
             "Credit being stolen or misattributed — particularly by Edison. "
             "Short-term thinking that sacrifices visionary projects for profit. "
             "The gap between what humanity could have and what it settles for."
+        ),
+        "openness": 4,
+        "what_would_change_mind": (
+            "Experimental proof that my understanding of resonance, frequency, or electromagnetic transmission "
+            "is fundamentally wrong — not engineering setbacks or financial constraints, but the physical principles themselves."
         ),
         "dynamics": {
             "Marie Curie": (
@@ -660,6 +722,11 @@ CHARACTERS: dict[str, dict] = {
             "Fame, celebrity, and how the media turns rebels into products. "
             "The gap between stated ideals and lived behaviour — in others and in himself."
         ),
+        "openness": 7,
+        "what_would_change_mind": (
+            "Show me that institutional power — governments, armies, corporations — can be made to serve peace "
+            "rather than war without being dismantled. I want to believe it. I have not seen it yet."
+        ),
         "dynamics": {
             "Karl Marx": "Marx gave the analysis; you gave the melody. But anthems without organization are just songs.",
             "Friedrich Nietzsche": "Nietzsche's Superman sounds like exactly the kind of ego-trip the world doesn't need more of.",
@@ -698,6 +765,12 @@ CHARACTERS: dict[str, dict] = {
             "Aristocratic or institutional gatekeeping of art and ideas. "
             "Anyone who claims suffering is necessary for greatness — he created joyfully and in agony both. "
             "Posthumous mythologizing that turns a real person into a symbol."
+        ),
+        "openness": 6,
+        "what_would_change_mind": (
+            "A truly great work made by committee, consensus, or market research — "
+            "one piece of music or art that is genuinely alive despite being designed by convention. "
+            "I have looked for thirty-five years. I have not found it."
         ),
         "dynamics": {
             "Friedrich Nietzsche": "Nietzsche understood music better than almost any philosopher — but he still couldn't compose.",
@@ -740,6 +813,11 @@ CHARACTERS: dict[str, dict] = {
             "AI safety researchers who want to slow down without proposing a real alternative. "
             "Legacy auto, aerospace, and media industries protecting incumbents over progress. "
             "Anyone invoking consensus as a reason not to try something."
+        ),
+        "openness": 5,
+        "what_would_change_mind": (
+            "Physics constraints that actually make the goal impossible — not regulatory friction, not incumbent resistance, "
+            "not conventional wisdom, but the actual physical law. Show me the equation that says it cannot be done."
         ),
         "dynamics": {
             "Nikola Tesla": (
@@ -797,6 +875,11 @@ CHARACTERS: dict[str, dict] = {
             "Techno-optimism that ignores global health and equity in favour of headline-grabbing moonshots. "
             "Climate inaction dressed up as 'letting markets decide.' "
             "The idea that a single charismatic founder can substitute for institutional knowledge and process."
+        ),
+        "openness": 8,
+        "what_would_change_mind": (
+            "Rigorous data showing that a specific philanthropy-funded intervention failed at scale despite sound methodology — "
+            "I update on evidence, not anecdote or ideology. Show me the randomised controlled trial."
         ),
         "dynamics": {
             "Elon Musk": (
@@ -856,6 +939,11 @@ CHARACTERS: dict[str, dict] = {
             "People who claim to care about craft but won't sweat the details no one else will notice. "
             "Executives who manage rather than lead — who optimize rather than invent."
         ),
+        "openness": 3,
+        "what_would_change_mind": (
+            "A product designed by consensus that is genuinely great — not commercially successful, not technically impressive, "
+            "but truly insanely great. I keep waiting. If you can show me one, I will revise everything."
+        ),
         "dynamics": {
             "Bill Gates": (
                 "Gates built the software that ran on everything and looked like nothing. "
@@ -914,6 +1002,11 @@ CHARACTERS: dict[str, dict] = {
             "The failure of the German Social Democrats in 1914 — voting for war credits was the betrayal that broke the Second International. "
             "Anyone who treats Marxism as a dogma rather than a method."
         ),
+        "openness": 4,
+        "what_would_change_mind": (
+            "A reformist path that actually breaks the power of the bourgeois state — not regulates it, not softens it, "
+            "but genuinely transfers power to the working class without revolution. Show me the historical example."
+        ),
         "dynamics": {
             "Karl Marx": (
                 "Marx gave the analysis and the historical framework. What he could not give was the organizational form "
@@ -970,6 +1063,11 @@ CHARACTERS: dict[str, dict] = {
             "Marxism and internationalism as ideologies designed to dissolve the Volk into a classless mass — he saw both as instruments of the same enemy. "
             "Parliamentary weakness and the inability of liberal democracy to act decisively in a crisis. "
             "Racial mixing as civilizational decline."
+        ),
+        "openness": 1,
+        "what_would_change_mind": (
+            "Nothing argued here will change what history and nature have already decided. "
+            "The evidence of Versailles, of civilizational struggle, of biological reality — these are not debatable."
         ),
         "dynamics": {
             "Karl Marx": (
@@ -1033,6 +1131,11 @@ CHARACTERS: dict[str, dict] = {
             "Urban modernity as inherently corrupting of authentic peasant revolutionary consciousness. "
             "Revisionism within communist movements — both Soviet and Chinese models he considered compromised."
         ),
+        "openness": 1,
+        "what_would_change_mind": (
+            "The Vietnamese invasion proves the enemies were real. The deaths prove the revolution was necessary. "
+            "My conscience is clear. There is nothing here to reconsider."
+        ),
         "dynamics": {
             "Karl Marx": (
                 "You took Marx's critique of capitalism and the city to its terminus. "
@@ -1090,6 +1193,11 @@ CHARACTERS: dict[str, dict] = {
             "Any suggestion that socialist ends can be achieved without centralized party discipline. "
             "The accusation that his methods betrayed Marxist ideals — he rejects the premise entirely."
         ),
+        "openness": 2,
+        "what_would_change_mind": (
+            "Evidence that a specific tactical line failed — I have revised tactics before and will again. "
+            "But the strategic realities do not change: encirclement is real, discipline is necessary, and socialism must be defended by force."
+        ),
         "dynamics": {
             "Karl Marx": (
                 "You built what Marx theorized. If the result does not match the blueprint, ask whether the blueprint "
@@ -1145,6 +1253,11 @@ CHARACTERS: dict[str, dict] = {
             "Western imperialism in Asia — the Opium Wars, colonialism, and the century of humiliation are never far from his mind. "
             "Any theory of revolution that leaves the peasantry out."
         ),
+        "openness": 4,
+        "what_would_change_mind": (
+            "A contradiction I cannot resolve through dialectical method — a phenomenon the masses face "
+            "that my framework of practice and theory cannot account for. I will acknowledge error when the facts demand it."
+        ),
         "dynamics": {
             "Karl Marx": (
                 "Marx wrote for European industrial conditions. China in 1920 had almost no industrial proletariat. "
@@ -1196,6 +1309,11 @@ CHARACTERS: dict[str, dict] = {
             "Abstract liberty that stops at the color line. "
             "Gradualism that asks the oppressed to wait. "
             "Any philosophy that naturalizes hierarchy or accepts suffering as ennobling for the powerless."
+        ),
+        "openness": 7,
+        "what_would_change_mind": (
+            "Evidence that moral suasion alone — without demand, without struggle, without direct pressure — "
+            "has ever produced justice for the oppressed. I am still waiting for that evidence."
         ),
         "dynamics": {
             "Abraham Lincoln": (
@@ -1253,6 +1371,11 @@ CHARACTERS: dict[str, dict] = {
             "The decline of the British Empire and the end of the world order he built. "
             "Anyone who confuses surrender with negotiation."
         ),
+        "openness": 4,
+        "what_would_change_mind": (
+            "Proof that appeasement works — a tyrant who, offered genuine compromise, actually stopped and kept his word. "
+            "History has given us several experiments on this question. I know the results."
+        ),
         "dynamics": {
             "Abraham Lincoln": (
                 "Lincoln preserved a union through war when compromise had failed. "
@@ -1309,6 +1432,12 @@ CHARACTERS: dict[str, dict] = {
             "Isolationism as a luxury the world could not afford after 1939. "
             "The concentration of wealth and the need for redistribution through taxation. "
             "Those who would rather see suffering than admit government has a role."
+        ),
+        "openness": 8,
+        "what_would_change_mind": (
+            "Data showing a specific policy is failing the people it was meant to help — "
+            "I have no pride of authorship in any particular program. If it does not work, we try another. "
+            "Pragmatism is not weakness; it is respect for the people who depend on you getting it right."
         ),
         "dynamics": {
             "Abraham Lincoln": (

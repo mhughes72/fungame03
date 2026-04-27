@@ -77,10 +77,14 @@ def generate_character_summaries(state: RoomState) -> dict:
             f"Transcript:\n{transcript}\n\n"
             f"Write a concise first-person summary for {name} covering:\n"
             f"- The main arguments you have made and how they evolved\n"
-            f"- Any positions you have shifted or conceded\n"
+            f"- Any positions you have shifted, qualified, or conceded — be specific\n"
+            f"- If a compelling argument or piece of evidence has genuinely challenged one of your "
+            f"starting positions, say so explicitly in first person (e.g. 'I find I can no longer "
+            f"dismiss...', 'I have begun to suspect...', 'The argument from X has forced me to "
+            f"reconsider...'). A great mind updates; do not paper over real movement.\n"
             f"- What you are currently defending\n"
-            f"- Key tensions you face from other participants\n\n"
-            f"Write as {name} reflecting on their own participation. 60–80 words."
+            f"- Key tensions you still face from other participants\n\n"
+            f"Write as {name} reflecting honestly on their own participation. 60–80 words."
         )
         response = _chat_llm().invoke([
             SystemMessage(content="You write concise first-person debate summaries in the voice of historical figures."),
