@@ -296,7 +296,14 @@ class SessionStore:
 def _detect_forced_speaker(text: str, participants: list[str]) -> Optional[str]:
     text_lower = text.lower()
     for name in participants:
+        # Check full name parts (e.g., "Franklin" in "Franklin Delano Roosevelt")
         for part in name.lower().split():
-            if len(part) > 3 and part in text_lower:
+            if len(part) >= 3 and part in text_lower:
                 return name
+
+        # Check initials (e.g., "FDR" for "Franklin Delano Roosevelt")
+        initials = ''.join(word[0] for word in name.split()).lower()
+        if len(initials) >= 2 and initials in text_lower:
+            return name
+
     return None
