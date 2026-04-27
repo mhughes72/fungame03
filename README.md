@@ -6,7 +6,7 @@ A terminal game powered by LangGraph and OpenAI where famous thinkers from histo
 
 You pick 2–4 historical figures, give them a topic, and watch them argue. Each turn the most likely candidate to react (scored by hot-topic keyword overlap with the last message) generates a response — a second candidate is generated only when scores are tied, and a selector LLM picks the winner. The debate runs in structured rounds: every 4 turns a moderator automatically steers the conversation toward common ground; every 12 turns a consensus checker evaluates whether the room has converged. You can jump in at any point to guide the conversation yourself.
 
-**26 characters** spanning philosophy, physics, politics, and tech — including Socrates, Nietzsche, Marx, Lenin, Stalin, Mao, Pol Pot, Hitler, Newton, Einstein, Bohr, Heisenberg, Feynman, Penrose, Musk, Gates, Jobs, and more.
+**25 characters** spanning philosophy, physics, politics, and tech — including Socrates, Nietzsche, Marx, Lenin, Stalin, Mao, Pol Pot, Hitler, Newton, Einstein, Bohr, Heisenberg, Feynman, Penrose, Musk, Gates, Jobs, Churchill, Roosevelt, and more.
 
 Response length adapts to context: a short pointed question gets a blunt one-liner; a long developed argument gets a full response.
 
@@ -47,13 +47,19 @@ python main.py --ui --debug 2>debug.log
 
 ## Web server
 
-The web version serves a browser-based frontend with a seating chart, debate timeline, and steer modal.
+The web version serves a browser-based frontend with a seating chart, a steer drawer, and end-of-debate reports.
 
 ```bash
 python run_server.py
 ```
 
 Opens at `http://localhost:8000`. The frontend is pre-built and served as static files — no Node.js required to run it.
+
+**Web UI features:**
+- **Seating chart** — oval table with DALL-E 3 portraits; seats pulse on active speaker and glow green on full consensus
+- **Steer drawer** — slides up from the bottom of the left column at each steer break; shows all 8 moderator styles with full descriptions; conversation remains visible above it
+- **End-of-debate report** — shown on both consensus and quit, with turn count, heat level, agreements reached, partial alignments, and unresolved tensions
+- **About / Help** — accessible from both the setup screen and the debate header; explains the rules and mechanics to new players
 
 **To rebuild the frontend after editing `client/src/`:**
 
@@ -264,17 +270,18 @@ Use 2 participants (faster, cheaper) unless a feature specifically requires more
 
 ---
 
-### 2. Steer modal (UI)
+### 2. Steer drawer (Web UI)
 
-**What to verify:** modal opens, accepts input, dismisses correctly, updates style.
+**What to verify:** drawer slides up, accepts input, dismisses correctly, updates style.
 
-1. Run `--ui`. Let the debate reach turn 4.
-2. Confirm the `SteerModal` opens automatically over the debate view (right sidebar remains fully visible and unobscured).
-3. Enter text in the input field → click **Steer** → confirm your text appears in the conversation as a `[You]` message and the debate continues.
-4. On the next steer break, select a different style from the radio list → click **Steer** without text → confirm the moderator generates a steer and the right pane style indicator updates.
-5. On the next steer break, click **Quit** → confirm the app exits cleanly.
+1. Run `python run_server.py` and open the web UI.
+2. Let the debate reach turn 4 (for 2 participants).
+3. Confirm the steer drawer slides up from the bottom of the left column — the conversation above remains fully visible.
+4. Enter text in the input field → click **Steer** → confirm your text appears in the conversation as a `[You]` message and the debate continues.
+5. On the next steer break, click a different style button → click **Steer** without text → confirm the moderator generates a steer in the new style.
+6. On the next steer break, click **Quit game** → confirm the end-of-debate report appears before the session ends.
 
-**Pass:** modal opens every steer break, user text and style selection both take effect, quit works.
+**Pass:** drawer opens every steer break, user text and style selection both take effect, quit shows the report.
 
 ---
 
@@ -446,7 +453,35 @@ Use 2 participants (faster, cheaper) unless a feature specifically requires more
 
 ---
 
-### 16. Portrait generation
+### 16. End-of-debate report (Web UI)
+
+**What to verify:** report appears after both consensus and quit; data is accurate.
+
+1. Reach consensus (or quit mid-debate) in the web UI.
+2. Confirm the report panel appears in the conversation pane with: turn count, heat level bar, agreements reached (if any), partial alignments, and unresolved tensions.
+3. On consensus: the panel should have a "consensus reached" header and list what everyone agreed on.
+4. On quit: the panel should have a "last call" header with whatever state was reached.
+5. Confirm the "Leave the bar" button clears the session.
+
+**Pass:** report displays correct turn count and heat; agreements/tensions match what was shown in the sidebar during debate.
+
+---
+
+### 17. About and Help modals (Web UI)
+
+**What to verify:** modals open, render content, and dismiss correctly.
+
+1. Open the web UI setup screen — confirm **About** and **Help** links appear in the footer.
+2. Click **About** → modal opens with game explanation and a GitHub link. Click outside the modal (or press Escape) → modal closes.
+3. Click **Help** → modal opens with player guide. Close it.
+4. Start a debate and confirm **About** and **Help** buttons appear in the debate header.
+5. Open one from the debate header — confirm it overlays the debate without disrupting the session.
+
+**Pass:** both modals open from both locations; click-outside and Escape close them; debate state is unaffected.
+
+---
+
+### 18. Portrait generation
 
 **What to verify:** `generate_portraits.py` creates images correctly.
 
@@ -459,14 +494,16 @@ Use 2 participants (faster, cheaper) unless a feature specifically requires more
 
 ---
 
-### 17. Quit / exit paths
+### 19. Quit / exit paths
 
 **What to verify:** all exit paths work cleanly without errors.
 
-1. **UI quit button (header):** click the Quit button in the top-right of the bar — app exits.
-2. **UI quit button (modal):** at a steer break, click Quit in the modal — app exits.
-3. **CLI `!quit`:** type `!quit` at the steer prompt — exits with farewell message.
-4. **Ctrl+C:** press Ctrl+C mid-debate — exits cleanly.
-5. **New topic then quit:** reach consensus, start a new topic, then quit — no crash.
+1. **Web header Quit:** click the Quit button in the debate header — end-of-debate report appears, then session ends.
+2. **Web steer drawer Quit:** at a steer break, click **Quit game** — end-of-debate report appears.
+3. **UI quit button (header):** click the Quit button in the top-right of the Textual bar — app exits.
+4. **UI quit button (modal):** at a steer break, click Quit in the modal — app exits.
+5. **CLI `!quit`:** type `!quit` at the steer prompt — exits with farewell message.
+6. **Ctrl+C:** press Ctrl+C mid-debate — exits cleanly.
+7. **New topic then quit:** reach consensus, start a new topic, then quit — no crash.
 
-**Pass:** all five paths exit without Python tracebacks or LangSmith thread errors.
+**Pass:** all paths exit without Python tracebacks or LangSmith thread errors; web quit paths show the end-of-debate report.

@@ -164,8 +164,9 @@ The consensus checker's structured output includes a `drifted_topic` field. If t
 |---|---|---|
 | Seating chart with portraits | Done | Oval table, DALL-E 3 portraits, pulse/glow seat states |
 | Debate summary in steer modal | Done | One-sentence state summary above text input |
-| Debate timeline strip | Done | Heatmap blocks per turn (colour = heat level), green outline for agreements, gold stripe for steers, hover tooltips |
-| End-of-debate report | TODO | Full report after consensus: all agreements reached, who shifted, heat arc, turn-by-turn highlights |
+| Debate timeline strip | Removed | Was implemented as a heatmap strip but removed — CSS deleted, `timeline.js` remains as dead code |
+| End-of-debate report | Done | Shows on both consensus and quit: turn count, heat bar, agreements, partial alignments, open tensions |
+| About / Help modals | Done | Accessible from setup screen footer and debate header; covers game explanation and player guide |
 | Stage direction graphics | TODO | Visual treatment for `*[action]*` asides — e.g. brief seat animation, overlay flash, or distinct styled block in the convo pane |
 
 ## Persona manipulation (TODO)
@@ -208,7 +209,7 @@ Add an entry to `CHARACTERS` in `personas.py`. All fields are required:
 
 `dynamics` is defined but not currently injected into prompts — characters react based on what is actually said.
 
-Current characters: Socrates, Nietzsche, Marx, Sun Tzu, Abraham Lincoln, Nikola Tesla, Frederick Douglass, John Lennon, Wolfgang Amadeus Mozart, Elon Musk, Bill Gates, Steve Jobs, Vladimir Lenin, Adolf Hitler, Joseph Stalin, Mao Zedong, Pol Pot, Isaac Newton, Albert Einstein, Niels Bohr, Werner Heisenberg, Richard Feynman, Roger Penrose.
+Current characters (25): Socrates, Nietzsche, Marx, Sun Tzu, Abraham Lincoln, Nikola Tesla, Frederick Douglass, John Lennon, Wolfgang Amadeus Mozart, Elon Musk, Bill Gates, Steve Jobs, Vladimir Lenin, Adolf Hitler, Joseph Stalin, Mao Zedong, Pol Pot, Isaac Newton, Albert Einstein, Niels Bohr, Werner Heisenberg, Richard Feynman, Roger Penrose, Winston Churchill, Franklin Delano Roosevelt.
 
 Good candidates to add: Hannah Arendt (essential with the authoritarian cast), Machiavelli, Thomas Jefferson, Dostoevsky, Oscar Wilde, Voltaire, Napoleon, Confucius, Ibn Khaldun.
 
