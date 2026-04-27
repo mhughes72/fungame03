@@ -12,32 +12,18 @@ from textual.widgets import Button, Footer, Input, Label, RadioButton, RadioSet,
 from textual.widgets.selection_list import Selection
 from textual import work
 
-_BAR_BEATS = [
-    "*[someone orders another round]*",
-    "*[the candle gutters]*",
-    "*[a glass is set down too hard]*",
-    "*[laughter drifts in from the next table]*",
-    "*[the barkeep wipes the counter without looking up]*",
-    "*[rain streaks the windows]*",
-    "*[a chair scrapes back]*",
-    "*[the fire settles with a soft crack]*",
-    "*[someone lights a cigarette and doesn't offer one]*",
-    "*[a long silence from the street outside]*",
-    "*[the clock above the bar ticks once]*",
-    "*[a cork is pulled somewhere in the back]*",
-    "*[the door swings open — cold draft — then closes]*",
-    "*[ice melts in an untouched glass]*",
-    "*[the lights flicker, then hold]*",
-]
 
 from graph import build_graph
 from nodes import (
     summarize_history,
     generate_character_summaries,
     generate_moderator_steer,
+    detect_forced_speaker,
+    MODERATOR_STYLES as _MODERATOR_STYLES,
+    BAR_BEATS as _BAR_BEATS,
 )
 from personas import CHARACTERS
-from state import RoomState
+from state import RoomState, new_room_state, reset_for_new_topic
 import debug as dbg
 
 
@@ -508,27 +494,7 @@ class PhilosopherBar(App):
         self.participants = participants
         self.topic = topic
         self.graph = build_graph(self.participants)
-        self.state = {
-            "messages": [],
-            "topic": self.topic,
-            "participants": self.participants,
-            "current_speaker": "",
-            "recent_speakers": [],
-            "turn_count": 0,
-            "max_turns": max_turns,
-            "consensus": False,
-            "consensus_summary": "",
-            "partial_agreements": [],
-            "points_of_agreement": [],
-            "remaining_disagreements": [],
-            "argument_log": {},
-            "concession_counts": {},
-            "character_summaries": {},
-            "moderator_style": "socratic",
-            "forced_speaker": "",
-            "heat": 0,
-            "drift_topic": "",
-        }
+        self.state = new_room_state(self.participants, self.topic, max_turns)
         self.query_one("#header-title", Static).update(
             f"[bold yellow]THE PHILOSOPHER'S BAR[/]   [#5c3a00]{self.topic}[/]"
         )
@@ -611,20 +577,11 @@ class PhilosopherBar(App):
     # ---------------------------------------------------------------------- #
 
     def _open_steer_modal(self) -> None:
-        from main import _MODERATOR_STYLES
         current_style = self.state.get("moderator_style", "socratic")
         self.push_screen(
             SteerModal(current_style, _MODERATOR_STYLES),
             callback=self._on_steer_result,
         )
-
-    def _detect_forced_speaker(self, text: str) -> str | None:
-        text_lower = text.lower()
-        for name in self.participants:
-            for part in name.lower().split():
-                if len(part) > 3 and part in text_lower:
-                    return name
-        return None
 
     def _on_steer_result(self, result: tuple | None) -> None:
         if result is None:
@@ -641,7 +598,7 @@ class PhilosopherBar(App):
 
         if text:
             dbg.dlog("STATE", "User message injected", {"content": text})
-            forced = self._detect_forced_speaker(text)
+            forced = detect_forced_speaker(text, self.participants)
             if forced:
                 dbg.dlog("STATE", f"Calling out {forced}")
             self.state = {
@@ -698,24 +655,7 @@ class PhilosopherBar(App):
 
     def _reset_for_new_topic(self, topic: str) -> None:
         self.topic = topic
-        self.state = {
-            **self.state,
-            "topic": topic,
-            "messages": [],
-            "recent_speakers": [],
-            "turn_count": 0,
-            "consensus": False,
-            "consensus_summary": "",
-            "partial_agreements": [],
-            "points_of_agreement": [],
-            "remaining_disagreements": [],
-            "argument_log": {},
-            "concession_counts": {},
-            "character_summaries": {},
-            "forced_speaker": "",
-            "heat": 0,
-            "drift_topic": "",
-        }
+        self.state = reset_for_new_topic(self.state, topic)
         self.query_one("#header-title", Static).update(
             f"[bold yellow]THE PHILOSOPHER'S BAR[/]   [#5c3a00]{topic}[/]"
         )
@@ -781,7 +721,6 @@ class PhilosopherBar(App):
         seats.update("   ".join(parts))
 
     def _update_debate_state(self) -> None:
-        from main import _MODERATOR_STYLES
         panel = self.query_one("#right-pane", Static)
         lines = [f"[bold #f5c842]TONIGHT'S QUESTION[/]\n[#8a7040]{self.state['topic']}[/]\n"]
 

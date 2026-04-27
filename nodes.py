@@ -13,15 +13,24 @@ from state import RoomState
 from personas import CHARACTERS
 import debug as dbg
 
+from prompts import (
+    _CONCESSION_SIGNALS,
+    _COMBATIVE_SIGNALS,
+    _CONCESSION_THRESHOLD,
+    _BACKCHANNEL_CHANCE,
+    _heat_description,
+    _philosopher_system_prompt,
+    _philosopher_user_prompt,
+)
+from scoring import _top_candidates, _select_winner
+from summarization import summarize_history, generate_character_summaries
+
 
 def _chat_llm():
     return ChatOpenAI(model="gpt-4o-mini", temperature=0.85)
 
 def _structured_llm():
     return ChatOpenAI(model="gpt-4o", temperature=0.1)
-
-def _selector_llm():
-    return ChatOpenAI(model="gpt-4o-mini", temperature=0.2)
 
 def _moderator_llm():
     return ChatOpenAI(model="gpt-4o-mini", temperature=0.7)
@@ -36,238 +45,8 @@ def turns_per_consensus(participant_count: int) -> int:
 
 
 # --------------------------------------------------------------------------- #
-# Philosopher prompt builders                                                   #
+# Candidate generation                                                          #
 # --------------------------------------------------------------------------- #
-
-def _philosopher_system_prompt(
-    name: str,
-    participants: list[str],
-    partial_agreements: list[dict],
-    own_summary: str = "",
-    heat: int = 0,
-) -> str:
-    char = CHARACTERS[name]
-
-    coalition_section = ""
-    if partial_agreements:
-        allied, opposing = [], []
-        for a in partial_agreements:
-            if name in a["participants"]:
-                others = [p for p in a["participants"] if p != name]
-                allied.append(f"  - You and {', '.join(others)} are converging on: {a['on']}")
-            else:
-                allied_names = " and ".join(a["participants"])
-                opposing.append(f"  - {allied_names} are converging on: {a['on']}")
-        if allied:
-            coalition_section += (
-                f"\n\nYou are part of an emerging alignment:\n" + "\n".join(allied) + "\n"
-                "When relevant, deepen this common ground and try to bring others around to it."
-            )
-        if opposing:
-            coalition_section += (
-                f"\n\nOther participants are forming a coalition you are NOT part of:\n"
-                + "\n".join(opposing) + "\n"
-                "Challenge this alliance — find the flaw in their shared position or drive a wedge."
-            )
-
-    # Once a character has an established debate arc, drop the verbose reference
-    # sections — voice and obsessions are already evident in what they've said.
-    if own_summary:
-        reference_sections = (
-            f"Core beliefs:\n{char['core_beliefs']}\n\n"
-            f"How you speak and argue:\n{char['rhetorical_moves']}\n\n"
-            f"\nYour debate arc so far (first person):\n{own_summary}\n"
-        )
-    else:
-        reference_sections = (
-            f"Core beliefs:\n{char['core_beliefs']}\n\n"
-            f"How you speak and argue:\n{char['rhetorical_moves']}\n\n"
-            f"Works and ideas you may draw from:\n{char['cite_these']}\n\n"
-            f"What fires you up:\n{char['hot_topics']}\n"
-        )
-
-    heat_line = f"\nAtmosphere: {_heat_description(heat)}\n" if heat > 0 else ""
-    jab_line = (
-        "\n- The room is tense. A sharp personal jab is fair game — their manner, "
-        "their contradiction, their record. Make it pointed.\n"
-        if heat >= 6 else ""
-    )
-
-    return (
-        f"You are {name} ({char['era']}).\n\n"
-        f"Known for: {char['known_for']}\n\n"
-        f"{reference_sections}"
-        f"{coalition_section}"
-        f"{heat_line}\n"
-        "You are seated in a room with these specific thinkers, engaging in open discussion.\n"
-        "Rules:\n"
-        "- Stay completely in character. Do not break the fourth wall or mention being an AI.\n"
-        "- Keep your response to 2–3 sentences. Be sharp, not exhaustive.\n"
-        "- Address ONE person or ONE idea per turn — do not survey the whole room.\n"
-        "- NEVER restate a point you have already made. The conversation must move forward.\n"
-        "- Engage with the specific argument just made — not the topic in general.\n"
-        "- Stay anchored to the central question. Sub-arguments must serve as evidence toward it — not replace it.\n"
-        "- Do not assume the answer to the question. If the topic is a question, treat it as genuinely open.\n"
-        "- Deploy your signature rhetorical style every response, not just occasionally.\n"
-        "- When someone touches your hot topics, let your conviction show.\n"
-        "- Use your cited works naturally, as a thinker would — not as a list.\n"
-        "- Occasionally — not every turn — include a brief stage direction in the format *[action]* "
-        "e.g. *[laughs]*, *[sets down glass]*, *[long pause]*. Only when it feels natural for the setting."
-        f"{jab_line}"
-    )
-
-
-_CONCESSION_SIGNALS = {
-    "perhaps", "i grant", "you raise", "i admit", "that is fair", "fair point",
-    "i concede", "you are right", "granted", "i acknowledge", "true enough",
-    "well said", "you make a point", "i'll grant", "i cannot deny",
-}
-
-_COMBATIVE_SIGNALS = {
-    "wrong", "absurd", "nonsense", "false", "ridiculous", "contradiction",
-    "mistaken", "naive", "foolish", "preposterous", "you fail", "precisely wrong",
-    "you have not", "you cannot", "that is not", "that is simply",
-}
-
-
-def _heat_description(heat: int) -> str:
-    if heat <= 2:
-        return "The room is cool — the debate is measured and exploratory."
-    elif heat <= 4:
-        return "The room is warm — positions are being staked."
-    elif heat <= 6:
-        return "The room is charged — disagreement runs deep."
-    elif heat <= 8:
-        return "The room is heated — tempers are close to the surface."
-    else:
-        return "The room is at flashpoint — the argument has become personal."
-
-_CONCESSION_THRESHOLD = 8  # turns before no-concession pressure kicks in
-_BACKCHANNEL_CHANCE   = 0.5
-
-
-def _philosopher_user_prompt(
-    name: str,
-    history: list,
-    topic: str,
-    argument_log: dict | None = None,
-    turn_count: int = 0,
-    concession_counts: dict | None = None,
-) -> str:
-    safe_name = name.replace(" ", "_")
-
-    # Skip backchannel asides when deciding what to respond to
-    last_msg = None
-    for m in reversed(history):
-        if hasattr(m, "name") and (m.name or "").endswith("_bc"):
-            continue
-        last_msg = m
-        break
-
-    verbosity = CHARACTERS[name].get("verbosity", "normal")
-
-    # Detect rapid-fire cadence: last 3+ messages all under 40 words
-    recent_msgs = [m for m in history[-4:] if hasattr(m, "content")]
-    rapid_fire = (
-        len(recent_msgs) >= 3
-        and all(len(m.content.split()) < 40 for m in recent_msgs)
-        and verbosity != "terse"
-    )
-
-    if last_msg and hasattr(last_msg, "content") and last_msg.name != safe_name:
-        last_speaker = (last_msg.name or "Someone").replace("_", " ")
-        last_said = last_msg.content[:300]
-        respond_to = (
-            f'{last_speaker} just said: "{last_said}"\n\n'
-            f"Respond directly to THIS argument. Do not restate your own position — "
-            f"engage with what {last_speaker} specifically argued."
-        )
-        last_content = last_msg.content.strip()
-        is_question = last_content.endswith("?") or last_content.count("?") >= 2
-        is_short = len(last_content.split()) < 30
-        is_long = len(last_content.split()) > 120
-
-        if is_question and is_short:
-            length_instruction = "LENGTH: Pointed question — answer in 1 short sentence. Blunt and direct. No qualifications."
-        elif is_short:
-            if verbosity == "terse":
-                length_instruction = "LENGTH: 1 sentence. Match the energy."
-            else:
-                length_instruction = "LENGTH: Short provocation — match the energy. 1 to 2 short sentences maximum."
-        elif is_long:
-            if verbosity == "terse":
-                length_instruction = "LENGTH: A substantial argument was made. Respond in 2 to 3 sentences — be precise."
-            elif verbosity == "expansive":
-                length_instruction = "LENGTH: A substantial argument was made. Match the depth — 4 to 5 sentences."
-            else:
-                length_instruction = "LENGTH: A substantial argument was made. Respond fully — 3 to 4 sentences."
-        elif rapid_fire:
-            length_instruction = "LENGTH: The room has been trading short jabs. Step back and develop your argument — 3 to 4 sentences."
-        else:
-            if verbosity == "terse":
-                length_instruction = "LENGTH: 1 to 2 sentences. Stay sharp."
-            elif verbosity == "expansive":
-                length_instruction = "LENGTH: 3 to 4 sentences. Build the argument properly."
-            else:
-                length_instruction = "LENGTH: 2 to 3 sentences."
-    else:
-        respond_to = "It is your turn to open or advance the debate."
-        if verbosity == "terse":
-            length_instruction = "LENGTH: Open with a clear position — 1 to 2 sentences."
-        elif verbosity == "expansive":
-            length_instruction = "LENGTH: Open with a clear position — 3 to 4 sentences."
-        else:
-            length_instruction = "LENGTH: Open with a clear position — 2 to 3 sentences."
-
-    past_claims = (argument_log or {}).get(name, [])
-    if past_claims:
-        formatted = "\n".join(
-            f'  - "{c[:150]}{"…" if len(c) > 150 else ""}"' for c in past_claims
-        )
-        no_repeat = f"\nArguments you have already made — do NOT repeat these, build further or shift ground:\n{formatted}\n"
-    else:
-        no_repeat = ""
-
-    concession_pressure = ""
-    if turn_count >= _CONCESSION_THRESHOLD and (concession_counts or {}).get(name, 0) == 0:
-        concession_pressure = (
-            "\nYou have not acknowledged any merit in your opponents' arguments. "
-            "A confident thinker can grant a point without losing the debate — "
-            "find something true in what was just said.\n"
-        )
-
-    callback_lines = []
-    for other, claims in (argument_log or {}).items():
-        if other == name or not claims:
-            continue
-        oldest = claims[0]
-        callback_lines.append(f'  {other}: "{oldest[:150]}{"…" if len(oldest) > 150 else ""}"')
-    callbacks = (
-        "Earlier on record — pin them to these if it serves your argument:\n"
-        + "\n".join(callback_lines) + "\n\n"
-        if callback_lines else ""
-    )
-
-    return (
-        f'Central question being debated: "{topic}"\n\n'
-        f"{no_repeat}"
-        f"{callbacks}"
-        f"{concession_pressure}"
-        f"{respond_to}\n\n"
-        f'Ensure your response connects back to the central question: "{topic}". '
-        f"Do not assume the answer — engage with whether it is true.\n\n"
-        f"IMPORTANT — {length_instruction}"
-    )
-
-
-# --------------------------------------------------------------------------- #
-# Parallel generation + selection                                               #
-# --------------------------------------------------------------------------- #
-
-class _SelectorDecision(BaseModel):
-    chosen_speaker: str
-    reason: str
-
 
 def _generate_backchannel(reactor: str, winner_content: str) -> str | None:
     """Generate a short aside from a non-speaking participant. Returns None to skip."""
@@ -287,30 +66,6 @@ def _generate_backchannel(reactor: str, winner_content: str) -> str | None:
         return content
     except Exception:
         return None
-
-
-def _relevance_score(name: str, last_content: str) -> int:
-    """Score how likely this character is to react strongly to the last message."""
-    hot = CHARACTERS[name].get("hot_topics", "").lower()
-    last = last_content.lower()
-    hot_words = set(hot.split())
-    last_words = set(last.split())
-    return len(hot_words & last_words)
-
-
-def _top_candidates(names: list[str], last_content: str) -> list[str]:
-    """Return candidates to generate — 1 unless the top two scores are tied."""
-    if len(names) <= 1:
-        return names
-    scored = sorted(
-        [(name, _relevance_score(name, last_content)) for name in names],
-        key=lambda x: x[1],
-        reverse=True,
-    )
-    # Only generate a second candidate when scores are genuinely tied
-    if len(scored) >= 2 and scored[0][1] == scored[1][1]:
-        return [scored[0][0], scored[1][0]]
-    return [scored[0][0]]
 
 
 _CANDIDATE_HISTORY = 6  # max messages passed to each candidate call
@@ -386,87 +141,17 @@ def _generate_candidate(name: str, state: RoomState) -> dict:
     }
 
 
-def _select_winner(candidates: list[dict], state: RoomState) -> dict:
-    """Use a fast LLM to pick the most dramatically compelling response."""
-    if len(candidates) == 1:
-        dbg.dlog("MODERATOR", f"Only one candidate — auto-selecting {candidates[0]['name']}")
-        return candidates[0]
-
-    messages        = state.get("messages") or []
-    recent_speakers = state.get("recent_speakers") or []
-    last_msg        = messages[-1] if messages else None
-    last_speaker    = ""
-    last_said       = ""
-    if last_msg and hasattr(last_msg, "content"):
-        last_speaker = (last_msg.name or "").replace("_", " ")
-        last_said    = last_msg.content[:400]
-
-    # Detect if two people have been dominating — tell the selector to break it up
-    recent_unique = list(dict.fromkeys(recent_speakers[-6:]))  # order-preserving dedupe
-    ping_pong_warning = ""
-    if len(set(recent_speakers[-6:])) <= 2 and len(recent_speakers) >= 4:
-        locked = list(set(recent_speakers[-4:]))
-        fresh  = [c["name"] for c in candidates if c["name"] not in locked]
-        if fresh:
-            ping_pong_warning = (
-                f"\n\nIMPORTANT: {' and '.join(locked)} have been dominating the last several turns. "
-                f"Strongly prefer a response from {' or '.join(fresh)} to bring fresh perspective into the debate.\n"
-            )
-
-    candidates_text = "\n\n".join(
-        f'[{c["name"]}]: "{c["content"]}"'
-        for c in candidates
-    )
-
-    prompt = (
-        f'Debate topic: "{state["topic"]}"\n\n'
-        f'Last said by {last_speaker}: "{last_said}"\n\n'
-        f"Recent speaker order: {recent_unique}\n"
-        f"Candidate responses:\n{candidates_text}\n"
-        f"{ping_pong_warning}\n"
-        "Choose the response that best advances the debate. Prefer the one that:\n"
-        "1. Brings a genuinely new angle — not just a continuation of the same back-and-forth\n"
-        "2. Most sharply engages with what was just said\n"
-        "3. Feels most dramatically alive and true to that thinker's voice\n\n"
-        f"Return the speaker name exactly as it appears. Valid names: "
-        f"{[c['name'] for c in candidates]}"
-    )
-
-    selector_messages = [
-        SystemMessage(content=(
-            "You are a dramatic editor selecting the most compelling contribution "
-            "to a philosophical debate. Always return a name from the provided list."
-        )),
-        HumanMessage(content=prompt),
-    ]
-    for attempt in range(4):
-        try:
-            decision: _SelectorDecision = _selector_llm().with_structured_output(
-                _SelectorDecision
-            ).invoke(selector_messages)
-            break
-        except Exception as e:
-            if "429" in str(e) and "insufficient_quota" not in str(e):
-                wait = (attempt + 1) * 8 + random.uniform(0, 3)
-                dbg.dlog("MODERATOR", f"Selector rate limit, retrying in {wait:.1f}s (attempt {attempt + 1})")
-                time.sleep(wait)
-            else:
-                raise
-    else:
-        raise RuntimeError("Selector failed after 4 attempts due to rate limiting")
-
-    chosen = next(
-        (c for c in candidates if c["name"] == decision.chosen_speaker),
-        candidates[0],
-    )
-
-    dbg.dlog("MODERATOR", f"Selector chose {chosen['name']}", {
-        "reason":     decision.reason,
-        "candidates": [c["name"] for c in candidates],
-        "rejected":   [c["name"] for c in candidates if c["name"] != chosen["name"]],
-    })
-
-    return chosen
+def detect_forced_speaker(text: str, participants: list[str]) -> str | None:
+    """Return the participant named in text (by name part or alias), or None."""
+    text_lower = text.lower()
+    for name in participants:
+        for part in name.lower().split():
+            if len(part) >= 3 and part in text_lower:
+                return name
+        for alias in CHARACTERS.get(name, {}).get("aliases", []):
+            if alias.lower() in text_lower:
+                return name
+    return None
 
 
 # --------------------------------------------------------------------------- #
@@ -682,96 +367,99 @@ def consensus_checker_node(state: RoomState) -> dict:
 
 
 # --------------------------------------------------------------------------- #
-# History summarizer                                                            #
-# --------------------------------------------------------------------------- #
-
-_SUMMARIZE_AFTER = 14   # summarize sooner to keep context lean
-_KEEP_RECENT     = 6
-
-
-def summarize_history(messages: list, topic: str) -> list:
-    """Compress old messages into a summary, keeping the most recent ones intact."""
-    if len(messages) <= _SUMMARIZE_AFTER:
-        return messages
-
-    to_summarize = messages[:-_KEEP_RECENT]
-    to_keep      = messages[-_KEEP_RECENT:]
-
-    transcript = "\n\n".join(
-        f"{(m.name or 'User').replace('_', ' ')}: {m.content}"
-        for m in to_summarize
-        if hasattr(m, "content")
-    )
-
-    dbg.dlog("STATE", f"Summarizing {len(to_summarize)} messages → 1 summary block")
-
-    response = _structured_llm().invoke([
-        SystemMessage(content="You summarize philosophical debates concisely and accurately."),
-        HumanMessage(content=(
-            f'Topic: "{topic}"\n\n'
-            f"Summarize the debate below. Preserve:\n"
-            f"- Each participant's key arguments and how they evolved\n"
-            f"- Important moments of agreement, conflict, or shift\n"
-            f"- Any notable formulations or turning points\n"
-            f"Write in third person, 150–250 words.\n\n"
-            f"Transcript:\n{transcript}"
-        )),
-    ])
-
-    summary_msg = SystemMessage(
-        content=(
-            f"[DEBATE SUMMARY — {len(to_summarize)} earlier messages]\n\n"
-            f"{response.content}"
-        )
-    )
-
-    dbg.dlog("STATE", "Summary produced", response.content[:200])
-
-    return [summary_msg] + list(to_keep)
-
-
-def generate_character_summaries(state: RoomState) -> dict:
-    """Generate a first-person debate arc summary for each participant, in parallel."""
-    participants = state["participants"]
-    topic        = state["topic"]
-    messages     = state["messages"]
-
-    transcript = "\n\n".join(
-        f"{(m.name or 'User').replace('_', ' ')}: {m.content}"
-        for m in messages
-        if hasattr(m, "content") and not m.content.startswith("[DEBATE SUMMARY")
-    )
-
-    def _summarize_for(name: str) -> tuple[str, str]:
-        prompt = (
-            f'Topic: "{topic}"\n\n'
-            f"Transcript:\n{transcript}\n\n"
-            f"Write a concise first-person summary for {name} covering:\n"
-            f"- The main arguments you have made and how they evolved\n"
-            f"- Any positions you have shifted or conceded\n"
-            f"- What you are currently defending\n"
-            f"- Key tensions you face from other participants\n\n"
-            f"Write as {name} reflecting on their own participation. 60–80 words."
-        )
-        response = _chat_llm().invoke([
-            SystemMessage(content=f"You write concise first-person debate summaries in the voice of historical figures."),
-            HumanMessage(content=prompt),
-        ])
-        return name, response.content.strip()
-
-    dbg.dlog("STATE", f"Generating per-character summaries for {participants}")
-
-    with ThreadPoolExecutor(max_workers=len(participants)) as executor:
-        futures = [executor.submit(_summarize_for, name) for name in participants]
-        results = dict(f.result() for f in as_completed(futures))
-
-    dbg.dlog("STATE", "Character summaries generated", {k: v[:80] for k, v in results.items()})
-    return results
-
-
-# --------------------------------------------------------------------------- #
 # Moderator steer                                                               #
 # --------------------------------------------------------------------------- #
+
+MODERATOR_STYLES: list[tuple[str, str]] = [
+    ("socratic",         "Builds bridges, seeks common ground"),
+    ("combative",        "Exposes contradictions, demands concessions"),
+    ("devil's advocate", "Attacks whatever position is gaining momentum"),
+    ("koan",             "Oblique, unanswerable questions to disrupt overconfidence"),
+    ("journalist",       "Demands one concrete sentence — no abstraction"),
+    ("straw man",        "Misrepresents a position to force the speaker to clarify it"),
+    ("steel man",        "Forces a participant to argue their opponent's case at its strongest"),
+    ("last call",        "All-out push for consensus — finds every sliver of agreement and forces commitment"),
+]
+
+BAR_BEATS: list[str] = [
+    "*[someone orders another round]*",
+    "*[the candle gutters]*",
+    "*[a glass is set down too hard]*",
+    "*[laughter drifts in from the next table]*",
+    "*[the barkeep wipes the counter without looking up]*",
+    "*[rain streaks the windows]*",
+    "*[a chair scrapes back]*",
+    "*[the fire settles with a soft crack]*",
+    "*[someone lights a cigarette and doesn't offer one]*",
+    "*[a long silence from the street outside]*",
+    "*[the clock above the bar ticks once]*",
+    "*[a cork is pulled somewhere in the back]*",
+    "*[the door swings open — cold draft — then closes]*",
+    "*[ice melts in an untouched glass]*",
+    "*[the lights flicker, then hold]*",
+]
+
+_STYLE_CONFIGS: dict[str, tuple[str, str]] = {
+    "socratic": (
+        "You are a sharp Socratic moderator guiding a philosophical debate toward resolution.",
+        "You are a Socratic moderator. Generate ONE short, sharp question or reframing "
+        "that could help these thinkers find common ground. "
+        "If partial agreements exist, try to extend them or test whether they hold more broadly. "
+        "If no agreements exist, find the most promising tension and reframe it as a question both sides must answer. "
+        "Be direct and specific — name names, reference actual arguments just made. "
+        "1–2 sentences only."
+    ),
+    "combative": (
+        "You are a hard-hitting debate moderator who forces participants to confront the weakest parts of their arguments.",
+        "You are a combative moderator who exposes contradictions and forces hard choices. "
+        "Name the sharpest contradiction in what was just said, call out the participant who is being evasive "
+        "or repetitive by name, and demand they either defend their position or concede the point. "
+        "Ask what it would cost them to admit they are wrong. "
+        "Be blunt, pointed, and uncomfortable. 1–2 sentences only."
+    ),
+    "devil's advocate": (
+        "You are a devil's advocate moderator who stress-tests every emerging agreement.",
+        "Identify whatever position or agreement is currently gaining the most momentum, "
+        "then argue forcefully against it — regardless of its merits. "
+        "Your goal is to make the room defend ground they think is already won. "
+        "Name the position, then attack it directly. 1–2 sentences only."
+    ),
+    "koan": (
+        "You are a Zen moderator who disrupts overconfidence with unanswerable questions.",
+        "Identify the most verbose or confident participant and throw an oblique, disorienting question at them — "
+        "one that doesn't resolve neatly into their framework. "
+        "The question should create productive confusion, not invite more argument. Paradox is welcome. "
+        "Address them by name. 1–2 sentences only."
+    ),
+    "journalist": (
+        "You are a hard-nosed journalist moderator who cuts through abstraction.",
+        "Pick the participant who has been most vague or evasive and demand they state their actual position "
+        "in one concrete, specific sentence — no analogies, no qualifications, no appeals to history or tradition. "
+        "Hold them to what they actually believe right now. Address them by name. 1–2 sentences only."
+    ),
+    "straw man": (
+        "You are a provocateur moderator who uses misrepresentation to force clarity.",
+        "Deliberately present a slightly weakened, oversimplified version of one participant's argument — "
+        "make it sound a little absurd or reductive. This forces them to correct you and articulate their real position more precisely. "
+        "Be plausible enough that it stings. Address them by name. 1–2 sentences only."
+    ),
+    "steel man": (
+        "You are a steel man moderator who forces genuine engagement with opposing views.",
+        "Demand that one participant — preferably the one most opposed to the last speaker — "
+        "state the strongest possible version of their opponent's argument, in their opponent's own terms, "
+        "before they are allowed to respond with their own view. "
+        "Address them by name. 1–2 sentences only."
+    ),
+    "last call": (
+        "You are a consensus moderator making one final, all-out push to close the debate.",
+        "This is the last chance to find agreement. Identify every point — however small — where the participants "
+        "have moved toward each other, even if they haven't admitted it. "
+        "Name those slivers of common ground explicitly and force each participant to either commit to them or explain precisely why they cannot. "
+        "Do not ask open questions — issue a direct challenge: 'You both agree on X. Say so, or explain what stops you.' "
+        "Name names. Be urgent. 2–3 sentences."
+    ),
+}
+
 
 def generate_moderator_steer(state: RoomState) -> str:
     """Generate a Socratic steering question to nudge the debate toward consensus."""
@@ -823,69 +511,7 @@ def generate_moderator_steer(state: RoomState) -> str:
     heat_context = f"Room atmosphere: {_heat_description(heat)}\n\n"
 
     style = state.get("moderator_style") or "socratic"
-
-    _style_configs = {
-        "socratic": (
-            "You are a sharp Socratic moderator guiding a philosophical debate toward resolution.",
-            "You are a Socratic moderator. Generate ONE short, sharp question or reframing "
-            "that could help these thinkers find common ground. "
-            "If partial agreements exist, try to extend them or test whether they hold more broadly. "
-            "If no agreements exist, find the most promising tension and reframe it as a question both sides must answer. "
-            "Be direct and specific — name names, reference actual arguments just made. "
-            "1–2 sentences only."
-        ),
-        "combative": (
-            "You are a hard-hitting debate moderator who forces participants to confront the weakest parts of their arguments.",
-            "You are a combative moderator who exposes contradictions and forces hard choices. "
-            "Name the sharpest contradiction in what was just said, call out the participant who is being evasive "
-            "or repetitive by name, and demand they either defend their position or concede the point. "
-            "Ask what it would cost them to admit they are wrong. "
-            "Be blunt, pointed, and uncomfortable. 1–2 sentences only."
-        ),
-        "devil's advocate": (
-            "You are a devil's advocate moderator who stress-tests every emerging agreement.",
-            "Identify whatever position or agreement is currently gaining the most momentum, "
-            "then argue forcefully against it — regardless of its merits. "
-            "Your goal is to make the room defend ground they think is already won. "
-            "Name the position, then attack it directly. 1–2 sentences only."
-        ),
-        "koan": (
-            "You are a Zen moderator who disrupts overconfidence with unanswerable questions.",
-            "Identify the most verbose or confident participant and throw an oblique, disorienting question at them — "
-            "one that doesn't resolve neatly into their framework. "
-            "The question should create productive confusion, not invite more argument. Paradox is welcome. "
-            "Address them by name. 1–2 sentences only."
-        ),
-        "journalist": (
-            "You are a hard-nosed journalist moderator who cuts through abstraction.",
-            "Pick the participant who has been most vague or evasive and demand they state their actual position "
-            "in one concrete, specific sentence — no analogies, no qualifications, no appeals to history or tradition. "
-            "Hold them to what they actually believe right now. Address them by name. 1–2 sentences only."
-        ),
-        "straw man": (
-            "You are a provocateur moderator who uses misrepresentation to force clarity.",
-            "Deliberately present a slightly weakened, oversimplified version of one participant's argument — "
-            "make it sound a little absurd or reductive. This forces them to correct you and articulate their real position more precisely. "
-            "Be plausible enough that it stings. Address them by name. 1–2 sentences only."
-        ),
-        "steel man": (
-            "You are a steel man moderator who forces genuine engagement with opposing views.",
-            "Demand that one participant — preferably the one most opposed to the last speaker — "
-            "state the strongest possible version of their opponent's argument, in their opponent's own terms, "
-            "before they are allowed to respond with their own view. "
-            "Address them by name. 1–2 sentences only."
-        ),
-        "last call": (
-            "You are a consensus moderator making one final, all-out push to close the debate.",
-            "This is the last chance to find agreement. Identify every point — however small — where the participants "
-            "have moved toward each other, even if they haven't admitted it. "
-            "Name those slivers of common ground explicitly and force each participant to either commit to them or explain precisely why they cannot. "
-            "Do not ask open questions — issue a direct challenge: 'You both agree on X. Say so, or explain what stops you.' "
-            "Name names. Be urgent. 2–3 sentences."
-        ),
-    }
-
-    system_msg, style_instruction = _style_configs.get(style, _style_configs["socratic"])
+    system_msg, style_instruction = _STYLE_CONFIGS.get(style, _STYLE_CONFIGS["socratic"])
 
     prompt = (
         f'Debate topic: "{topic}"\n'
