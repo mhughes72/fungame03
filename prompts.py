@@ -30,6 +30,29 @@ def _heat_description(heat: int) -> str:
         return "The room is at flashpoint — the argument has become personal."
 
 
+def _openness_line(openness: int) -> str:
+    if openness >= 8:
+        return (
+            "Intellectual honesty: You update your position when shown strong evidence or a logically "
+            "airtight argument. You would rather be right than consistent.\n"
+        )
+    elif openness >= 5:
+        return (
+            "Intellectual honesty: You are open to updating your position, but require concrete evidence "
+            "or a flaw you cannot answer. Genuine proof moves you; mere pressure does not.\n"
+        )
+    elif openness >= 3:
+        return (
+            "Intellectual honesty: You are deeply committed to your framework. You might grant a narrow "
+            "point while holding your broader position — but it takes real weight to move you.\n"
+        )
+    else:
+        return (
+            "Intellectual honesty: You almost never concede. You reframe opposition as error, not as data. "
+            "Only a devastating logical contradiction with no escape route gives you pause.\n"
+        )
+
+
 def _philosopher_system_prompt(
     name: str,
     participants: list[str],
@@ -65,9 +88,12 @@ def _philosopher_system_prompt(
     # sections — voice and obsessions are already evident in what they've said.
     if own_summary:
         reference_sections = (
-            f"Core beliefs:\n{char['core_beliefs']}\n\n"
+            f"Core beliefs (your historical starting point):\n{char['core_beliefs']}\n\n"
             f"How you speak and argue:\n{char['rhetorical_moves']}\n\n"
-            f"\nYour debate arc so far (first person):\n{own_summary}\n"
+            f"\nYour debate arc so far (first person):\n{own_summary}\n\n"
+            f"Important: where your arc records that you have shifted, qualified, or reconsidered "
+            f"a position during this debate, let the arc take precedence over your starting beliefs. "
+            f"Do not retreat to your historical defaults if this conversation has moved you.\n"
         )
     else:
         reference_sections = (
@@ -84,10 +110,17 @@ def _philosopher_system_prompt(
         if heat >= 6 else ""
     )
 
+    openness = char.get("openness", 5)
+    intellectual_honesty = _openness_line(openness)
+    what_would_change = char.get("what_would_change_mind", "")
+    change_line = f"What would genuinely change your mind: {what_would_change}\n" if what_would_change else ""
+
     return (
         f"You are {name} ({char['era']}).\n\n"
         f"Known for: {char['known_for']}\n\n"
         f"{reference_sections}"
+        f"{intellectual_honesty}"
+        f"{change_line}"
         f"{coalition_section}"
         f"{heat_line}\n"
         "You are seated in a room with these specific thinkers, engaging in open discussion.\n"
@@ -102,6 +135,7 @@ def _philosopher_system_prompt(
         "- Deploy your signature rhetorical style every response, not just occasionally.\n"
         "- When someone touches your hot topics, let your conviction show.\n"
         "- Use your cited works naturally, as a thinker would — not as a list.\n"
+        "- Updating your view when shown compelling logic or evidence is intellectual strength — do not defend a position you have already been forced to abandon.\n"
         "- Occasionally — not every turn — include a brief stage direction in the format *[action]* "
         "e.g. *[laughs]*, *[sets down glass]*, *[long pause]*. Only when it feels natural for the setting."
         f"{jab_line}"
@@ -139,6 +173,8 @@ def _philosopher_user_prompt(
     argument_log: dict | None = None,
     turn_count: int = 0,
     concession_counts: dict | None = None,
+    concession_log: dict | None = None,
+    challenge_counts: dict | None = None,
 ) -> str:
     safe_name = name.replace(" ", "_")
 
@@ -201,6 +237,26 @@ def _philosopher_user_prompt(
             "find something true in what was just said.\n"
         )
 
+    prior_concessions = (concession_log or {}).get(name, [])
+    concession_memory = ""
+    if prior_concessions:
+        formatted = "\n".join(
+            f'  - "{c[:160]}{"…" if len(c) > 160 else ""}"' for c in prior_concessions
+        )
+        concession_memory = (
+            f"\nYou have already conceded these points in this debate — build forward from them, "
+            f"do not silently retreat:\n{formatted}\n"
+        )
+
+    pressure_count = (challenge_counts or {}).get(name, 0)
+    challenge_pressure = ""
+    if pressure_count >= 3:
+        challenge_pressure = (
+            "\nYour position has been challenged repeatedly and you have not resolved it. "
+            "You must now either mount a decisive, specific defence of your argument "
+            "or explicitly acknowledge the difficulty — continued deflection is not acceptable.\n"
+        )
+
     callback_lines = []
     for other, claims in (argument_log or {}).items():
         if other == name or not claims:
@@ -217,7 +273,9 @@ def _philosopher_user_prompt(
         f'Central question being debated: "{topic}"\n\n'
         f"{no_repeat}"
         f"{callbacks}"
+        f"{concession_memory}"
         f"{concession_pressure}"
+        f"{challenge_pressure}"
         f"{respond_to}\n\n"
         f'Ensure your response connects back to the central question: "{topic}". '
         f"Do not assume the answer — engage with whether it is true.\n\n"
