@@ -39,6 +39,7 @@ export function mount(container, sessionId, participants, topic, styles, api) {
 
   let currentStyle = 'socratic'
   let closeStream  = null
+  let gameEnded    = false
   let lastState    = { turn: 0, heat: 0, partial_agreements: [], remaining_disagreements: [], drift_topic: '' }
 
   const seating = Seating.create(seatsBar, participants)
@@ -95,6 +96,9 @@ export function mount(container, sessionId, participants, topic, styles, api) {
         break
 
       case 'consensus':
+        if (gameEnded) break
+        gameEnded = true
+        if (closeStream) { closeStream(); closeStream = null }
         clearTyping(convoPane)
         seating.clearAll()
         appendConsensus(convoPane, data, {
@@ -107,6 +111,9 @@ export function mount(container, sessionId, participants, topic, styles, api) {
         break
 
       case 'game_over':
+        if (gameEnded) break
+        gameEnded = true
+        if (closeStream) { closeStream(); closeStream = null }
         clearTyping(convoPane)
         seating.clearAll()
         appendGameOver(convoPane, data, participants, quit)
@@ -138,7 +145,10 @@ export function mount(container, sessionId, participants, topic, styles, api) {
   container.querySelector('#help-btn').addEventListener('click', openHelp)
 
   container.querySelector('#quit-btn').addEventListener('click', () => {
+    if (gameEnded) { quit(); return }
     if (lastState.turn > 0) {
+      gameEnded = true
+      if (closeStream) { closeStream(); closeStream = null }
       appendGameOver(convoPane, lastState, participants, quit)
     } else {
       quit()
