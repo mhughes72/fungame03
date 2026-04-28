@@ -204,8 +204,10 @@ class Session:
             self._put(evt.message("User", text, role="user"))
         else:
             steer = generate_moderator_steer(self.state)
+            forced = detect_forced_speaker(steer, participants)
             self.state = {
                 **self.state,
+                "forced_speaker": forced or "",
                 "messages": list(self.state["messages"]) + [
                     HumanMessage(content=steer, name="Moderator")
                 ],
