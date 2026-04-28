@@ -521,17 +521,44 @@ def generate_moderator_steer(state: RoomState) -> str:
 
     agreement_context = "\n\n".join(agreement_lines) + "\n\n" if agreement_lines else ""
 
-    # Identify the most entrenched participant to target
-    targeting = ""
-    if turn_count >= _CONCESSION_THRESHOLD:
-        entrenched = min(participants, key=lambda p: concession_counts.get(p, 0))
-        others = [p for p in participants if p != entrenched]
-        targeting = (
-            f"\nThe most entrenched participant so far is {entrenched} "
-            f"({concession_counts.get(entrenched, 0)} concessions). "
-            f"Address them by name and build a specific bridge from {others[0] if others else 'another participant'}'s "
-            f"argument to a position {entrenched} might be able to accept — without asking them to abandon their core view.\n"
-        )
+    # Pick a single target to address — priority order:
+    #   1. Most challenged without resolving (highest challenge_counts)
+    #   2. Most entrenched (fewest concessions, past threshold)
+    #   3. The most recent speaker (press immediately on what was just said)
+    challenge_counts = state.get("challenge_counts") or {}
+    recent_speakers  = state.get("recent_speakers") or []
+
+    target = None
+    reason = ""
+
+    if challenge_counts:
+        top = max(challenge_counts, key=lambda p: challenge_counts.get(p, 0))
+        if challenge_counts.get(top, 0) >= 2:
+            target = top
+            reason = f"has been challenged {challenge_counts[top]} times without resolving the pressure"
+
+    if not target and turn_count >= _CONCESSION_THRESHOLD:
+        target = min(participants, key=lambda p: concession_counts.get(p, 0))
+        reason = f"has made {concession_counts.get(target, 0)} concessions — the most entrenched voice in the room"
+
+    if not target:
+        # Fall back to whoever spoke most recently
+        for name in reversed(recent_speakers):
+            if name in participants:
+                target = name
+                reason = "spoke most recently"
+                break
+
+    if not target and participants:
+        target = participants[0]
+        reason = "participant"
+
+    targeting = (
+        f"\nYour target for this steer is: {target} ({reason}).\n"
+        f"Address {target} by name — and ONLY {target}. "
+        f"Do not pose questions to multiple participants. "
+        f"Ask {target} one sharp, direct question they cannot dodge.\n"
+    )
 
     heat = state.get("heat") or 0
     heat_context = f"Room atmosphere: {_heat_description(heat)}\n\n"
@@ -546,10 +573,9 @@ def generate_moderator_steer(state: RoomState) -> str:
     system_msg, style_instruction = _STYLE_CONFIGS.get(style, _STYLE_CONFIGS["socratic"])
 
     binary_close = (
-        "\n\nRegardless of style: end your steer with one binary commitment question. "
-        "Name at least two specific participants and state one concrete claim they plausibly share — "
-        "then ask them to affirm or deny it explicitly. "
-        "Format: '[Name] and [Name] — do you both agree that [specific claim]? Say yes or explain why not.' "
+        f"\n\nRegardless of style: your steer must end with a single direct question aimed at {target}. "
+        f"State one concrete claim they must affirm or deny — no wriggle room. "
+        f"Format: '{target} — [sharp, specific claim]? Yes or no, and why.' "
         "Use the suggested common ground above if it fits."
     )
 
