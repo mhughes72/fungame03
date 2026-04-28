@@ -104,6 +104,10 @@ export function mount(container, sessionId, participants, topic, styles, api) {
         appendConsensus(convoPane, data, {
           onNewTopic(newTopic) {
             api.newTopic(sessionId, newTopic)
+              .then(() => {
+                gameEnded = false
+                closeStream = api.openStream(sessionId, onEvent)
+              })
               .catch(err => appendSystem(convoPane, `Error: ${err.message}`))
           },
           onQuit: quit,
