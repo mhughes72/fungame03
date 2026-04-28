@@ -1,4 +1,4 @@
-(function(){const a=document.createElement("link").relList;if(a&&a.supports&&a.supports("modulepreload"))return;for(const n of document.querySelectorAll('link[rel="modulepreload"]'))i(n);new MutationObserver(n=>{for(const s of n)if(s.type==="childList")for(const p of s.addedNodes)p.tagName==="LINK"&&p.rel==="modulepreload"&&i(p)}).observe(document,{childList:!0,subtree:!0});function t(n){const s={};return n.integrity&&(s.integrity=n.integrity),n.referrerPolicy&&(s.referrerPolicy=n.referrerPolicy),n.crossOrigin==="use-credentials"?s.credentials="include":n.crossOrigin==="anonymous"?s.credentials="omit":s.credentials="same-origin",s}function i(n){if(n.ep)return;n.ep=!0;const s=t(n);fetch(n.href,s)}})();const k="/api";async function q(e,a){const t=await fetch(`${k}${e}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(a)});if(!t.ok){const i=await t.text();throw new Error(`${t.status} ${t.statusText}: ${i}`)}return t.json()}async function G(e){await fetch(`${k}${e}`,{method:"DELETE"})}async function W(){const e=await fetch(`${k}/characters`);if(!e.ok)throw new Error("Failed to load characters");return e.json()}async function F(){const e=await fetch(`${k}/styles`);if(!e.ok)throw new Error("Failed to load styles");return e.json()}async function Q(e,a){return q("/sessions",{characters:e,topic:a})}async function Y(e,a,t){return q(`/sessions/${e}/steer`,{text:a,style:t})}async function K(e,a){return q(`/sessions/${e}/new-topic`,{topic:a})}async function J(e){return G(`/sessions/${e}`)}function Z(e,a){const t=new EventSource(`${k}/sessions/${e}/stream`);return t.onmessage=i=>{try{const n=JSON.parse(i.data);a(n)}catch{console.error("Unparseable SSE frame:",i.data)}},t.onerror=i=>{console.error("SSE error",i),a({type:"error",data:{text:"Connection lost."}})},()=>t.close()}const O="https://github.com/mhughes72/fungame03";function j(e,a){const t=document.createElement("div");t.className="info-overlay",t.innerHTML=`
+(function(){const a=document.createElement("link").relList;if(a&&a.supports&&a.supports("modulepreload"))return;for(const n of document.querySelectorAll('link[rel="modulepreload"]'))i(n);new MutationObserver(n=>{for(const s of n)if(s.type==="childList")for(const p of s.addedNodes)p.tagName==="LINK"&&p.rel==="modulepreload"&&i(p)}).observe(document,{childList:!0,subtree:!0});function t(n){const s={};return n.integrity&&(s.integrity=n.integrity),n.referrerPolicy&&(s.referrerPolicy=n.referrerPolicy),n.crossOrigin==="use-credentials"?s.credentials="include":n.crossOrigin==="anonymous"?s.credentials="omit":s.credentials="same-origin",s}function i(n){if(n.ep)return;n.ep=!0;const s=t(n);fetch(n.href,s)}})();const k="/api";async function A(e,a){const t=await fetch(`${k}${e}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(a)});if(!t.ok){const i=await t.text();throw new Error(`${t.status} ${t.statusText}: ${i}`)}return t.json()}async function G(e){await fetch(`${k}${e}`,{method:"DELETE"})}async function W(){const e=await fetch(`${k}/characters`);if(!e.ok)throw new Error("Failed to load characters");return e.json()}async function F(){const e=await fetch(`${k}/styles`);if(!e.ok)throw new Error("Failed to load styles");return e.json()}async function Q(e,a){return A("/sessions",{characters:e,topic:a})}async function Y(e,a,t){return A(`/sessions/${e}/steer`,{text:a,style:t})}async function K(e,a){return A(`/sessions/${e}/new-topic`,{topic:a})}async function J(e){return G(`/sessions/${e}`)}function Z(e,a){const t=new EventSource(`${k}/sessions/${e}/stream`);return t.onmessage=i=>{try{const n=JSON.parse(i.data);a(n)}catch{console.error("Unparseable SSE frame:",i.data)}},t.onerror=i=>{console.error("SSE error",i),a({type:"error",data:{text:"Connection lost."}})},()=>t.close()}const O="https://github.com/mhughes72/fungame03";function j(e,a){const t=document.createElement("div");t.className="info-overlay",t.innerHTML=`
     <div class="info-box">
       <div class="info-header">
         <div class="info-title">${e}</div>
@@ -129,24 +129,24 @@
           </button>
         `).join("")}
       </div>
-    `,(i||document.body).appendChild(s);const c=s.querySelector("#steer-text-input");c.focus();let o=e;s.querySelectorAll(".style-item").forEach(r=>{r.addEventListener("click",()=>{s.querySelectorAll(".style-item").forEach(l=>l.classList.remove("style-selected")),r.classList.add("style-selected"),o=r.dataset.style,d()})});function d(){const r=c.value.trim();s.remove(),n({text:r,style:o})}s.querySelector("#steer-submit").addEventListener("click",d),s.querySelector("#steer-quit").addEventListener("click",()=>{s.remove(),n(null)}),c.addEventListener("keydown",r=>{r.key==="Enter"&&d()})})}const C={2:[[18,50],[82,50]],3:[[14,24],[86,24],[50,84]],4:[[14,20],[86,20],[14,80],[86,80]]};function X(e,a){const t=Math.min(a.length,4),i=C[t]||C[4];e.innerHTML=`
+    `,(i||document.body).appendChild(s);const c=s.querySelector("#steer-text-input");c.focus();let o=e;s.querySelectorAll(".style-item").forEach(r=>{r.addEventListener("click",()=>{s.querySelectorAll(".style-item").forEach(l=>l.classList.remove("style-selected")),r.classList.add("style-selected"),o=r.dataset.style,d()})});function d(){const r=c.value.trim();s.remove(),n({text:r,style:o})}s.querySelector("#steer-submit").addEventListener("click",d),s.querySelector("#steer-quit").addEventListener("click",()=>{s.remove(),n(null)}),c.addEventListener("keydown",r=>{r.key==="Enter"&&d()})})}const x={2:[[18,50],[82,50]],3:[[14,24],[86,24],[50,84]],4:[[14,20],[86,20],[14,80],[86,80]]};function X(e,a){const t=Math.min(a.length,4),i=x[t]||x[4];e.innerHTML=`
     <div class="seating-area">
       <div class="seating-table">
         <span class="seating-table-label">THE BAR</span>
       </div>
-      ${a.map((d,r)=>{const[l,g]=i[r]||[50,50],m=ee(d),h=te(d);return`
-          <div class="seat" id="seat-${x(d)}"
+      ${a.map((d,r)=>{const[l,g]=i[r]||[50,50],h=ee(d),m=te(d);return`
+          <div class="seat" id="seat-${N(d)}"
                style="left:${l}%;top:${g}%">
             <div class="seat-portrait-wrap">
-              <img class="seat-img" src="${m}" alt="${H(d)}"
+              <img class="seat-img" src="${h}" alt="${_(d)}"
                    onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
-              <div class="seat-initials" style="display:none">${H(h)}</div>
+              <div class="seat-initials" style="display:none">${_(m)}</div>
             </div>
-            <div class="seat-name">${H(se(d))}</div>
+            <div class="seat-name">${_(se(d))}</div>
           </div>
         `}).join("")}
     </div>
-  `;let n=null;function s(d){return e.querySelector(`#seat-${x(d)}`)}function p(){clearTimeout(n),e.querySelectorAll(".seat").forEach(d=>{d.classList.remove("seat-thinking","seat-speaking")})}function c(d){var r;p(),(r=s(d))==null||r.classList.add("seat-thinking")}function o(d){p();const r=s(d);r&&(r.classList.add("seat-speaking"),n=setTimeout(()=>r.classList.remove("seat-speaking"),3e3))}return{setThinking:c,setSpeaking:o,clearAll:p}}function ee(e){return`/portraits/${e.replace(/ /g,"_")}.png`}function te(e){return e.split(" ").map(a=>a[0]).join("").slice(0,2).toUpperCase()}function se(e){return e.split(" ").at(-1)}function x(e){return e.replace(/[^a-zA-Z0-9]/g,"-").toLowerCase()}function H(e){return String(e).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}function ne(e,a,t,i,n,s){e.innerHTML=`
+  `;let n=null;function s(d){return e.querySelector(`#seat-${N(d)}`)}function p(){clearTimeout(n),e.querySelectorAll(".seat").forEach(d=>{d.classList.remove("seat-thinking","seat-speaking")})}function c(d){var r;p(),(r=s(d))==null||r.classList.add("seat-thinking")}function o(d){p();const r=s(d);r&&(r.classList.add("seat-speaking"),n=setTimeout(()=>r.classList.remove("seat-speaking"),3e3))}return{setThinking:c,setSpeaking:o,clearAll:p}}function ee(e){return`/portraits/${e.replace(/ /g,"_")}.png`}function te(e){return e.split(" ").map(a=>a[0]).join("").slice(0,2).toUpperCase()}function se(e){return e.split(" ").at(-1)}function N(e){return e.replace(/[^a-zA-Z0-9]/g,"-").toLowerCase()}function _(e){return String(e).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}function ne(e,a,t,i,n,s){e.innerHTML=`
     <div class="debate-shell">
       <header class="debate-header">
         <span class="debate-title">THE PHILOSOPHER'S BAR</span>
@@ -165,7 +165,7 @@
         <div class="sidebar" id="sidebar"></div>
       </div>
     </div>
-  `;const p=e.querySelector("#seats-bar"),c=e.querySelector("#convo-pane"),o=e.querySelector("#sidebar"),d=e.querySelector("#left-col");let r="socratic",l=null,g=!1,m={turn:0,heat:0,partial_agreements:[],remaining_disagreements:[],drift_topic:""};const h=X(p,t);N(o,{topic:i,turn:0,heat:0,moderator_style:"socratic",partial_agreements:[],points_of_agreement:[],remaining_disagreements:[]});function A({type:D,data:v}){switch(D){case"speaker":h.setThinking(v.name),oe(c,v.name);break;case"message":E(c),v.backchannel||h.setSpeaking(v.name),ae(c,v);break;case"state":r=v.moderator_style,m=v,N(o,{topic:i,...v});break;case"steer_needed":r=v.current_style,v.drift_topic&&(b(c,`── DRIFT ── conversation has shifted to: ${v.drift_topic}`),b(c,`   original topic: ${i}`)),p.style.display="none",c.scrollTop=c.scrollHeight,V(r,n,ce(m),d).then($=>{p.style.display="",$===null?_(c,m,t,f):s.steer(a,$.text,$.style).catch(L=>b(c,`Steer error: ${L.message}`))});break;case"consensus":if(g)break;g=!0,l&&(l(),l=null),E(c),h.clearAll(),re(c,v,{onNewTopic($){s.newTopic(a,$).then(()=>{g=!1,l=s.openStream(a,A)}).catch(L=>b(c,`Error: ${L.message}`))},onQuit:f},m);break;case"game_over":if(g)break;g=!0,l&&(l(),l=null),E(c),h.clearAll(),_(c,v,t,f);break;case"bar_beat":ie(c,v.text);break;case"system":b(c,v.text);break;case"error":b(c,`⚠ ${v.text}`);break}}function f(){l&&l(),s.deleteSession(a).catch(()=>{}),e.dispatchEvent(new CustomEvent("debate:quit",{bubbles:!0}))}e.querySelector("#about-btn").addEventListener("click",M),e.querySelector("#help-btn").addEventListener("click",P),e.querySelector("#quit-btn").addEventListener("click",()=>{if(g){f();return}m.turn>0?(g=!0,l&&(l(),l=null),_(c,m,t,f)):f()}),l=s.openStream(a,A)}function ae(e,{role:a,name:t,content:i,backchannel:n}){const s=document.createElement("div");n?(s.className="msg msg-bc",s.innerHTML=`<span class="bc-name">${u(t)}:</span> <em>${S(i)}</em>`):a==="moderator"?(s.className="msg msg-moderator",s.innerHTML=`<div class="msg-mod-label">― Moderator ―</div><div class="msg-content">${S(i)}</div>`):a==="user"?(s.className="msg msg-user",s.innerHTML=`<div class="msg-name msg-name-user">You</div><div class="msg-content">${S(i)}</div>`):(s.className="msg msg-philosopher",s.innerHTML=`<div class="msg-name">${u(t)}</div><div class="msg-content">${S(i)}</div>`),y(e,s)}function ie(e,a){const t=document.createElement("div");t.className="msg msg-beat",t.innerHTML=S(a),y(e,t)}function b(e,a){const t=document.createElement("div");t.className="msg msg-system",t.textContent=a,y(e,t)}function re(e,{summary:a,points:t},{onNewTopic:i,onQuit:n},s={}){const p=document.createElement("div");p.className="consensus-panel",p.innerHTML=`
+  `;const p=e.querySelector("#seats-bar"),c=e.querySelector("#convo-pane"),o=e.querySelector("#sidebar"),d=e.querySelector("#left-col");let r="socratic",l=null,g=!1,h={turn:0,heat:0,partial_agreements:[],remaining_disagreements:[],drift_topic:""};const m=X(p,t);q(o,{topic:i,turn:0,heat:0,moderator_style:"socratic",partial_agreements:[],points_of_agreement:[],remaining_disagreements:[]});function C({type:D,data:v}){switch(D){case"speaker":m.setThinking(v.name),oe(c,v.name);break;case"message":E(c),v.backchannel||m.setSpeaking(v.name),ae(c,v);break;case"state":r=v.moderator_style,h=v,q(o,{topic:i,...v});break;case"steer_needed":r=v.current_style,v.drift_topic&&(y(c,`── DRIFT ── conversation has shifted to: ${v.drift_topic}`),y(c,`   original topic: ${i}`)),p.style.display="none",c.scrollTop=c.scrollHeight,V(r,n,ce(h),d).then(f=>{p.style.display="",f===null?H(c,h,t,b):s.steer(a,f.text,f.style).catch(L=>y(c,`Steer error: ${L.message}`))});break;case"consensus":if(g)break;g=!0,l&&(l(),l=null),E(c),m.clearAll(),re(c,v,{onNewTopic(f){s.newTopic(a,f).then(()=>{g=!1,h={turn:0,heat:0,partial_agreements:[],remaining_disagreements:[],drift_topic:""},e.querySelector(".debate-topic").textContent=f,q(o,{topic:f,...h,moderator_style:r,points_of_agreement:[]}),m.clearAll(),l=s.openStream(a,C)}).catch(L=>y(c,`Error: ${L.message}`))},onQuit:b},h);break;case"game_over":if(g)break;g=!0,l&&(l(),l=null),E(c),m.clearAll(),H(c,v,t,b);break;case"bar_beat":ie(c,v.text);break;case"system":y(c,v.text);break;case"error":y(c,`⚠ ${v.text}`);break}}function b(){l&&l(),s.deleteSession(a).catch(()=>{}),e.dispatchEvent(new CustomEvent("debate:quit",{bubbles:!0}))}e.querySelector("#about-btn").addEventListener("click",M),e.querySelector("#help-btn").addEventListener("click",P),e.querySelector("#quit-btn").addEventListener("click",()=>{if(g){b();return}h.turn>0?(g=!0,l&&(l(),l=null),H(c,h,t,b)):b()}),l=s.openStream(a,C)}function ae(e,{role:a,name:t,content:i,backchannel:n}){const s=document.createElement("div");n?(s.className="msg msg-bc",s.innerHTML=`<span class="bc-name">${u(t)}:</span> <em>${S(i)}</em>`):a==="moderator"?(s.className="msg msg-moderator",s.innerHTML=`<div class="msg-mod-label">― Moderator ―</div><div class="msg-content">${S(i)}</div>`):a==="user"?(s.className="msg msg-user",s.innerHTML=`<div class="msg-name msg-name-user">You</div><div class="msg-content">${S(i)}</div>`):(s.className="msg msg-philosopher",s.innerHTML=`<div class="msg-name">${u(t)}</div><div class="msg-content">${S(i)}</div>`),$(e,s)}function ie(e,a){const t=document.createElement("div");t.className="msg msg-beat",t.innerHTML=S(a),$(e,t)}function y(e,a){const t=document.createElement("div");t.className="msg msg-system",t.textContent=a,$(e,t)}function re(e,{summary:a,points:t},{onNewTopic:i,onQuit:n},s={}){const p=document.createElement("div");p.className="consensus-panel",p.innerHTML=`
     <div class="consensus-title">━━━ CONSENSUS REACHED ━━━</div>
     <div class="consensus-summary">${u(a)}</div>
     ${t.length?`
@@ -180,14 +180,14 @@
       <button class="consensus-continue-btn" id="consensus-continue">Continue ▶</button>
       <button class="consensus-end-btn" id="consensus-end">End the evening</button>
     </div>
-  `,y(e,p);const c=p.querySelector("#consensus-topic-input");c.focus(),p.querySelector("#consensus-continue").addEventListener("click",()=>{const o=c.value.trim();o&&i(o)}),c.addEventListener("keydown",o=>{if(o.key==="Enter"){const d=c.value.trim();d&&i(d)}}),p.querySelector("#consensus-end").addEventListener("click",n)}function _(e,a,t,i){E(e);const n=document.createElement("div");n.className="game-over-panel";const s=a.turn||0,p=s?`${s} turn${s!==1?"s":""} — no consensus reached`:"The evening ends before it really began.";n.innerHTML=`
+  `,$(e,p);const c=p.querySelector("#consensus-topic-input");c.focus(),p.querySelector("#consensus-continue").addEventListener("click",()=>{const o=c.value.trim();o&&i(o)}),c.addEventListener("keydown",o=>{if(o.key==="Enter"){const d=c.value.trim();d&&i(d)}}),p.querySelector("#consensus-end").addEventListener("click",n)}function H(e,a,t,i){E(e);const n=document.createElement("div");n.className="game-over-panel";const s=a.turn||0,p=s?`${s} turn${s!==1?"s":""} — no consensus reached`:"The evening ends before it really began.";n.innerHTML=`
     <div class="game-over-title">━━━ LAST CALL ━━━</div>
     <div class="game-over-subtitle">${u(p)}</div>
     ${R(a)}
     <div class="game-over-actions">
       <button class="consensus-end-btn" id="game-over-leave">Leave the bar</button>
     </div>
-  `,y(e,n),n.querySelector("#game-over-leave").addEventListener("click",i)}function R(e){const{turn:a=0,heat:t=0,partial_agreements:i=[],points_of_agreement:n=[],remaining_disagreements:s=[]}=e;if(!a)return"";const p=B(t),c=I(t),o="█".repeat(t),d="░".repeat(10-t);let r='<div class="report-stats">';return r+=`<div class="report-stat-row">
+  `,$(e,n),n.querySelector("#game-over-leave").addEventListener("click",i)}function R(e){const{turn:a=0,heat:t=0,partial_agreements:i=[],points_of_agreement:n=[],remaining_disagreements:s=[]}=e;if(!a)return"";const p=B(t),c=I(t),o="█".repeat(t),d="░".repeat(10-t);let r='<div class="report-stats">';return r+=`<div class="report-stat-row">
     <span class="report-stat-label">turns</span>
     <span class="report-stat-value">${a}</span>
   </div>`,r+=`<div class="report-stat-row">
@@ -197,40 +197,40 @@
           <span class="report-tension-topic">${u(l.topic)}</span>
           <span class="report-tension-stance">${u(l.participant_a)}: ${u(l.stance_a)}</span>
           <span class="report-tension-stance">${u(l.participant_b)}: ${u(l.stance_b)}</span>
-        </div>`:`<div class="report-tension">${u(String(l))}</div>`).join("")),r+="</div>",r}function oe(e,a){E(e);const t=document.createElement("div");t.className="msg msg-typing",t.id="typing-indicator",t.innerHTML=`<span class="typing-name">${u(a)}</span><span class="typing-dots"><span>.</span><span>.</span><span>.</span></span>`,y(e,t)}function E(e){var a;(a=e.querySelector("#typing-indicator"))==null||a.remove()}function N(e,a){const{topic:t,turn:i=0,heat:n=0,moderator_style:s="socratic",partial_agreements:p=[],points_of_agreement:c=[],remaining_disagreements:o=[]}=a,d=I(n),r=B(n),l="█".repeat(n),g="░".repeat(10-n);let m=`
+        </div>`:`<div class="report-tension">${u(String(l))}</div>`).join("")),r+="</div>",r}function oe(e,a){E(e);const t=document.createElement("div");t.className="msg msg-typing",t.id="typing-indicator",t.innerHTML=`<span class="typing-name">${u(a)}</span><span class="typing-dots"><span>.</span><span>.</span><span>.</span></span>`,$(e,t)}function E(e){var a;(a=e.querySelector("#typing-indicator"))==null||a.remove()}function q(e,a){const{topic:t,turn:i=0,heat:n=0,moderator_style:s="socratic",partial_agreements:p=[],points_of_agreement:c=[],remaining_disagreements:o=[]}=a,d=I(n),r=B(n),l="█".repeat(n),g="░".repeat(10-n);let h=`
     <div class="sb-section">
       <div class="sb-label">TONIGHT'S QUESTION</div>
       <div class="sb-topic">${u(t)}</div>
     </div>
 
     <div class="sb-section sb-turn">Turn ${i}</div>
-  `;c.length&&(m+=`
+  `;c.length&&(h+=`
       <div class="sb-section">
         <div class="sb-label sb-label-agree">Full agreements</div>
-        ${c.map(h=>`<div class="sb-agree-item">✓ ${u(h)}</div>`).join("")}
+        ${c.map(m=>`<div class="sb-agree-item">✓ ${u(m)}</div>`).join("")}
       </div>
-    `),p.length&&(m+=`
+    `),p.length&&(h+=`
       <div class="sb-section">
         <div class="sb-label sb-label-partial">Emerging alignments</div>
-        ${p.map(h=>`
+        ${p.map(m=>`
           <div class="sb-partial">
-            <div class="sb-partial-names">${u(h.participants.join(" + "))}</div>
-            <div class="sb-partial-on">${u(h.on)}</div>
+            <div class="sb-partial-names">${u(m.participants.join(" + "))}</div>
+            <div class="sb-partial-on">${u(m.on)}</div>
           </div>
         `).join("")}
       </div>
-    `),o.length&&(m+=`
+    `),o.length&&(h+=`
       <div class="sb-section">
         <div class="sb-label sb-label-tension">Open tensions</div>
-        ${o.map(h=>typeof h=="object"&&h!==null?`
+        ${o.map(m=>typeof m=="object"&&m!==null?`
               <div class="sb-tension">
-                <div class="sb-tension-topic">• ${u(h.topic)}</div>
-                <div class="sb-tension-stance">${u(h.participant_a)}: ${u(h.stance_a)}</div>
-                <div class="sb-tension-stance">${u(h.participant_b)}: ${u(h.stance_b)}</div>
+                <div class="sb-tension-topic">• ${u(m.topic)}</div>
+                <div class="sb-tension-stance">${u(m.participant_a)}: ${u(m.stance_a)}</div>
+                <div class="sb-tension-stance">${u(m.participant_b)}: ${u(m.stance_b)}</div>
               </div>
-            `:`<div class="sb-tension">• ${u(String(h))}</div>`).join("")}
+            `:`<div class="sb-tension">• ${u(String(m))}</div>`).join("")}
       </div>
-    `),m+=`
+    `),h+=`
     <div class="sb-section">
       <div class="sb-label">── HEAT ──</div>
       <div class="sb-heat">
@@ -243,4 +243,4 @@
       <div class="sb-label">── APPROACH ──</div>
       <div class="sb-style">${u(s)}</div>
     </div>
-  `,e.innerHTML=m}function S(e){let t=u(e).replace(/\*\[([^\]]+)\]\*/g,'<em class="stage-dir">[$1]</em>');return t=t.replace(/\*([A-Z][^*]+?)\*(?!\])/g,(i,n)=>n.includes("[")||n.includes("]")?i:`<em class="stage-dir">[${n}]</em>`),t.replace(/\n/g,"<br>")}function y(e,a){const t=e.scrollHeight-e.scrollTop-e.clientHeight<120;e.appendChild(a),t&&(e.scrollTop=e.scrollHeight)}function u(e){return String(e).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}function I(e){return e<=2?"#4a7ab5":e<=4?"#8a9040":e<=6?"#c8a030":e<=8?"#c86030":"#c83030"}function B(e){return e<=2?"cool":e<=4?"warm":e<=6?"charged":e<=8?"heated":"flashpoint"}function ce(e,a){const{turn:t,heat:i,partial_agreements:n,remaining_disagreements:s,drift_topic:p}=e;if(!t)return"The debate is just getting started.";if(p)return`The conversation has drifted from the original topic toward ${p}.`;const c=n||[],o=s||[];if(c.length&&o.length){const r=c[0],l=o[0],g=r.participants.join(" and "),m=typeof l=="object"?l.topic:String(l);return`${g} are finding common ground, but the group remains divided on ${m}.`}if(c.length){const r=c[0];return`${r.participants.join(" and ")} are converging on ${r.on}, ${i>=6?"though tempers are running high":"with the room following closely"}.`}if(o.length){const r=o[0];return typeof r=="object"?`${r.participant_a} and ${r.participant_b} are sharply divided over ${r.topic}.`:`The room is deadlocked — ${String(r)}.`}const d=i>=8?"at flashpoint":i>=5?"heating up":i>=3?"warming up":"still feeling each other out";return`${t} turns in, no clear alignments yet — the room is ${d}.`}const T=document.querySelector("#app");async function U(){let e,a;try{[e,a]=await Promise.all([W(),F()])}catch(i){T.innerHTML=`<div class="fatal-error">Could not reach the server.<br/>${i.message}</div>`;return}const t=z(T,e,async({characters:i,topic:n})=>{try{const s=await Q(i,n);le(s.session_id,i,n,a)}catch(s){t.showError(`Could not start session: ${s.message}`)}})}function le(e,a,t,i){ne(T,e,a,t,i,{steer:Y,deleteSession:J,newTopic:K,openStream:Z}),T.addEventListener("debate:quit",()=>U(),{once:!0})}U();
+  `,e.innerHTML=h}function S(e){let t=u(e).replace(/\*\[([^\]]+)\]\*/g,'<em class="stage-dir">[$1]</em>');return t=t.replace(/\*([A-Z][^*]+?)\*(?!\])/g,(i,n)=>n.includes("[")||n.includes("]")?i:`<em class="stage-dir">[${n}]</em>`),t.replace(/\n/g,"<br>")}function $(e,a){const t=e.scrollHeight-e.scrollTop-e.clientHeight<120;e.appendChild(a),t&&(e.scrollTop=e.scrollHeight)}function u(e){return String(e).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}function I(e){return e<=2?"#4a7ab5":e<=4?"#8a9040":e<=6?"#c8a030":e<=8?"#c86030":"#c83030"}function B(e){return e<=2?"cool":e<=4?"warm":e<=6?"charged":e<=8?"heated":"flashpoint"}function ce(e,a){const{turn:t,heat:i,partial_agreements:n,remaining_disagreements:s,drift_topic:p}=e;if(!t)return"The debate is just getting started.";if(p)return`The conversation has drifted from the original topic toward ${p}.`;const c=n||[],o=s||[];if(c.length&&o.length){const r=c[0],l=o[0],g=r.participants.join(" and "),h=typeof l=="object"?l.topic:String(l);return`${g} are finding common ground, but the group remains divided on ${h}.`}if(c.length){const r=c[0];return`${r.participants.join(" and ")} are converging on ${r.on}, ${i>=6?"though tempers are running high":"with the room following closely"}.`}if(o.length){const r=o[0];return typeof r=="object"?`${r.participant_a} and ${r.participant_b} are sharply divided over ${r.topic}.`:`The room is deadlocked — ${String(r)}.`}const d=i>=8?"at flashpoint":i>=5?"heating up":i>=3?"warming up":"still feeling each other out";return`${t} turns in, no clear alignments yet — the room is ${d}.`}const T=document.querySelector("#app");async function U(){let e,a;try{[e,a]=await Promise.all([W(),F()])}catch(i){T.innerHTML=`<div class="fatal-error">Could not reach the server.<br/>${i.message}</div>`;return}const t=z(T,e,async({characters:i,topic:n})=>{try{const s=await Q(i,n);le(s.session_id,i,n,a)}catch(s){t.showError(`Could not start session: ${s.message}`)}})}function le(e,a,t,i){ne(T,e,a,t,i,{steer:Y,deleteSession:J,newTopic:K,openStream:Z}),T.addEventListener("debate:quit",()=>U(),{once:!0})}U();

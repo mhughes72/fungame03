@@ -106,6 +106,10 @@ export function mount(container, sessionId, participants, topic, styles, api) {
             api.newTopic(sessionId, newTopic)
               .then(() => {
                 gameEnded = false
+                lastState = { turn: 0, heat: 0, partial_agreements: [], remaining_disagreements: [], drift_topic: '' }
+                container.querySelector('.debate-topic').textContent = newTopic
+                renderSidebar(sidebar, { topic: newTopic, ...lastState, moderator_style: currentStyle, points_of_agreement: [] })
+                seating.clearAll()
                 closeStream = api.openStream(sessionId, onEvent)
               })
               .catch(err => appendSystem(convoPane, `Error: ${err.message}`))
