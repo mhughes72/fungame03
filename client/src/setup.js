@@ -48,12 +48,7 @@ export function mount(container, characters, onStart) {
     </div>
   `
 
-  // Default selections: Lincoln + Tesla (indices 5, 8 — same as Textual UI)
   const checkboxes = container.querySelectorAll('input[type=checkbox]')
-  const defaultNames = new Set(['Abraham Lincoln', 'Nikola Tesla'])
-  checkboxes.forEach(cb => {
-    if (defaultNames.has(cb.value)) cb.checked = true
-  })
 
   const hint    = container.querySelector('#selection-hint')
   const startBtn = container.querySelector('#start-btn')
