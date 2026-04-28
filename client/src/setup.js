@@ -57,7 +57,7 @@ export function mount(container, characters, onStart) {
   function updateHint() {
     const count = [...checkboxes].filter(cb => cb.checked).length
     if (count < 2) {
-      hint.textContent = `Select ${2 - count} more`
+      hint.textContent = count === 0 ? 'Select 2 to 4 thinkers' : 'Select 1 more'
       hint.classList.remove('hint-ok', 'hint-warn')
     } else if (count > 4) {
       hint.textContent = `Too many — deselect ${count - 4}`
