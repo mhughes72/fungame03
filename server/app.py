@@ -29,6 +29,10 @@ os.environ.setdefault("LANGCHAIN_TRACING_V2", "false")
 from dotenv import load_dotenv
 load_dotenv()
 
+from tavily import TavilyClient
+from langchain_openai import ChatOpenAI
+from langchain_core.messages import SystemMessage, HumanMessage
+
 from fastapi import FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, FileResponse
@@ -94,6 +98,11 @@ class StartRequest(BaseModel):
 class SteerRequest(BaseModel):
     text: str = ""
     style: str = "socratic"
+    evidence: str = ""    # pre-summarised finding from /api/search; empty if not injecting
+
+
+class SearchRequest(BaseModel):
+    query: str = Field(..., min_length=1, max_length=300)
 
 
 class NewTopicRequest(BaseModel):
@@ -183,6 +192,43 @@ async def stream_session(session_id: str):
     )
 
 
+@app.post("/api/search")
+async def search_evidence(req: SearchRequest):
+    """Search the web and return a summarised empirical finding for evidence injection."""
+    api_key = os.getenv("TAVILY_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=503, detail="TAVILY_API_KEY not configured")
+
+    try:
+        client = TavilyClient(api_key=api_key)
+        results = client.search(req.query, max_results=3)
+        snippets = "\n\n".join(
+            f"[{r.get('title', '')}] {r.get('content', '')}"
+            for r in results.get("results", [])[:3]
+        )
+        source_urls = [r.get("url", "") for r in results.get("results", [])[:1]]
+        source = source_urls[0] if source_urls else ""
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Search failed: {exc}")
+
+    try:
+        llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.1)
+        response = llm.invoke([
+            SystemMessage(content=(
+                "Distil the following search results into a single factual finding of 1–2 sentences. "
+                "Be specific — cite numbers, dates, or study details if present. "
+                "Write it as a standalone statement of fact, not a summary of the search. "
+                "Do not editorialize or express opinion."
+            )),
+            HumanMessage(content=f'Search query: "{req.query}"\n\nResults:\n{snippets}'),
+        ])
+        finding = response.content.strip()
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Summarisation failed: {exc}")
+
+    return {"finding": finding, "source": source}
+
+
 @app.post("/api/sessions/{session_id}/steer")
 async def steer_session(session_id: str, req: SteerRequest):
     """Inject a steer (user text or moderator prompt) and start the next batch."""
@@ -199,6 +245,7 @@ async def steer_session(session_id: str, req: SteerRequest):
         text=req.text,
         new_style=req.style,
         participants=session.state["participants"],
+        evidence=req.evidence,
     )
     loop.run_in_executor(None, session.run_batch)
     return {"ok": True}

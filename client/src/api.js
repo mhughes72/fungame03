@@ -38,8 +38,12 @@ export async function createSession(characters, topic) {
   return post('/sessions', { characters, topic })   // { session_id, participants, topic }
 }
 
-export async function steer(sessionId, text, style) {
-  return post(`/sessions/${sessionId}/steer`, { text, style })
+export async function steer(sessionId, text, style, evidence = '') {
+  return post(`/sessions/${sessionId}/steer`, { text, style, evidence })
+}
+
+export async function searchEvidence(query) {
+  return post('/search', { query })   // { finding, source }
 }
 
 export async function newTopic(sessionId, topic) {

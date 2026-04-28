@@ -208,63 +208,25 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 }
 .quit-btn:hover { border-color: var(--red); color: var(--red); }
 
-/* ── seats bar ──────────────────────────────────────────────────────── */
-/* ── seats bar — now hosts the seating chart ────────────────────────── */
-.seats-bar {
-  background: #120a00;
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-  height: 170px;
-  overflow: hidden;
-}
-
-/* ── seating chart ──────────────────────────────────────────────────── */
-.seating-area {
-  position: relative;
-  width: 100%;
-  height: 100%;
-}
-
-/* oval bar table */
-.seating-table {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 200px;
-  height: 72px;
-  border-radius: 50%;
-  background: radial-gradient(ellipse at 40% 35%, #3a2200, #1a0d00);
-  border: 2px solid var(--border-hi);
+/* ── header avatar strip ─────────────────────────────────────────────── */
+.header-avatars {
   display: flex;
   align-items: center;
-  justify-content: center;
-  pointer-events: none;
-}
-
-.seating-table-label {
-  color: var(--text-dim);
-  font-family: var(--serif);
-  font-size: 0.7rem;
-  letter-spacing: 0.12em;
-  opacity: 0.5;
-  user-select: none;
+  gap: 0.5rem;
+  flex-shrink: 0;
 }
 
 /* individual seat */
 .seat {
-  position: absolute;
-  transform: translate(-50%, -50%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  width: 68px;
+  gap: 2px;
 }
 
 .seat-portrait-wrap {
-  width: 52px;
-  height: 52px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   overflow: hidden;
   border: 2px solid var(--border);
@@ -294,10 +256,10 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 }
 
 .seat-name {
-  font-size: 0.68rem;
+  font-size: 0.58rem;
   color: var(--text-dim);
   text-align: center;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.02em;
   white-space: nowrap;
   transition: color 0.25s;
 }
@@ -357,6 +319,43 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 
 .msg-philosopher {
   margin-top: 0.75rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+
+.msg-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  background: var(--bg-mid);
+  margin-top: 0.1rem;
+}
+
+.msg-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.msg-avatar-initials {
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--serif);
+  font-size: 0.85rem;
+  color: var(--gold-dim);
+  background: var(--bg-mid);
+}
+
+.msg-body {
+  flex: 1;
+  min-width: 0;
 }
 
 .msg-name {
@@ -423,6 +422,22 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   font-size: 0.8rem;
   font-style: italic;
   margin: 0.25rem 0;
+}
+
+/* evidence injection */
+.msg-evidence {
+  border-left: 3px solid var(--amber);
+  padding: 0.4rem 0.75rem;
+  margin: 0.6rem 0;
+  font-size: 0.85rem;
+  color: var(--gold-dim);
+  background: rgba(180, 120, 20, 0.08);
+}
+.evidence-label {
+  color: var(--amber);
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  margin-right: 0.5rem;
 }
 
 /* typing indicator */
@@ -746,6 +761,53 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   letter-spacing: 0.03em;
   text-align: center;
 }
+
+/* evidence search in steer drawer */
+.evidence-search-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.steer-search-btn {
+  padding: 0.35rem 0.75rem;
+  background: none;
+  border: 1px solid var(--amber);
+  color: var(--amber);
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.steer-search-btn:hover { background: rgba(180,120,20,0.15); }
+.steer-search-btn:disabled { opacity: 0.5; cursor: default; }
+
+.evidence-preview {
+  border: 1px solid var(--amber);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.82rem;
+  color: var(--gold-dim);
+  background: rgba(180, 120, 20, 0.08);
+}
+.evidence-preview-label {
+  color: var(--amber);
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.25rem;
+}
+.evidence-preview-text { margin-bottom: 0.4rem; line-height: 1.5; }
+.evidence-preview-actions { display: flex; gap: 0.5rem; }
+.evidence-accept-btn, .evidence-discard-btn {
+  padding: 0.2rem 0.6rem;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  border: 1px solid;
+  cursor: pointer;
+  background: none;
+}
+.evidence-accept-btn  { border-color: var(--green); color: var(--green); }
+.evidence-discard-btn { border-color: var(--text-dim); color: var(--text-dim); }
+.evidence-accepted { color: var(--green); font-size: 0.8rem; }
 
 /* style list — vertical, scrollable */
 .style-list {

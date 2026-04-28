@@ -97,22 +97,65 @@ START → moderator ─┬─ consensus_checker → END
 
 ## Concession tracking
 
-`parallel_turn_node` scans each winning response for concession phrases (`perhaps`, `i grant`, `i concede`, etc.). Hits increment `concession_counts[name]`. Two effects:
-1. Zero concessions past turn 8 → nudge in user prompt to find merit in opponent's argument.
-2. Moderator steer targets the most entrenched participant by name.
+After each turn, `_score_heat()` (a `gpt-4o-mini` structured output call) returns `conceded: bool`. When true, `concession_counts[name]` increments. Effects:
+
+- `concession_log[name]` stores the last 3 conceded responses — fed back into the character's own prompt so they build forward rather than silently retreating.
+- Moderator steer targets the most entrenched participant by name.
+- Past turn 8, a sliding nudge is injected into the character's user prompt based on their personal concession count:
+
+| Own concessions | Nudge |
+|---|---|
+| 0 | Grant something — you haven't acknowledged any merit |
+| 1–2 | You've shown openness — now push back and find the flaw |
+| 3 | No nudge — balanced, leave them alone |
+| 4+ | Stop conceding — hold your ground |
+
+- UI right pane shows a cumulative `█`/`░` concession bar (total across all participants, capped at 10 for display).
 
 ## Heat / mood state
 
-`heat` (0–10) is tracked in state and updated by `parallel_turn_node`:
-- +1 for combative keyword hits (`_COMBATIVE_SIGNALS`) or exclamation marks in the response
-- -1 for concession phrases
+`heat` (0–10) is tracked in state and updated by `parallel_turn_node` after each turn using a `gpt-4o-mini` structured output call (`_score_heat`) that returns `delta: +1 / 0 / -1`:
+- +1 when the response is combative: attacking, dismissing, or aggressively challenging
+- -1 when the response concedes or genuinely agrees
 - Clamped to [0, 10]
 
-Effects:
-- `_philosopher_system_prompt` receives `heat` and injects a heat description line
-- At heat ≥ 6, a jab instruction is added: characters are told to land a pointed personal shot
+The heat and backchannel calls run in parallel via `ThreadPoolExecutor` to avoid adding serial latency.
+
+Effects on `_philosopher_system_prompt` — sliding scale:
+
+| Heat | Effect |
+|---|---|
+| 0–2 | No heat instruction |
+| 3–4 | Atmosphere line + "be assertive, state your view directly" |
+| 5–6 | Atmosphere line + "push back directly, name the specific flaw" |
+| 7–8 | Atmosphere line + "land a pointed challenge, name the contradiction" |
+| 9–10 | Atmosphere line + personal jab instruction |
+
 - `generate_moderator_steer` prepends a heat context line to the prompt
-- UI right pane shows a `█`/`░` bar color-coded by intensity
+- UI right pane shows a `█`/`░` bar color-coded by intensity (blue → yellow → red), updated every turn
+
+## Evidence injection
+
+At each steer break, the player can optionally inject empirical evidence into the debate. The flow:
+
+1. Player types a search term in the steer drawer's **"── inject evidence ──"** field.
+2. The server POSTs to `/api/search` — Tavily returns the top 3 web results, which `gpt-4o-mini` distils into a single 1–2 sentence factual finding.
+3. The player sees the finding and can **Accept** or **Discard** it before submitting the steer.
+4. If accepted, the finding is sent alongside the steer payload (`evidence` field on `SteerRequest`).
+
+**What happens in the debate:**
+- A styled `[EVIDENCE]` `SystemMessage` is prepended to the message history so all characters see it.
+- An amber-bordered evidence block appears in the conversation pane.
+- `evidence_this_turn` is set in state for the duration of that batch only.
+- Every philosopher's system prompt for that batch receives an additional instruction: *"You must engage with this finding directly. You cannot dismiss or ignore it outright. You may reframe it through your worldview, question its scope or methodology, or accept it and update your position — but you must address it."*
+- After the batch completes, `evidence_this_turn` is cleared — subsequent turns are unaffected.
+
+**Character response to evidence** varies naturally by persona:
+- Scientists (Newton, Feynman, Einstein) tend to accept and integrate it.
+- Ideologues (Stalin, Mao, Lenin) tend to reframe or question scope but must still engage.
+- Philosophers (Socrates, Nietzsche) tend to interrogate the epistemological basis of the evidence itself.
+
+Requires `TAVILY_API_KEY` in `.env`.
 
 ## Backchannel reactions
 

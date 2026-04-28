@@ -1,5 +1,5 @@
 /**
- * Seating chart — oval bar table with portrait seats around it.
+ * Participant avatar strip — compact row in the debate header.
  *
  * create(container, participants) → { setThinking, setSpeaking, clearAll }
  *
@@ -9,41 +9,21 @@
  *   speaking  — solid gold ring (just spoke), auto-clears after 3s
  */
 
-// Seat positions [left%, top%] by participant count.
-// Each seat div is centered on its point via transform: translate(-50%,-50%).
-const POSITIONS = {
-  2: [[18, 50], [82, 50]],
-  3: [[14, 24], [86, 24], [50, 84]],
-  4: [[14, 20], [86, 20], [14, 80], [86, 80]],
-}
-
 export function create(container, participants) {
-  const count  = Math.min(participants.length, 4)
-  const coords = POSITIONS[count] || POSITIONS[4]
-
-  container.innerHTML = `
-    <div class="seating-area">
-      <div class="seating-table">
-        <span class="seating-table-label">THE BAR</span>
+  container.innerHTML = participants.map(name => {
+    const img  = portraitUrl(name)
+    const init = initials(name)
+    return `
+      <div class="seat" id="seat-${slug(name)}">
+        <div class="seat-portrait-wrap">
+          <img class="seat-img" src="${img}" alt="${escHtml(name)}"
+               onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
+          <div class="seat-initials" style="display:none">${escHtml(init)}</div>
+        </div>
+        <div class="seat-name">${escHtml(lastName(name))}</div>
       </div>
-      ${participants.map((name, i) => {
-        const [left, top] = coords[i] || [50, 50]
-        const img  = portraitUrl(name)
-        const init = initials(name)
-        return `
-          <div class="seat" id="seat-${slug(name)}"
-               style="left:${left}%;top:${top}%">
-            <div class="seat-portrait-wrap">
-              <img class="seat-img" src="${img}" alt="${escHtml(name)}"
-                   onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
-              <div class="seat-initials" style="display:none">${escHtml(init)}</div>
-            </div>
-            <div class="seat-name">${escHtml(lastName(name))}</div>
-          </div>
-        `
-      }).join('')}
-    </div>
-  `
+    `
+  }).join('')
 
   let clearTimer = null
 

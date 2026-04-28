@@ -14,8 +14,6 @@ from personas import CHARACTERS
 import debug as dbg
 
 from prompts import (
-    _CONCESSION_SIGNALS,
-    _COMBATIVE_SIGNALS,
     _CONCESSION_THRESHOLD,
     _BACKCHANNEL_CHANCE,
     _heat_description,
@@ -34,6 +32,34 @@ def _structured_llm():
 
 def _moderator_llm():
     return ChatOpenAI(model="gpt-4o-mini", temperature=0.7)
+
+
+class _HeatScore(BaseModel):
+    delta: int       # +1 combative, -1 concession/agreement, 0 neutral
+    conceded: bool   # true when the speaker grants a point to an opponent
+
+
+def _score_heat(speaker: str, content: str) -> _HeatScore:
+    """Ask gpt-4o-mini to classify a philosopher's response for heat tracking."""
+    try:
+        result = ChatOpenAI(model="gpt-4o-mini", temperature=0).with_structured_output(
+            _HeatScore
+        ).invoke([
+            SystemMessage(content=(
+                "You are scoring a single debate response for emotional tone.\n"
+                "Return delta=1 if the speaker is combative: attacking, dismissing, mocking, "
+                "or aggressively challenging an opponent's position.\n"
+                "Return delta=-1 if the speaker concedes or genuinely agrees with an opponent: "
+                "grants a point, acknowledges merit, softens their stance.\n"
+                "Return delta=0 if the tone is neutral, expository, or neither.\n"
+                "Return conceded=true only when delta=-1.\n"
+                "Be strict — mild disagreement is 0, not +1."
+            )),
+            HumanMessage(content=f"{speaker} said:\n\n{content[:600]}"),
+        ])
+        return result
+    except Exception:
+        return _HeatScore(delta=0, conceded=False)
 
 
 def turns_per_batch(participant_count: int) -> int:
@@ -95,8 +121,9 @@ def _generate_candidate(name: str, state: RoomState) -> dict:
     character_summaries = state.get("character_summaries") or {}
     turn_count          = state.get("turn_count") or 0
     own_summary         = character_summaries.get(name, "")
-    heat          = state.get("heat") or 0
-    system_prompt = _philosopher_system_prompt(name, participants, partial_agreements, own_summary, heat)
+    heat                = state.get("heat") or 0
+    evidence_this_turn  = state.get("evidence_this_turn") or ""
+    system_prompt = _philosopher_system_prompt(name, participants, partial_agreements, own_summary, heat, evidence_this_turn)
     user_prompt   = _philosopher_user_prompt(
         name, state["messages"], topic, argument_log, turn_count, concession_counts,
         concession_log, challenge_counts,
@@ -236,35 +263,50 @@ def parallel_turn_node(state: RoomState) -> dict:
     concession_counts = dict(state.get("concession_counts") or {})
     concession_log    = dict(state.get("concession_log") or {})
     challenge_counts  = dict(state.get("challenge_counts") or {})
-    content_lower = winner["content"].lower()
     heat = state.get("heat") or 0
     prev_speaker = recent_speakers[-1] if recent_speakers else ""
-    if any(signal in content_lower for signal in _CONCESSION_SIGNALS):
+
+    # Run heat scoring and backchannel generation in parallel
+    reactor = None
+    do_backchannel = turn_count > 0
+    if do_backchannel:
+        reactors = [p for p in participants if p != winner["name"]]
+        do_backchannel = bool(reactors) and random.random() < _BACKCHANNEL_CHANCE
+        if do_backchannel:
+            reactor = random.choice(reactors)
+
+    with ThreadPoolExecutor(max_workers=2) as ex:
+        heat_fut = ex.submit(_score_heat, winner["name"], winner["content"])
+        bc_fut   = ex.submit(_generate_backchannel, reactor, winner["content"]) if reactor else None
+        score    = heat_fut.result()
+        bc       = bc_fut.result() if bc_fut else None
+
+    dbg.dlog("PHILOSOPHER", f"heat score for {winner['name']}", {
+        "delta": score.delta,
+        "conceded": score.conceded,
+        "heat_before": heat,
+        "snippet": winner["content"][:120],
+    })
+
+    if score.conceded:
         concession_counts[winner["name"]] = concession_counts.get(winner["name"], 0) + 1
         dbg.dlog("PHILOSOPHER", f"{winner['name']} conceded — total {concession_counts[winner['name']]}")
         heat = max(0, heat - 1)
-        # Log what was conceded so it can be fed back into future prompts
         prev = list(concession_log.get(winner["name"], []))
         concession_log[winner["name"]] = (prev + [winner["content"][:160]])[-3:]
-        # Conceding resets the challenge pressure on this character
         challenge_counts[winner["name"]] = 0
-    elif any(signal in content_lower for signal in _COMBATIVE_SIGNALS) or winner["content"].count("!") >= 2:
+    elif score.delta == 1:
         heat = min(10, heat + 1)
-        # Track that the previous speaker is being pushed — they haven't resolved this yet
         if prev_speaker and prev_speaker != winner["name"]:
             challenge_counts[prev_speaker] = challenge_counts.get(prev_speaker, 0) + 1
             dbg.dlog("PHILOSOPHER", f"{prev_speaker} challenged — pressure count {challenge_counts[prev_speaker]}")
+
     dbg.dlog("MODERATOR", f"Heat: {heat}")
 
     out_msgs = [AIMessage(content=winner["content"], name=winner["safe_name"])]
-    if turn_count > 0:
-        reactors = [p for p in participants if p != winner["name"]]
-        if reactors and random.random() < _BACKCHANNEL_CHANCE:
-            reactor = random.choice(reactors)
-            bc = _generate_backchannel(reactor, winner["content"])
-            if bc:
-                out_msgs.append(AIMessage(content=bc, name=reactor.replace(" ", "_") + "_bc"))
-                dbg.dlog("PHILOSOPHER", f"{reactor} [aside]: {bc}")
+    if bc:
+        out_msgs.append(AIMessage(content=bc, name=reactor.replace(" ", "_") + "_bc"))
+        dbg.dlog("PHILOSOPHER", f"{reactor} [aside]: {bc}")
 
     return {
         "messages":          out_msgs,

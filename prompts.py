@@ -1,26 +1,12 @@
 from personas import CHARACTERS
 
 
-_CONCESSION_SIGNALS = {
-    "perhaps", "i grant", "you raise", "i admit", "that is fair", "fair point",
-    "i concede", "you are right", "granted", "i acknowledge", "true enough",
-    "well said", "you make a point", "i'll grant", "i cannot deny",
-}
-
-_COMBATIVE_SIGNALS = {
-    "wrong", "absurd", "nonsense", "false", "ridiculous", "contradiction",
-    "mistaken", "naive", "foolish", "preposterous", "you fail", "precisely wrong",
-    "you have not", "you cannot", "that is not", "that is simply",
-}
-
 _CONCESSION_THRESHOLD = 8   # turns before no-concession pressure kicks in
 _BACKCHANNEL_CHANCE   = 0.5
 
 
 def _heat_description(heat: int) -> str:
-    if heat <= 2:
-        return "The room is cool — the debate is measured and exploratory."
-    elif heat <= 4:
+    if heat <= 4:
         return "The room is warm — positions are being staked."
     elif heat <= 6:
         return "The room is charged — disagreement runs deep."
@@ -59,6 +45,7 @@ def _philosopher_system_prompt(
     partial_agreements: list[dict],
     own_summary: str = "",
     heat: int = 0,
+    evidence_this_turn: str = "",
 ) -> str:
     char = CHARACTERS[name]
 
@@ -103,17 +90,33 @@ def _philosopher_system_prompt(
             f"What fires you up:\n{char['hot_topics']}\n"
         )
 
-    heat_line = f"\nAtmosphere: {_heat_description(heat)}\n" if heat > 0 else ""
-    jab_line = (
-        "\n- The room is tense. A sharp personal jab is fair game — their manner, "
-        "their contradiction, their record. Make it pointed.\n"
-        if heat >= 6 else ""
-    )
+    if heat <= 2:
+        heat_line = ""
+        jab_line  = ""
+    elif heat <= 4:
+        heat_line = f"\nAtmosphere: {_heat_description(heat)}\n"
+        jab_line  = "\n- Positions are hardening. Be assertive — state your view directly without hedging.\n"
+    elif heat <= 6:
+        heat_line = f"\nAtmosphere: {_heat_description(heat)}\n"
+        jab_line  = "\n- Don't soften your position. Push back directly and name the specific flaw in what was just said.\n"
+    elif heat <= 8:
+        heat_line = f"\nAtmosphere: {_heat_description(heat)}\n"
+        jab_line  = "\n- Land a pointed challenge. Name the contradiction in their position or their record. Don't let them off the hook.\n"
+    else:
+        heat_line = f"\nAtmosphere: {_heat_description(heat)}\n"
+        jab_line  = "\n- The room is at flashpoint. A sharp personal jab is fair game — their manner, their contradiction, their record. Make it pointed.\n"
 
     openness = char.get("openness", 5)
     intellectual_honesty = _openness_line(openness)
     what_would_change = char.get("what_would_change_mind", "")
     change_line = f"What would genuinely change your mind: {what_would_change}\n" if what_would_change else ""
+
+    evidence_line = (
+        f"\n[EMPIRICAL EVIDENCE HAS JUST BEEN INTRODUCED]: {evidence_this_turn}\n"
+        "You must engage with this finding directly in your response. You cannot dismiss or ignore it outright. "
+        "You may reframe it through your worldview, question its scope or methodology, or accept it and update "
+        "your position — but you must address it.\n"
+    ) if evidence_this_turn else ""
 
     return (
         f"You are {name} ({char['era']}).\n\n"
@@ -140,6 +143,7 @@ def _philosopher_system_prompt(
         "e.g. *[laughs]*, *[sets down glass]*, *[long pause]*. Stage directions are 2–4 word physical actions only. "
         "Never wrap your entire response in brackets. Your speech is plain text — brackets are for asides only."
         f"{jab_line}"
+        f"{evidence_line}"
     )
 
 
@@ -230,13 +234,25 @@ def _philosopher_user_prompt(
     else:
         no_repeat = ""
 
+    own_concessions = (concession_counts or {}).get(name, 0)
     concession_pressure = ""
-    if turn_count >= _CONCESSION_THRESHOLD and (concession_counts or {}).get(name, 0) == 0:
-        concession_pressure = (
-            "\nYou have not acknowledged any merit in your opponents' arguments. "
-            "A confident thinker can grant a point without losing the debate — "
-            "find something true in what was just said.\n"
-        )
+    if turn_count >= _CONCESSION_THRESHOLD:
+        if own_concessions == 0:
+            concession_pressure = (
+                "\nYou have not acknowledged any merit in your opponents' arguments. "
+                "A confident thinker can grant a point without losing the debate — "
+                "find something true in what was just said.\n"
+            )
+        elif own_concessions <= 2:
+            concession_pressure = (
+                "\nYou have shown some openness — but don't let that become a pattern. "
+                "Identify the weakest point just made and challenge it directly.\n"
+            )
+        elif own_concessions >= 4:
+            concession_pressure = (
+                "\nYou have already granted several points. Hold your ground — "
+                "stop conceding and find the flaw in their argument instead.\n"
+            )
 
     prior_concessions = (concession_log or {}).get(name, [])
     concession_memory = ""

@@ -15,13 +15,12 @@ export function mount(container, sessionId, participants, topic, styles, api) {
     <div class="debate-shell">
       <header class="debate-header">
         <span class="debate-title">THE PHILOSOPHER'S BAR</span>
+        <div class="header-avatars" id="seats-bar"></div>
         <span class="debate-topic">${escHtml(topic)}</span>
         <button class="info-btn" id="about-btn">About</button>
         <button class="info-btn" id="help-btn">Help</button>
         <button class="quit-btn" id="quit-btn">Quit</button>
       </header>
-
-      <div class="seats-bar" id="seats-bar"></div>
 
       <div class="debate-layout">
         <div class="left-col" id="left-col">
@@ -40,7 +39,7 @@ export function mount(container, sessionId, participants, topic, styles, api) {
   let currentStyle = 'socratic'
   let closeStream  = null
   let gameEnded    = false
-  let lastState    = { turn: 0, heat: 0, partial_agreements: [], remaining_disagreements: [], drift_topic: '' }
+  let lastState    = { turn: 0, heat: 0, concession_total: 0, partial_agreements: [], remaining_disagreements: [], drift_topic: '' }
 
   const seating = Seating.create(seatsBar, participants)
   renderSidebar(sidebar, {
@@ -68,6 +67,19 @@ export function mount(container, sessionId, participants, topic, styles, api) {
         appendMessage(convoPane, data)
         break
 
+      case 'bars':
+        updateBars(sidebar, data.heat, data.concession_total ?? 0)
+        break
+
+      case 'debug': {
+        const payload = data.data != null ? data.data : ''
+        const detail = typeof payload === 'object'
+          ? '\n' + Object.entries(payload).map(([k, v]) => `  ${k}: ${JSON.stringify(v)}`).join('\n')
+          : (payload ? ` — ${payload}` : '')
+        console.log(`[${data.channel}] ${data.label}${detail}`)
+        break
+      }
+
       case 'state':
         currentStyle = data.moderator_style
         lastState = data
@@ -82,14 +94,12 @@ export function mount(container, sessionId, participants, topic, styles, api) {
           appendSystem(convoPane,
             `   original topic: ${topic}`)
         }
-        seatsBar.style.display = 'none'
         convoPane.scrollTop = convoPane.scrollHeight
-        openSteerModal(currentStyle, styles, debateSummary(lastState, participants), leftCol).then(result => {
-          seatsBar.style.display = ''
+        openSteerModal(currentStyle, styles, debateSummary(lastState, participants), leftCol, api.searchEvidence).then(result => {
           if (result === null) {
             appendGameOver(convoPane, lastState, participants, quit)
           } else {
-            api.steer(sessionId, result.text, result.style)
+            api.steer(sessionId, result.text, result.style, result.evidence || '')
               .catch(err => appendSystem(convoPane, `Steer error: ${err.message}`))
           }
         })
@@ -106,7 +116,7 @@ export function mount(container, sessionId, participants, topic, styles, api) {
             api.newTopic(sessionId, newTopic)
               .then(() => {
                 gameEnded = false
-                lastState = { turn: 0, heat: 0, partial_agreements: [], remaining_disagreements: [], drift_topic: '' }
+                lastState = { turn: 0, heat: 0, concession_total: 0, partial_agreements: [], remaining_disagreements: [], drift_topic: '' }
                 container.querySelector('.debate-topic').textContent = newTopic
                 renderSidebar(sidebar, { topic: newTopic, ...lastState, moderator_style: currentStyle, points_of_agreement: [] })
                 seating.clearAll()
@@ -129,6 +139,10 @@ export function mount(container, sessionId, participants, topic, styles, api) {
 
       case 'bar_beat':
         appendBarBeat(convoPane, data.text)
+        break
+
+      case 'evidence':
+        appendEvidence(convoPane, data.finding)
         break
 
       case 'system':
@@ -190,10 +204,19 @@ function appendMessage(el, { role, name, content, backchannel }) {
       `<div class="msg-name msg-name-user">You</div>` +
       `<div class="msg-content">${renderContent(content)}</div>`
   } else {
+    const imgSrc  = `/portraits/${name.replace(/ /g, '_')}.png`
+    const initials = name.split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase()
     div.className = 'msg msg-philosopher'
     div.innerHTML =
-      `<div class="msg-name">${escHtml(name)}</div>` +
-      `<div class="msg-content">${renderContent(content)}</div>`
+      `<div class="msg-avatar">` +
+        `<img class="msg-avatar-img" src="${imgSrc}" alt="${escHtml(name)}"` +
+             ` onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">` +
+        `<div class="msg-avatar-initials" style="display:none">${escHtml(initials)}</div>` +
+      `</div>` +
+      `<div class="msg-body">` +
+        `<div class="msg-name">${escHtml(name)}</div>` +
+        `<div class="msg-content">${renderContent(content)}</div>` +
+      `</div>`
   }
 
   scrollAppend(el, div)
@@ -210,6 +233,13 @@ function appendSystem(el, text) {
   const div = document.createElement('div')
   div.className = 'msg msg-system'
   div.textContent = text
+  scrollAppend(el, div)
+}
+
+function appendEvidence(el, finding) {
+  const div = document.createElement('div')
+  div.className = 'msg msg-evidence'
+  div.innerHTML = `<span class="evidence-label">── EVIDENCE ──</span> ${escHtml(finding)}`
   scrollAppend(el, div)
 }
 
@@ -351,6 +381,7 @@ function renderSidebar(el, state) {
     topic,
     turn = 0,
     heat = 0,
+    concession_total = 0,
     moderator_style = 'socratic',
     partial_agreements = [],
     points_of_agreement = [],
@@ -417,12 +448,8 @@ function renderSidebar(el, state) {
   }
 
   html += `
-    <div class="sb-section">
-      <div class="sb-label">── HEAT ──</div>
-      <div class="sb-heat">
-        <span style="color:${heatColor}">${filled}</span><span class="sb-heat-empty">${empty}</span>
-        <span class="sb-heat-label" style="color:${heatColor}">${heatLabel}</span>
-      </div>
+    <div class="sb-section" id="sb-bars">
+      ${barsHtml_(heat, concession_total)}
     </div>
 
     <div class="sb-section">
@@ -469,6 +496,37 @@ function escHtml(str) {
     .replace(/"/g, '&quot;')
 }
 
+function barsHtml_(heat, concessionTotal) {
+  const heatColor = heatColor_(heat)
+  const heatLabel = heatLabel_(heat)
+  const hFilled = '█'.repeat(heat)
+  const hEmpty  = '░'.repeat(10 - heat)
+
+  const capped    = Math.min(concessionTotal, 10)
+  const cColor    = concessionColor_(concessionTotal)
+  const cFilled   = '█'.repeat(capped)
+  const cEmpty    = '░'.repeat(10 - capped)
+  const cLabel    = concessionLabel_(concessionTotal)
+
+  return `
+    <div class="sb-label">── HEAT ──</div>
+    <div class="sb-heat">
+      <span style="color:${heatColor}">${hFilled}</span><span class="sb-heat-empty">${hEmpty}</span>
+      <span class="sb-heat-label" style="color:${heatColor}">${heatLabel}</span>
+    </div>
+    <div class="sb-label" style="margin-top:6px">── CONCESSIONS ──</div>
+    <div class="sb-heat">
+      <span style="color:${cColor}">${cFilled}</span><span class="sb-heat-empty">${cEmpty}</span>
+      <span class="sb-heat-label" style="color:${cColor}">${cLabel} (${concessionTotal})</span>
+    </div>
+  `
+}
+
+function updateBars(sidebar, heat, concessionTotal) {
+  const el = sidebar.querySelector('#sb-bars')
+  if (el) el.innerHTML = barsHtml_(heat, concessionTotal)
+}
+
 function heatColor_(h) {
   if (h <= 2) return '#4a7ab5'
   if (h <= 4) return '#8a9040'
@@ -483,6 +541,21 @@ function heatLabel_(h) {
   if (h <= 6) return 'charged'
   if (h <= 8) return 'heated'
   return 'flashpoint'
+}
+
+function concessionColor_(n) {
+  if (n <= 2) return '#4a7ab5'
+  if (n <= 5) return '#4a9b6f'
+  if (n <= 8) return '#6abf8a'
+  return '#a8e6bf'
+}
+
+function concessionLabel_(n) {
+  if (n === 0) return 'none'
+  if (n <= 2) return 'rare'
+  if (n <= 5) return 'some'
+  if (n <= 8) return 'frequent'
+  return 'flowing'
 }
 
 function debateSummary(state, participants) {

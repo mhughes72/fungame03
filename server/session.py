@@ -32,6 +32,7 @@ if _ROOT not in sys.path:
 
 from langchain_core.messages import AIMessage, HumanMessage
 
+import debug as dbg
 import server.events as evt
 from graph import build_graph
 from nodes import (
@@ -81,6 +82,13 @@ class Session:
         Exits when the graph reaches ``__steer__`` or ``consensus_checker``.
         The method is designed to be called via ``loop.run_in_executor``.
         """
+        dbg.set_sink(lambda ch, label, data: self._put(evt.debug(ch, label, data)))
+        try:
+            self._run_batch_inner()
+        finally:
+            dbg.clear_sink()
+
+    def _run_batch_inner(self) -> None:
         displayed_count = len(self.state.get("messages") or [])
         final_state = self.state
 
@@ -102,6 +110,10 @@ class Session:
                 )
                 if clean_speaker:
                     self._put(evt.speaker(clean_speaker))
+
+                if new_msgs:
+                    concession_total = sum((snapshot.get("concession_counts") or {}).values())
+                    self._put(evt.bars(snapshot.get("heat", 0), concession_total))
 
                 final_state = snapshot
 
@@ -128,6 +140,10 @@ class Session:
             self._put(evt.message(name, msg.content.strip(), role=role))
 
     def _after_batch(self) -> None:
+        # Clear one-turn evidence flag
+        if self.state.get("evidence_this_turn"):
+            self.state = {**self.state, "evidence_this_turn": ""}
+
         # History compression
         condensed = summarize_history(self.state["messages"], self.state["topic"])
         if len(condensed) < len(self.state["messages"]):
@@ -139,6 +155,7 @@ class Session:
         self._put(evt.state_update(
             turn=self.state.get("turn_count", 0),
             heat=self.state.get("heat", 0),
+            concession_total=sum((self.state.get("concession_counts") or {}).values()),
             moderator_style=self.state.get("moderator_style", "socratic"),
             partial_agreements=self.state.get("partial_agreements") or [],
             points_of_agreement=self.state.get("points_of_agreement") or [],
@@ -184,6 +201,7 @@ class Session:
         text: str,
         new_style: str,
         participants: list[str],
+        evidence: str = "",
     ) -> None:
         """Inject user input or a moderator steer into state, then start next batch."""
         if new_style and new_style != self.state.get("moderator_style"):
@@ -213,6 +231,17 @@ class Session:
                 ],
             }
             self._put(evt.message("Moderator", steer, role="moderator"))
+
+        if evidence:
+            from langchain_core.messages import SystemMessage as _SysMsg
+            self.state = {
+                **self.state,
+                "evidence_this_turn": evidence,
+                "messages": list(self.state["messages"]) + [
+                    _SysMsg(content=f"[EVIDENCE] {evidence}")
+                ],
+            }
+            self._put(evt.evidence(evidence, ""))
 
     def new_topic(self, topic: str) -> None:
         """Reset state for a new topic, keeping the same participants and graph."""

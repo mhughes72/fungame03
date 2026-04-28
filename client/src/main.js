@@ -26,10 +26,11 @@ async function showSetup() {
 
 function showDebate(sessionId, participants, topic, styles) {
   debate.mount(app, sessionId, participants, topic, styles, {
-    steer:         api.steer,
-    deleteSession: api.deleteSession,
-    newTopic:      api.newTopic,
-    openStream:    api.openStream,
+    steer:          api.steer,
+    deleteSession:  api.deleteSession,
+    newTopic:       api.newTopic,
+    openStream:     api.openStream,
+    searchEvidence: api.searchEvidence,
   })
 
   app.addEventListener('debate:quit', () => showSetup(), { once: true })

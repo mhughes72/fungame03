@@ -34,6 +34,7 @@ def speaker(name: str) -> dict:
 def state_update(
     turn: int,
     heat: int,
+    concession_total: int,
     moderator_style: str,
     partial_agreements: list[dict],
     points_of_agreement: list[str],
@@ -44,6 +45,7 @@ def state_update(
     return _evt("state", {
         "turn": turn,
         "heat": heat,
+        "concession_total": concession_total,
         "moderator_style": moderator_style,
         "partial_agreements": partial_agreements,
         "points_of_agreement": points_of_agreement,
@@ -87,6 +89,21 @@ def system(text: str) -> dict:
 
 def error(text: str) -> dict:
     return _evt("error", {"text": text})
+
+
+def evidence(finding: str, source: str) -> dict:
+    """Empirical evidence injected by the player — rendered distinctly in the convo pane."""
+    return _evt("evidence", {"finding": finding, "source": source})
+
+
+def bars(heat: int, concession_total: int) -> dict:
+    """Lightweight per-turn update for just the heat and concession bars."""
+    return _evt("bars", {"heat": heat, "concession_total": concession_total})
+
+
+def debug(channel: str, label: str, data=None) -> dict:
+    """Debug log line — forwarded to the browser console."""
+    return _evt("debug", {"channel": channel, "label": label, "data": data})
 
 
 # ── serialisation ──────────────────────────────────────────────────────────── #

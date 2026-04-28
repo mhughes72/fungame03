@@ -16,6 +16,7 @@ Channels
 
 import os
 import sys
+import threading
 from datetime import datetime
 
 # Individual channels — all on when debug is enabled; toggle selectively
@@ -28,6 +29,20 @@ CHANNELS: dict[str, bool] = {
 }
 
 _enabled: bool = os.getenv("DEBUG", "").lower() in ("1", "true", "yes")
+
+# Thread-local sink — set per-session so web sessions can capture dlog output
+# without cross-session pollution. Each thread sees its own .fn value.
+_thread_sink: threading.local = threading.local()
+
+
+def set_sink(fn) -> None:
+    """Register a callable(channel, label, data) for the current thread."""
+    _thread_sink.fn = fn
+
+
+def clear_sink() -> None:
+    """Remove the sink for the current thread."""
+    _thread_sink.fn = None
 
 # ANSI helpers (gracefully degrade on terminals without color support)
 _RESET  = "\033[0m"
@@ -98,6 +113,10 @@ def dlog(channel: str, label: str, data=None) -> None:
     label    - short description of what's being logged
     data     - dict, list, or string of supporting detail (optional)
     """
+    fn = getattr(_thread_sink, "fn", None)
+    if fn:
+        fn(channel, label, data)
+
     if not is_enabled(channel):
         return
 

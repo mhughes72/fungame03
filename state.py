@@ -26,6 +26,7 @@ class RoomState(TypedDict):
     forced_speaker: str        # if set, bypass scorer and force this character next
     heat: int                  # 0–10, rises with disagreement, falls with concession
     drift_topic: str           # non-empty when conversation has wandered from original topic
+    evidence_this_turn: str    # non-empty for one batch after evidence is injected; cleared after
 
 
 def new_room_state(
@@ -57,6 +58,7 @@ def new_room_state(
         "forced_speaker": "",
         "heat": 0,
         "drift_topic": "",
+        "evidence_this_turn": "",
     }
 
 
@@ -82,4 +84,5 @@ def reset_for_new_topic(state: RoomState, topic: str) -> RoomState:
         "forced_speaker": "",
         "heat": 0,
         "drift_topic": "",
+        "evidence_this_turn": "",
     }
