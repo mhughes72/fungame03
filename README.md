@@ -58,6 +58,7 @@ Opens at `http://localhost:8000`. The frontend is pre-built and served as static
 **Web UI features:**
 - **Seating chart** — oval table with DALL-E 3 portraits; seats pulse on active speaker and glow green on full consensus
 - **Steer drawer** — slides up from the bottom of the left column at each steer break; shows all 8 moderator styles with full descriptions; conversation remains visible above it
+- **Buy a round** — in the steer drawer, set how many drinks each participant consumes this round using `−`/`+` buttons; drink counts accumulate across steer breaks and affect how characters speak (see below)
 - **End-of-debate report** — shown on both consensus and quit, with turn count, heat level, agreements reached, partial alignments, and unresolved tensions
 - **About / Help** — accessible from both the setup screen and the debate header; explains the rules and mechanics to new players
 
@@ -151,6 +152,21 @@ After each philosopher turn, the winning response is scanned for concession lang
 Concession counts are used in two ways:
 1. Prompt pressure: zero concessions past turn 8 → nudge to find merit in opponent's argument
 2. Moderator targeting: the character with the fewest concessions is identified as most entrenched and addressed by name in the steer
+
+### Drunk characters
+
+Each character tracks a cumulative drink count (`drunk_levels` in state). At each steer break, the player can add drinks per character using the `−`/`+` controls in the steer drawer. Counts accumulate across rounds and reset on new topic.
+
+The drink level is injected as the final instruction in the character's user prompt — the position the model weighs most heavily:
+
+| Drinks | Effect |
+|---|---|
+| 1 | Filter loosened — says things normally held back; too emphatic on key point; stage direction required |
+| 2 | Clearly tipsy — says the quiet part loud; trails off mid-sentence with an em-dash and recovers; unsteady stage direction |
+| 3 | Drunk — slurred words in text (e.g. *thish*, *exshactly*); loops back to the same point twice; CAPS for emphasis; required stage direction |
+| 4+ | Very drunk — barely coherent; sentence fragments; goes on a tangent and slams back; one sentence maximum; physical unsteadiness required |
+
+---
 
 ### Moderator steer
 

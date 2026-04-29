@@ -99,6 +99,7 @@ class SteerRequest(BaseModel):
     text: str = ""
     style: str = "socratic"
     evidence: str = ""    # pre-summarised finding from /api/search; empty if not injecting
+    drinks: dict[str, int] = {}   # {name: count} — drinks to add this round per character
 
 
 class SearchRequest(BaseModel):
@@ -246,6 +247,7 @@ async def steer_session(session_id: str, req: SteerRequest):
         new_style=req.style,
         participants=session.state["participants"],
         evidence=req.evidence,
+        drinks=req.drinks,
     )
     loop.run_in_executor(None, session.run_batch)
     return {"ok": True}

@@ -202,6 +202,7 @@ class Session:
         new_style: str,
         participants: list[str],
         evidence: str = "",
+        drinks: dict = None,
     ) -> None:
         """Inject user input or a moderator steer into state, then start next batch."""
         if new_style and new_style != self.state.get("moderator_style"):
@@ -242,6 +243,18 @@ class Session:
                 ],
             }
             self._put(evt.evidence(evidence, ""))
+
+        if drinks:
+            participants = self.state.get("participants", [])
+            current = dict(self.state.get("drunk_levels") or {})
+            for name, count in drinks.items():
+                if count > 0 and name in participants:
+                    current[name] = current.get(name, 0) + count
+                    total = current[name]
+                    _labels = {1: "one drink", 2: "two drinks", 3: "three drinks"}
+                    label = _labels.get(total, f"{total} drinks")
+                    self._put(evt.system(f"{name} has had {label} tonight."))
+            self.state = {**self.state, "drunk_levels": current}
 
     def new_topic(self, topic: str) -> None:
         """Reset state for a new topic, keeping the same participants and graph."""

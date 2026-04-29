@@ -95,11 +95,11 @@ export function mount(container, sessionId, participants, topic, styles, api) {
             `   original topic: ${topic}`)
         }
         convoPane.scrollTop = convoPane.scrollHeight
-        openSteerModal(currentStyle, styles, debateSummary(lastState, participants), leftCol, api.searchEvidence).then(result => {
+        openSteerModal(currentStyle, styles, debateSummary(lastState, participants), leftCol, api.searchEvidence, participants).then(result => {
           if (result === null) {
             appendGameOver(convoPane, lastState, participants, quit)
           } else {
-            api.steer(sessionId, result.text, result.style, result.evidence || '')
+            api.steer(sessionId, result.text, result.style, result.evidence || '', result.drinks || {})
               .catch(err => appendSystem(convoPane, `Steer error: ${err.message}`))
           }
         })

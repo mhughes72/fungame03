@@ -27,6 +27,7 @@ class RoomState(TypedDict):
     heat: int                  # 0–10, rises with disagreement, falls with concession
     drift_topic: str           # non-empty when conversation has wandered from original topic
     evidence_this_turn: str    # non-empty for one batch after evidence is injected; cleared after
+    drunk_levels: dict         # {name: int} — cumulative drinks served per character
 
 
 def new_room_state(
@@ -59,6 +60,7 @@ def new_room_state(
         "heat": 0,
         "drift_topic": "",
         "evidence_this_turn": "",
+        "drunk_levels": {},
     }
 
 
@@ -85,4 +87,5 @@ def reset_for_new_topic(state: RoomState, topic: str) -> RoomState:
         "heat": 0,
         "drift_topic": "",
         "evidence_this_turn": "",
+        "drunk_levels": {},
     }

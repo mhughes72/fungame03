@@ -809,6 +809,51 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 .evidence-discard-btn { border-color: var(--text-dim); color: var(--text-dim); }
 .evidence-accepted { color: var(--green); font-size: 0.8rem; }
 
+/* drinks grid in steer drawer */
+.drinks-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0 0.25rem;
+}
+.drink-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.drink-name {
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.drink-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.drink-count {
+  font-size: 0.85rem;
+  color: var(--text);
+  min-width: 1.2rem;
+  text-align: center;
+}
+.drink-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.85rem;
+  line-height: 1;
+  padding: 0.1rem 0.45rem;
+  transition: border-color 0.15s, color 0.15s;
+}
+.drink-btn:hover { border-color: var(--amber); color: var(--amber); }
+
 /* style list — vertical, scrollable */
 .style-list {
   flex: 1;

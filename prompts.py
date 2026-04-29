@@ -39,6 +39,42 @@ def _openness_line(openness: int) -> str:
         )
 
 
+def _drunk_line(drunk_level: int) -> str:
+    if drunk_level <= 0:
+        return ""
+    elif drunk_level == 1:
+        return (
+            "\n⚠ OVERRIDE — YOU HAVE HAD ONE DRINK. This overrides your normal style rules.\n"
+            "Your filter is loose. Say something you'd normally hold back. "
+            "Be a little too emphatic — lean on your key point harder than the argument needs. "
+            "Include one *[stage direction]* like *[swirls glass]* or *[leans forward]*.\n\n"
+        )
+    elif drunk_level == 2:
+        return (
+            "\n⚠ OVERRIDE — YOU HAVE HAD TWO DRINKS. This overrides your normal style rules.\n"
+            "You are tipsy. Say the quiet part loud. "
+            "Hammer your conviction harder than the argument warrants. "
+            "Trail off mid-sentence with an em-dash — then recover and finish the thought differently. "
+            "Include a *[stage direction]* like *[takes a long sip]* or *[points unsteadily]*.\n\n"
+        )
+    elif drunk_level == 3:
+        return (
+            "\n⚠ OVERRIDE — YOU ARE DRUNK. This overrides your normal style rules.\n"
+            "Your thoughts loop. Slur a word or two in the actual text (e.g. 'thish', 'exshactly'). "
+            "Circle back to the same point twice as if you haven't said it yet. "
+            "You are louder than you mean to be — USE CAPS once for emphasis. "
+            "Stage direction like *[grips the table]* or *[gestures too broadly]* is required.\n\n"
+        )
+    else:
+        return (
+            "\n⚠ OVERRIDE — YOU ARE VERY DRUNK. This completely overrides your normal style rules.\n"
+            "Barely coherent. Slur words visibly (e.g. 'lissen', 'absho-lutely', 'thash the thing'). "
+            "Your deepest obsession spills out in sentence fragments. "
+            "Go on a tangent — lose the thread — slam back to your point. "
+            "One sentence maximum. A *[stage direction]* showing physical unsteadiness is required.\n\n"
+        )
+
+
 def _philosopher_system_prompt(
     name: str,
     participants: list[str],
@@ -180,6 +216,7 @@ def _philosopher_user_prompt(
     concession_counts: dict | None = None,
     concession_log: dict | None = None,
     challenge_counts: dict | None = None,
+    drunk_level: int = 0,
 ) -> str:
     safe_name = name.replace(" ", "_")
 
@@ -286,6 +323,9 @@ def _philosopher_user_prompt(
         if callback_lines else ""
     )
 
+    drunk_reminder = _drunk_line(drunk_level).strip()
+    drunk_suffix = f"\n\n{drunk_reminder}" if drunk_reminder else ""
+
     return (
         f'Central question being debated: "{topic}"\n\n'
         f"{no_repeat}"
@@ -297,4 +337,5 @@ def _philosopher_user_prompt(
         f'Ensure your response connects back to the central question: "{topic}". '
         f"Do not assume the answer — engage with whether it is true.\n\n"
         f"IMPORTANT — {length_instruction}"
+        f"{drunk_suffix}"
     )
