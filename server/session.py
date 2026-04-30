@@ -118,7 +118,27 @@ class Session:
                 final_state = snapshot
 
         except Exception as exc:
-            self._put(evt.error(str(exc)))
+            err_str = str(exc).lower()
+            is_billing = any(k in err_str for k in (
+                "insufficient_quota", "exceeded your current quota",
+                "billing", "out of credits", "quota exceeded",
+            ))
+            if is_billing:
+                self._put(evt.system(
+                    "*[the barkeep sets down a glass and kills the lights]* "
+                    "The bar is closed for the evening. The developer — and we use that term loosely — "
+                    "appears to have forgotten to top up the OpenAI account. "
+                    "The philosophers will resume their quarrel once someone finds their wallet."
+                ))
+                s = final_state
+                self._put(evt.game_over(
+                    turn=s.get("turn_count", 0),
+                    heat=s.get("heat", 0),
+                    partial_agreements=s.get("partial_agreements") or [],
+                    remaining_disagreements=s.get("remaining_disagreements") or [],
+                ))
+            else:
+                self._put(evt.error(str(exc)))
             self._put_sentinel()
             return
 
