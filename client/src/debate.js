@@ -536,17 +536,11 @@ function renderSidebar(el, state) {
 function renderContent(text) {
   const escaped = escHtml(text)
 
-  // Handle both *[action]* and *action* formats
-  let result = escaped
+  // *[action]* → stage direction (keep brackets)
+  // *anything else* → stage direction (add brackets)
+  const result = escaped
     .replace(/\*\[([^\]]+)\]\*/g, '<em class="stage-dir">[$1]</em>')
-
-  // Match *text* that looks like a stage direction: starts with capital letter or lowercase action verb
-  // Only if not already processed above (i.e., not wrapped in [...])
-  result = result.replace(/\*([A-Z][^*]+?)\*(?!\])/g, (match, content) => {
-    // Avoid double-processing if it somehow got wrapped in brackets
-    if (content.includes('[') || content.includes(']')) return match
-    return `<em class="stage-dir">[${content}]</em>`
-  })
+    .replace(/\*([^*\n]+)\*/g, '<em class="stage-dir">[$1]</em>')
 
   return result.replace(/\n/g, '<br>')
 }
