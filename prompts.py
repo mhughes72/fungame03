@@ -207,6 +207,32 @@ _LENGTH_INSTRUCTIONS: dict[tuple[str, str], str] = {
 }
 
 
+def _drunk_opponents_line(name: str, drunk_levels: dict) -> str:
+    """Describe the observable drunk state of opponents so the speaker can react."""
+    lines = []
+    for other, level in drunk_levels.items():
+        if other == name or level <= 0:
+            continue
+        display = other.replace("_", " ")
+        if level == 1:
+            desc = f"{display} has had a drink — looser than usual, a little too emphatic."
+        elif level == 2:
+            desc = f"{display} is visibly tipsy — arguments getting sloppy, saying more than they should."
+        elif level == 3:
+            desc = f"{display} is drunk — slurring, looping, and louder than they realise."
+        else:
+            desc = f"{display} is very drunk — barely coherent, held together by ego alone."
+        lines.append(f"  - {desc}")
+    if not lines:
+        return ""
+    return (
+        "\nYou can observe that some at the table have been drinking:\n"
+        + "\n".join(lines)
+        + "\nFeel free to react to this — exploit it, mock it, express concern, or ignore it as beneath you. "
+        "Do not narrate it mechanically; let it colour how you engage with them.\n"
+    )
+
+
 def _philosopher_user_prompt(
     name: str,
     history: list,
@@ -217,6 +243,7 @@ def _philosopher_user_prompt(
     concession_log: dict | None = None,
     challenge_counts: dict | None = None,
     drunk_level: int = 0,
+    drunk_levels: dict | None = None,
 ) -> str:
     safe_name = name.replace(" ", "_")
 
@@ -326,6 +353,8 @@ def _philosopher_user_prompt(
     drunk_reminder = _drunk_line(drunk_level).strip()
     drunk_suffix = f"\n\n{drunk_reminder}" if drunk_reminder else ""
 
+    opponents_drunk = _drunk_opponents_line(name, drunk_levels or {})
+
     return (
         f'Central question being debated: "{topic}"\n\n'
         f"{no_repeat}"
@@ -333,6 +362,7 @@ def _philosopher_user_prompt(
         f"{concession_memory}"
         f"{concession_pressure}"
         f"{challenge_pressure}"
+        f"{opponents_drunk}"
         f"{respond_to}\n\n"
         f'Ensure your response connects back to the central question: "{topic}". '
         f"Do not assume the answer — engage with whether it is true.\n\n"

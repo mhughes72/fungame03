@@ -124,13 +124,14 @@ def _generate_candidate(name: str, state: RoomState) -> dict:
     own_summary         = character_summaries.get(name, "")
     heat                = state.get("heat") or 0
     evidence_this_turn  = state.get("evidence_this_turn") or ""
-    drunk_level         = (state.get("drunk_levels") or {}).get(name, 0)
+    drunk_levels        = state.get("drunk_levels") or {}
+    drunk_level         = drunk_levels.get(name, 0)
     if drunk_level:
         dbg.dlog("PHILOSOPHER", f"{name} — drunk level {drunk_level}")
     system_prompt = _philosopher_system_prompt(name, participants, partial_agreements, own_summary, heat, evidence_this_turn)
     user_prompt   = _philosopher_user_prompt(
         name, state["messages"], topic, argument_log, turn_count, concession_counts,
-        concession_log, challenge_counts, drunk_level,
+        concession_log, challenge_counts, drunk_level, drunk_levels,
     )
 
     messages = (
