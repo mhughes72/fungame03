@@ -6,7 +6,7 @@ A terminal game powered by LangGraph and OpenAI where famous thinkers from histo
 
 You pick 2–4 historical figures, give them a topic, and watch them argue. Each turn the most likely candidate to react (scored by hot-topic keyword overlap with the last message) generates a response — a second candidate is generated only when scores are tied, and a selector LLM picks the winner. The debate runs in structured rounds: every 4 turns a moderator automatically steers the conversation toward common ground; every 12 turns a consensus checker evaluates whether the room has converged. You can jump in at any point to guide the conversation yourself.
 
-**25 characters** spanning philosophy, physics, politics, and tech — including Socrates, Nietzsche, Marx, Lenin, Stalin, Mao, Pol Pot, Hitler, Newton, Einstein, Bohr, Heisenberg, Feynman, Penrose, Musk, Gates, Jobs, Churchill, Roosevelt, and more.
+**27 characters** spanning philosophy, physics, politics, and tech — including Socrates, Nietzsche, Marx, Lenin, Stalin, Mao, Pol Pot, Hitler, Newton, Einstein, Bohr, Heisenberg, Feynman, Penrose, Musk, Gates, Jobs, Churchill, Roosevelt, Putin, Xi Jinping, and more.
 
 Response length adapts to context: a short pointed question gets a blunt one-liner; a long developed argument gets a full response.
 
@@ -57,9 +57,10 @@ Opens at `http://localhost:8000`. The frontend is pre-built and served as static
 
 **Web UI features:**
 - **Seating chart** — oval table with DALL-E 3 portraits; seats pulse on active speaker and glow green on full consensus
-- **Steer drawer** — slides up from the bottom of the left column at each steer break; shows all 8 moderator styles with full descriptions; conversation remains visible above it
-- **Buy a round** — in the steer drawer, set how many drinks each participant consumes this round using `−`/`+` buttons; drink counts accumulate across steer breaks and affect how characters speak (see below)
+- **Steer drawer** — slides up from the bottom of the left column at each steer break; shows all 8 moderator styles with full descriptions; conversation remains visible above it; moderator style updates in the sidebar immediately on submit
+- **Cheat button** — always-accessible button in the debate header; opens a modal to directly set the heat level (0–10 slider) and buy rounds for any character; drink controls were moved here from the steer drawer
 - **End-of-debate report** — shown on both consensus and quit, with turn count, heat level, agreements reached, partial alignments, and unresolved tensions
+- **Newspaper front page** — after a debate ends, click "Read the morning paper" to generate a sensationalist Victorian-style newspaper front page summarising the debate, complete with headline, scandal sidebar, pull quote, and portrait photos of all participants
 - **About / Help** — accessible from both the setup screen and the debate header; explains the rules and mechanics to new players
 
 **To rebuild the frontend after editing `client/src/`:**
@@ -184,7 +185,7 @@ Ping-pong detection watches the last 6 speakers: if two people have dominated �
 **User prompt:**
 - The central question
 - The last 3 claims this character has made (no-repeat guard)
-- A direct quote of the last thing said, with instruction to engage with it specifically
+- A direct quote of the last thing said, with instruction to engage with it specifically — or, if the previous speaker was cut off mid-sentence (response ended with `—`), a prompt describing the cutoff and offering three response options: steamroll past it, finish their thought sarcastically, or turn the interruption itself into an argument
 - If the character has made zero concessions after turn 8: a nudge to find merit in what was just said
 
 ### Candidate history
@@ -194,6 +195,18 @@ Each philosopher call receives a trimmed history: the leading summary block (if 
 ### Argument log
 
 Each character's last 3 full responses are stored and shown in their prompt as claims they must not repeat. Older entries are dropped as new ones arrive.
+
+### Interruptions
+
+At heat ≥ 6, the system prompt instructs characters they may cut off mid-sentence — ending their response with an em-dash (`—`) when conviction overtakes composition. The next speaker's prompt detects this and frames the cutoff as something to react to rather than ignore. At heat 9–10, interrupting is described as expected behaviour.
+
+This is prompt-driven: the model decides whether to cut off, and the detection is a simple string check. If the model never cuts off, nothing breaks.
+
+### Alliance signalling
+
+When partial agreements form, the coalition block in each allied character's system prompt is extended with a **social texture** note. If the character has a `dynamics` entry for their ally (most major character pairs do), that historical relationship is quoted and they are told to let the tension surface — to acknowledge the surprise, express cautious respect, or note what still divides them despite the convergence. If no dynamics entry exists, a generic nudge is added instead.
+
+This turns silent coalitions into named, slightly awkward ones: *"I find myself agreeing with Lenin here, which I'll admit unsettles me."*
 
 ### Concession tracking
 
@@ -205,7 +218,7 @@ Concession counts are used in two ways:
 
 ### Drunk characters
 
-Each character tracks a cumulative drink count (`drunk_levels` in state). At each steer break, the player can add drinks per character using the `−`/`+` controls in the steer drawer. Counts accumulate across rounds and reset on new topic.
+Each character tracks a cumulative drink count (`drunk_levels` in state). The player can add drinks per character at any time using the **Cheat** button in the debate header — `−`/`+` controls per character, applied immediately. Counts accumulate across rounds and reset on new topic.
 
 The drink level is injected as the final instruction in the character's user prompt — the position the model weighs most heavily:
 
