@@ -252,9 +252,9 @@ Add an entry to `CHARACTERS` in `personas.py`. All fields are required:
 
 `dynamics` is defined but not currently injected into prompts — characters react based on what is actually said.
 
-Current characters (27): Socrates, Nietzsche, Marx, Sun Tzu, Abraham Lincoln, Nikola Tesla, Frederick Douglass, John Lennon, Wolfgang Amadeus Mozart, Elon Musk, Bill Gates, Steve Jobs, Vladimir Lenin, Adolf Hitler, Joseph Stalin, Mao Zedong, Pol Pot, Isaac Newton, Albert Einstein, Niels Bohr, Werner Heisenberg, Richard Feynman, Roger Penrose, Winston Churchill, Franklin Delano Roosevelt, Vladimir Putin, Xi Jinping.
+Current characters (33): Socrates, Nietzsche, Marx, Sun Tzu, Abraham Lincoln, Nikola Tesla, Frederick Douglass, John Lennon, Wolfgang Amadeus Mozart, Elon Musk, Bill Gates, Steve Jobs, Vladimir Lenin, Adolf Hitler, Joseph Stalin, Mao Zedong, Pol Pot, Isaac Newton, Albert Einstein, Niels Bohr, Werner Heisenberg, Richard Feynman, Roger Penrose, Winston Churchill, Franklin Delano Roosevelt, Vladimir Putin, Xi Jinping, Charles Darwin, Jesus Christ, Oscar Wilde, Leonardo da Vinci, Pablo Picasso, Kurt Cobain.
 
-Good candidates to add: Hannah Arendt (essential with the authoritarian cast), Machiavelli, Thomas Jefferson, Dostoevsky, Oscar Wilde, Voltaire, Napoleon, Confucius, Ibn Khaldun.
+Good candidates to add: Hannah Arendt (essential with the authoritarian cast), Machiavelli, Thomas Jefferson, Dostoevsky, Voltaire, Napoleon, Confucius, Ibn Khaldun.
 
 ## Runtime `!` commands
 
