@@ -104,6 +104,8 @@ export function mount(container, sessionId, participants, topic, styles, api) {
           if (result === null) {
             appendGameOver(convoPane, lastState, participants, quit, sessionId, api)
           } else {
+            currentStyle = result.style
+            renderSidebar(sidebar, { topic, ...lastState, moderator_style: result.style })
             api.steer(sessionId, result.text, result.style, result.evidence || '', result.drinks || {})
               .catch(err => appendSystem(convoPane, `Steer error: ${err.message}`))
           }
