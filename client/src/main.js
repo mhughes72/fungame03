@@ -31,6 +31,7 @@ function showDebate(sessionId, participants, topic, styles) {
     newTopic:       api.newTopic,
     openStream:     api.openStream,
     searchEvidence: api.searchEvidence,
+    fetchNewspaper: api.fetchNewspaper,
   })
 
   app.addEventListener('debate:quit', () => showSetup(), { once: true })

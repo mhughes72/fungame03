@@ -54,6 +54,10 @@ export async function deleteSession(sessionId) {
   return del(`/sessions/${sessionId}`)
 }
 
+export async function fetchNewspaper(sessionId) {
+  return post(`/sessions/${sessionId}/newspaper`, {})
+}
+
 /**
  * Open an SSE stream for a session.
  *

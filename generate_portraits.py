@@ -1,6 +1,9 @@
 """
 Generate portrait images for each philosopher in personas.py using DALL-E 3.
 
+Characters in WIKIPEDIA_SOURCES are fetched as real Wikipedia photos instead
+of being generated — useful for figures DALL-E refuses (Hitler, Stalin, etc.).
+
 Run:
     python generate_portraits.py            # all characters
     python generate_portraits.py Newton Einstein  # specific names (partial match OK)
@@ -11,9 +14,10 @@ you pass --overwrite.
 Edit the block below to change style, size, quality, or the prompt template.
 """
 
-import os
+import json
 import sys
 import time
+import urllib.parse
 import urllib.request
 from pathlib import Path
 
@@ -45,6 +49,23 @@ PROMPT_TEMPLATE = (
 
 DELAY_BETWEEN = 2   # seconds between API calls to avoid rate limits
 
+# ── Wikipedia sources ──────────────────────────────────────────────────────────
+# Characters here get their main Wikipedia photo instead of a DALL-E generation.
+# Add any name here if DALL-E refuses or the result is poor.
+
+WIKIPEDIA_SOURCES: dict[str, str] = {
+    "Adolf Hitler":  "Adolf_Hitler",
+    "Joseph Stalin": "Joseph_Stalin",
+    "Mao Zedong":    "Mao_Zedong",
+    "Pol Pot":       "Pol_Pot",
+    "Vladimir Lenin":"Vladimir_Lenin",
+    "Vladimir Putin":"Vladimir_Putin",
+    "Xi Jinping":    "Xi_Jinping",
+    "Elon Musk":     "Elon_Musk",
+    "Bill Gates":    "Bill_Gates",
+    "Steve Jobs":    "Steve_Jobs",
+}
+
 # ── Image generation ───────────────────────────────────────────────────────────
 
 def _safe_filename(name: str) -> str:
@@ -58,6 +79,27 @@ def _build_prompt(name: str, char: dict) -> str:
         known_for=char["known_for"][:200],
         style=STYLE,
     )
+
+
+def _fetch_wikipedia_image(article_title: str) -> str | None:
+    """Return the original image URL from Wikipedia's summary API, or None."""
+    encoded = urllib.parse.quote(article_title, safe="")
+    url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{encoded}"
+    req = urllib.request.Request(url, headers={"User-Agent": "PhilosophersBar/1.0"})
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read())
+        img = data.get("originalimage") or data.get("thumbnail")
+        return img["source"] if img else None
+    except Exception as exc:
+        print(f"Wikipedia fetch failed ({exc})", end=" ")
+        return None
+
+
+def _download(url: str, dest: Path) -> None:
+    req = urllib.request.Request(url, headers={"User-Agent": "PhilosophersBar/1.0"})
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        dest.write_bytes(resp.read())
 
 
 def generate_portraits(names: list[str] | None = None, overwrite: bool = False) -> None:
@@ -84,19 +126,32 @@ def generate_portraits(names: list[str] | None = None, overwrite: bool = False) 
             print(f"[{i}/{total}] {name} — already exists, skipping")
             continue
 
-        prompt = _build_prompt(name, char)
-        print(f"[{i}/{total}] {name} … ", end="", flush=True)
+        # ── Wikipedia path ──────────────────────────────────────────────────
+        if name in WIKIPEDIA_SOURCES:
+            print(f"[{i}/{total}] {name} (wikipedia) … ", end="", flush=True)
+            img_url = _fetch_wikipedia_image(WIKIPEDIA_SOURCES[name])
+            if img_url:
+                try:
+                    _download(img_url, dest)
+                    print(f"saved → {dest}")
+                    continue
+                except Exception as exc:
+                    print(f"download failed ({exc}), falling back to DALL-E … ", end="", flush=True)
+            else:
+                print("no image found, falling back to DALL-E … ", end="", flush=True)
 
+        # ── DALL-E path ─────────────────────────────────────────────────────
+        print(f"[{i}/{total}] {name} (dalle) … ", end="", flush=True)
         try:
             response = client.images.generate(
                 model=MODEL,
-                prompt=prompt,
+                prompt=_build_prompt(name, char),
                 size=IMAGE_SIZE,
                 quality=IMAGE_QUALITY,
                 n=1,
             )
-            url = response.data[0].url
-            urllib.request.urlretrieve(url, dest)
+            img_url = response.data[0].url
+            _download(img_url, dest)
             print(f"saved → {dest}")
         except Exception as e:
             print(f"FAILED — {e}")

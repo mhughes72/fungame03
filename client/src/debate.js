@@ -97,7 +97,7 @@ export function mount(container, sessionId, participants, topic, styles, api) {
         convoPane.scrollTop = convoPane.scrollHeight
         openSteerModal(currentStyle, styles, debateSummary(lastState, participants), leftCol, api.searchEvidence, participants).then(result => {
           if (result === null) {
-            appendGameOver(convoPane, lastState, participants, quit)
+            appendGameOver(convoPane, lastState, participants, quit, sessionId, api)
           } else {
             api.steer(sessionId, result.text, result.style, result.evidence || '', result.drinks || {})
               .catch(err => appendSystem(convoPane, `Steer error: ${err.message}`))
@@ -125,7 +125,7 @@ export function mount(container, sessionId, participants, topic, styles, api) {
               .catch(err => appendSystem(convoPane, `Error: ${err.message}`))
           },
           onQuit: quit,
-        }, lastState)
+        }, lastState, sessionId, api)
         break
 
       case 'game_over':
@@ -134,7 +134,7 @@ export function mount(container, sessionId, participants, topic, styles, api) {
         if (closeStream) { closeStream(); closeStream = null }
         clearTyping(convoPane)
         seating.clearAll()
-        appendGameOver(convoPane, data, participants, quit)
+        appendGameOver(convoPane, data, participants, quit, sessionId, api)
         break
 
       case 'bar_beat':
@@ -171,7 +171,7 @@ export function mount(container, sessionId, participants, topic, styles, api) {
     if (lastState.turn > 0) {
       gameEnded = true
       if (closeStream) { closeStream(); closeStream = null }
-      appendGameOver(convoPane, lastState, participants, quit)
+      appendGameOver(convoPane, lastState, participants, quit, sessionId, api)
     } else {
       quit()
     }
@@ -243,7 +243,7 @@ function appendEvidence(el, finding) {
   scrollAppend(el, div)
 }
 
-function appendConsensus(el, { summary, points }, { onNewTopic, onQuit }, state = {}) {
+function appendConsensus(el, { summary, points }, { onNewTopic, onQuit }, state = {}, sessionId, api) {
   const div = document.createElement('div')
   div.className = 'consensus-panel'
   div.innerHTML = `
@@ -259,6 +259,7 @@ function appendConsensus(el, { summary, points }, { onNewTopic, onQuit }, state 
       <input class="consensus-topic-input" id="consensus-topic-input"
              type="text" placeholder="New topic…" autocomplete="off" />
       <button class="consensus-continue-btn" id="consensus-continue">Continue ▶</button>
+      <button class="newspaper-btn" id="consensus-paper">Read the morning paper 📰</button>
       <button class="consensus-end-btn" id="consensus-end">End the evening</button>
     </div>
   `
@@ -278,9 +279,10 @@ function appendConsensus(el, { summary, points }, { onNewTopic, onQuit }, state 
     }
   })
   div.querySelector('#consensus-end').addEventListener('click', onQuit)
+  div.querySelector('#consensus-paper').addEventListener('click', () => openNewspaper(sessionId, api))
 }
 
-function appendGameOver(el, state, participants, onQuit) {
+function appendGameOver(el, state, participants, onQuit, sessionId, api) {
   clearTyping(el)
   const div = document.createElement('div')
   div.className = 'game-over-panel'
@@ -293,11 +295,78 @@ function appendGameOver(el, state, participants, onQuit) {
     <div class="game-over-subtitle">${escHtml(subtitle)}</div>
     ${_debateStats(state)}
     <div class="game-over-actions">
+      ${sessionId ? `<button class="newspaper-btn" id="game-over-paper">Read the morning paper 📰</button>` : ''}
       <button class="consensus-end-btn" id="game-over-leave">Leave the bar</button>
     </div>
   `
   scrollAppend(el, div)
   div.querySelector('#game-over-leave').addEventListener('click', onQuit)
+  if (sessionId) div.querySelector('#game-over-paper')?.addEventListener('click', () => openNewspaper(sessionId, api))
+}
+
+// ── newspaper modal ──────────────────────────────────────────────────── //
+
+async function openNewspaper(sessionId, api) {
+  const overlay = document.createElement('div')
+  overlay.className = 'newspaper-overlay'
+  overlay.innerHTML = `
+    <div class="newspaper-loading">
+      <div class="newspaper-loading-text">Setting type… rolling the press…</div>
+    </div>
+  `
+  document.body.appendChild(overlay)
+
+  let paper
+  try {
+    paper = await api.fetchNewspaper(sessionId)
+  } catch (err) {
+    overlay.remove()
+    alert(`Could not print the paper: ${err.message}`)
+    return
+  }
+
+  overlay.innerHTML = `
+    <div class="newspaper-modal">
+      <button class="newspaper-close" id="newspaper-close">✕ Close</button>
+      <div class="newspaper-page">
+
+        <div class="newspaper-masthead">
+          <div class="newspaper-name">${escHtml(paper.newspaper_name)}</div>
+          <div class="newspaper-meta">
+            <span>${escHtml(paper.city)}</span>
+            <span class="newspaper-meta-sep">·</span>
+            <span>${escHtml(paper.date_str)}</span>
+            <span class="newspaper-meta-sep">·</span>
+            <span>ONE PENNY</span>
+          </div>
+          <div class="newspaper-rule"></div>
+        </div>
+
+        <div class="newspaper-headline">${escHtml(paper.headline)}</div>
+        <div class="newspaper-subhead">${escHtml(paper.subheadline)}</div>
+
+        <div class="newspaper-columns">
+          <div class="newspaper-main-col">
+            <p class="newspaper-lede">${escHtml(paper.lede)}</p>
+            <p class="newspaper-body">${escHtml(paper.body)}</p>
+            <div class="newspaper-pullquote">
+              <div class="newspaper-pullquote-text">"${escHtml(paper.pull_quote)}"</div>
+              <div class="newspaper-pullquote-attr">— ${escHtml(paper.pull_quote_attr)}</div>
+            </div>
+          </div>
+          <div class="newspaper-scandal-col">
+            <div class="newspaper-scandal-head">${escHtml(paper.scandal_head)}</div>
+            <div class="newspaper-scandal-rule"></div>
+            <p class="newspaper-scandal-body">${escHtml(paper.scandal_body)}</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  `
+
+  overlay.querySelector('#newspaper-close').addEventListener('click', () => overlay.remove())
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove() })
 }
 
 function _debateStats(state) {

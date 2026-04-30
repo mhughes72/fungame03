@@ -71,6 +71,42 @@ npm run build
 cd ..
 ```
 
+## Generating portraits
+
+Two portrait generators ship with the project. Both use DALL-E 3 for most characters and fall back to real Wikipedia photos for figures that DALL-E refuses to generate (Hitler, Stalin, Mao, Pol Pot, Lenin, Putin, Xi Jinping, and current tech figures). The `WIKIPEDIA_SOURCES` dict at the top of each script is the place to add more if DALL-E blocks additional characters.
+
+### Game portraits (`generate_portraits.py`)
+
+Used by the web UI seating chart. Saved to `portraits/`.
+
+```bash
+python generate_portraits.py                  # all characters
+python generate_portraits.py Newton           # one character (partial name OK)
+python generate_portraits.py Newton Einstein  # multiple characters
+python generate_portraits.py --overwrite      # regenerate existing images
+```
+
+Style: flat vector illustration, bold cartoon, warm colour palette.
+
+### Newspaper portraits (`generate_newspaper_portraits.py`)
+
+Used by the post-debate newspaper front page. Saved to `newspaper_portraits/`.
+
+```bash
+python generate_newspaper_portraits.py                  # all characters
+python generate_newspaper_portraits.py Newton           # one character (partial name OK)
+python generate_newspaper_portraits.py Newton Einstein  # multiple characters
+python generate_newspaper_portraits.py --overwrite      # regenerate existing images
+```
+
+Style is era-aware:
+- **Photography era** (died after 1845): vintage sepia press-photo style
+- **Pre-photography** (died before 1845 — Newton, Mozart, Socrates, Sun Tzu): Victorian woodcut / cross-hatch engraving style
+
+Both scripts require `OPENAI_API_KEY` in `.env` for DALL-E generation. Wikipedia fetches need no key.
+
+---
+
 ## Bar UI controls
 
 | Key | Effect |
@@ -499,14 +535,15 @@ Use 2 participants (faster, cheaper) unless a feature specifically requires more
 
 ### 18. Portrait generation
 
-**What to verify:** `generate_portraits.py` creates images correctly.
+**What to verify:** both portrait generators create images correctly.
 
 1. Run `python generate_portraits.py Newton` — confirm `portraits/Isaac_Newton.png` is created.
-2. Run again without `--overwrite` — confirm "already exists, skipping" is printed and no API call is made.
-3. Run `python generate_portraits.py Newton --overwrite` — confirm a new image is generated.
-4. Run `python generate_portraits.py Xyz` — confirm "No match for 'Xyz'" is printed and no crash occurs.
+2. Run `python generate_newspaper_portraits.py Newton` — confirm `newspaper_portraits/Isaac_Newton.png` is created (should use DALL-E engraving style).
+3. Run `python generate_newspaper_portraits.py Hitler` — confirm `newspaper_portraits/Adolf_Hitler.png` is fetched from Wikipedia (no DALL-E call, prints "wikipedia").
+4. Run either script again without `--overwrite` — confirm "already exists, skipping" is printed.
+5. Run `python generate_portraits.py Xyz` — confirm "No match for 'Xyz'" is printed and no crash occurs.
 
-**Pass:** images created, skip logic works, overwrite flag works, bad name handled gracefully.
+**Pass:** images created in the correct folders, Wikipedia path used for blocked characters, skip and overwrite logic work, bad name handled gracefully.
 
 ---
 

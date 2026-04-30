@@ -1,3 +1,4 @@
+import re
 import time
 import random
 import warnings
@@ -646,3 +647,127 @@ def generate_moderator_steer(state: RoomState) -> str:
 
     dbg.dlog("MODERATOR", "Steer generated", response.content[:200])
     return response.content.strip()
+
+
+# --------------------------------------------------------------------------- #
+# Post-debate newspaper                                                         #
+# --------------------------------------------------------------------------- #
+
+class _NewspaperContent(BaseModel):
+    newspaper_name: str    # e.g. "THE EVENING GAZETTE"
+    city: str              # e.g. "London"
+    date_str: str          # e.g. "Thursday, 17 April, 1929"
+    headline: str          # big sensational headline
+    subheadline: str       # secondary headline
+    lede: str              # opening paragraph (~70 words)
+    body: str              # second/third paragraphs (~100 words), quotes incidents
+    scandal_head: str      # sidebar headline e.g. "SCANDALOUS CONDUCT AT THE BAR!"
+    scandal_body: str      # sidebar ~60 words, most lurid moment
+    pull_quote: str        # short verbatim-style quote from the debate
+    pull_quote_attr: str   # speaker name + brief title
+
+
+def _era_death_year(era: str) -> int:
+    bc = "bc" in era.lower()
+    if "present" in era.lower():
+        return 2025
+    m = re.search(r'\d{3,4}\s*[–\-]\s*(\d{3,4})', era)
+    if m:
+        y = int(m.group(1))
+        return -y if bc else y
+    m = re.search(r'(\d{3,4})', era)
+    return (-int(m.group(1)) if bc else int(m.group(1))) if m else 0
+
+
+def _era_birth_year(era: str) -> int:
+    bc = "bc" in era.lower()
+    m = re.search(r'(\d{3,4})\s*[–\-]', era)
+    if m:
+        y = int(m.group(1))
+        return -y if bc else y
+    m = re.search(r'(\d{3,4})', era)
+    return (-int(m.group(1)) if bc else int(m.group(1))) if m else 0
+
+
+def generate_newspaper(
+    participants: list[str],
+    topic: str,
+    messages: list,
+    heat: int,
+    concession_counts: dict,
+    partial_agreements: list,
+    remaining_disagreements: list,
+) -> _NewspaperContent:
+    """Generate a sensational newspaper front page summarising the debate."""
+
+    # Determine the era of the "latest" participant so the newspaper has a date
+    eras = {p: CHARACTERS[p]["era"] for p in participants if p in CHARACTERS}
+    latest_death = max((_era_death_year(e) for e in eras.values()), default=1900)
+    latest_birth = max((_era_birth_year(e) for e in eras.values()), default=1850)
+    era_lines = "\n".join(f"  {name}: {era}" for name, era in eras.items())
+
+    # Build transcript (skip system/evidence/backchannel)
+    transcript_parts = []
+    for m in messages:
+        if isinstance(m, SystemMessage):
+            continue
+        name = getattr(m, "name", None) or ""
+        if name.endswith("_bc"):
+            continue
+        display = name.replace("_", " ") if name else ("You" if isinstance(m, HumanMessage) else "?")
+        transcript_parts.append(f'{display}: "{m.content[:300]}"')
+    transcript = "\n".join(transcript_parts[-25:])  # last 25 lines
+
+    concession_lines = ", ".join(
+        f"{n.replace('_', ' ')} ({c})" for n, c in concession_counts.items() if c > 0
+    ) or "none"
+
+    agreement_lines = "; ".join(
+        f"{' & '.join(a['participants'])} agreed on: {a['on']}" for a in partial_agreements
+    ) or "none"
+
+    tension_lines = "; ".join(
+        f"{t['participant_a']} vs {t['participant_b']} over {t['topic']}"
+        if isinstance(t, dict) else str(t)
+        for t in remaining_disagreements
+    ) or "none"
+
+    prompt = f"""You are a sensationalist newspaper reporter in the tradition of Victorian-era yellow journalism.
+A group of historical figures just had a live debate at a bar. Write the front page.
+
+DEBATE FACTS
+Topic: {topic}
+Participants: {', '.join(p.replace('_', ' ') for p in participants)}
+Final heat level: {heat}/10
+Concessions made: {concession_lines}
+Alignments formed: {agreement_lines}
+Unresolved tensions: {tension_lines}
+
+PARTICIPANT ERAS (for dating the newspaper)
+{era_lines}
+
+TRANSCRIPT (last exchanges):
+{transcript}
+
+INSTRUCTIONS
+- The newspaper date must fall within the lifetime of the most recently-lived participant.
+  Their death year is approximately {latest_death}. Their birth year is approximately {latest_birth}.
+  Pick a plausible, specific calendar date (day, month, year) within that range.
+- Invent a newspaper name appropriate to the era and city.
+- The headline must be ALL CAPS, punchy, and scandalous. Use em-dashes freely.
+- The lede must name at least two participants and invoke the debate topic dramatically.
+- The body must reference at least one specific exchange or moment from the transcript.
+- If any character was drunk (slurred speech, erratic arguments, ordered many drinks, became belligerent),
+  the scandal sidebar MUST feature it by name with theatrical outrage.
+- If no one was drunk, the scandal sidebar should cover the most heated exchange.
+- The pull quote must be something a participant actually said (or plausibly said) — keep it under 20 words.
+- Write as a breathless, opinionated reporter who finds all of this DEEPLY shocking yet irresistible.
+"""
+
+    result = ChatOpenAI(model="gpt-4o", temperature=0.9).with_structured_output(
+        _NewspaperContent
+    ).invoke([
+        SystemMessage(content="You write sensationalist newspaper front pages from a user-supplied debate transcript."),
+        HumanMessage(content=prompt),
+    ])
+    return result

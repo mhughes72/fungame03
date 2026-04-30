@@ -42,7 +42,7 @@ from pydantic import BaseModel, Field
 import server.events as evt
 from server.session import SessionStore, _SENTINEL
 from personas import CHARACTERS
-from nodes import MODERATOR_STYLES as _MODERATOR_STYLES
+from nodes import MODERATOR_STYLES as _MODERATOR_STYLES, generate_newspaper as _generate_newspaper
 
 
 # --------------------------------------------------------------------------- #
@@ -264,6 +264,31 @@ async def new_topic(session_id: str, req: NewTopicRequest):
     session.new_topic(req.topic)
     loop.run_in_executor(None, session.run_batch)
     return {"ok": True, "topic": req.topic}
+
+
+@app.post("/api/sessions/{session_id}/newspaper")
+async def newspaper(session_id: str):
+    """Generate a post-debate newspaper front page for the session."""
+    session = store.get(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    state = session.state
+    loop = asyncio.get_event_loop()
+    try:
+        result = await loop.run_in_executor(None, lambda: _generate_newspaper(
+            participants=state.get("participants", []),
+            topic=state.get("topic", ""),
+            messages=state.get("messages", []),
+            heat=state.get("heat", 0),
+            concession_counts=state.get("concession_counts", {}),
+            partial_agreements=state.get("partial_agreements", []),
+            remaining_disagreements=state.get("remaining_disagreements", []),
+        ))
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Newspaper generation failed: {exc}")
+
+    return result.dict()
 
 
 @app.delete("/api/sessions/{session_id}", status_code=204)

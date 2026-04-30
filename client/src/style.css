@@ -987,3 +987,208 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   font-size: 0.85rem;
 }
 .info-link:hover { text-decoration: underline; }
+
+
+/* ══════════════════════════════════════════════════════════════════════ */
+/* NEWSPAPER MODAL                                                         */
+/* ══════════════════════════════════════════════════════════════════════ */
+
+.newspaper-btn {
+  background: #2a1a00;
+  border: 1px solid var(--gold-dim);
+  color: var(--gold);
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  padding: 0.4rem 0.9rem;
+  cursor: pointer;
+  letter-spacing: 0.03em;
+}
+.newspaper-btn:hover { background: var(--bg-mid); border-color: var(--gold); }
+
+.newspaper-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.82);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+.newspaper-loading {
+  color: var(--amber);
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 1.1rem;
+  text-align: center;
+  padding: 3rem;
+}
+
+.newspaper-modal {
+  position: relative;
+  background: #f2ebd4;
+  color: #1a1008;
+  width: 760px;
+  max-width: 100%;
+  padding: 2.5rem 2.5rem 2rem;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.7), inset 0 0 60px rgba(120,80,20,0.08);
+  font-family: Georgia, 'Times New Roman', serif;
+  border: 2px solid #8a6a20;
+}
+
+.newspaper-close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.9rem;
+  background: none;
+  border: none;
+  color: #6b5030;
+  font-family: Georgia, serif;
+  font-size: 0.82rem;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+}
+.newspaper-close:hover { color: #1a1008; }
+
+.newspaper-masthead {
+  text-align: center;
+  margin-bottom: 0.6rem;
+}
+
+.newspaper-name {
+  font-size: 2.4rem;
+  font-weight: 900;
+  font-family: 'IM Fell English', Georgia, serif;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  color: #0d0700;
+  text-transform: uppercase;
+}
+
+.newspaper-meta {
+  font-size: 0.72rem;
+  color: #5a4020;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin: 0.35rem 0 0.5rem;
+}
+
+.newspaper-meta-sep {
+  margin: 0 0.5rem;
+  color: #9a7040;
+}
+
+.newspaper-rule {
+  border: none;
+  border-top: 3px double #1a1008;
+  margin: 0.4rem 0 0.8rem;
+}
+
+.newspaper-headline {
+  font-size: 1.9rem;
+  font-weight: 900;
+  font-family: 'IM Fell English', Georgia, serif;
+  line-height: 1.15;
+  text-align: center;
+  margin-bottom: 0.4rem;
+  color: #0d0700;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+}
+
+.newspaper-subhead {
+  font-size: 1.0rem;
+  font-style: italic;
+  text-align: center;
+  color: #3a2800;
+  margin-bottom: 1rem;
+  font-family: 'IM Fell English', Georgia, serif;
+  border-top: 1px solid #8a6a20;
+  border-bottom: 1px solid #8a6a20;
+  padding: 0.3rem 0;
+}
+
+.newspaper-columns {
+  display: grid;
+  grid-template-columns: 1fr 220px;
+  gap: 1.5rem;
+  border-top: 2px solid #1a1008;
+  padding-top: 0.9rem;
+}
+
+.newspaper-main-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.newspaper-lede {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  margin: 0;
+  font-weight: 600;
+  color: #0d0700;
+}
+
+.newspaper-body {
+  font-size: 0.88rem;
+  line-height: 1.75;
+  margin: 0;
+  color: #1a1008;
+  text-align: justify;
+}
+
+.newspaper-pullquote {
+  border-left: 3px solid #8a6a20;
+  border-right: 3px solid #8a6a20;
+  padding: 0.6rem 1rem;
+  text-align: center;
+  margin: 0.5rem 0;
+}
+
+.newspaper-pullquote-text {
+  font-size: 1.05rem;
+  font-style: italic;
+  font-family: 'IM Fell English', Georgia, serif;
+  color: #2a1a00;
+  line-height: 1.5;
+}
+
+.newspaper-pullquote-attr {
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #5a4020;
+  margin-top: 0.35rem;
+}
+
+.newspaper-scandal-col {
+  border-left: 2px solid #8a6a20;
+  padding-left: 1rem;
+}
+
+.newspaper-scandal-head {
+  font-size: 1.0rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  font-family: 'IM Fell English', Georgia, serif;
+  color: #7a1008;
+  line-height: 1.2;
+  margin-bottom: 0.3rem;
+}
+
+.newspaper-scandal-rule {
+  border: none;
+  border-top: 2px solid #7a1008;
+  margin-bottom: 0.5rem;
+}
+
+.newspaper-scandal-body {
+  font-size: 0.84rem;
+  line-height: 1.7;
+  margin: 0;
+  color: #1a1008;
+  text-align: justify;
+}
