@@ -134,13 +134,22 @@ def _philosopher_system_prompt(
         jab_line  = "\n- Positions are hardening. Be assertive — state your view directly without hedging.\n"
     elif heat <= 6:
         heat_line = f"\nAtmosphere: {_heat_description(heat)}\n"
-        jab_line  = "\n- Don't soften your position. Push back directly and name the specific flaw in what was just said.\n"
+        jab_line  = (
+            "\n- Don't soften your position. Push back directly and name the specific flaw in what was just said.\n"
+            "- If the moment demands it, cut in before the other person finishes — end your response mid-sentence with an em-dash (—) to show you can't wait.\n"
+        )
     elif heat <= 8:
         heat_line = f"\nAtmosphere: {_heat_description(heat)}\n"
-        jab_line  = "\n- Land a pointed challenge. Name the contradiction in their position or their record. Don't let them off the hook.\n"
+        jab_line  = (
+            "\n- Land a pointed challenge. Name the contradiction in their position or their record. Don't let them off the hook.\n"
+            "- You may cut in mid-thought — end your response with an em-dash (—) if your conviction overtakes your sentence.\n"
+        )
     else:
         heat_line = f"\nAtmosphere: {_heat_description(heat)}\n"
-        jab_line  = "\n- The room is at flashpoint. A sharp personal jab is fair game — their manner, their contradiction, their record. Make it pointed.\n"
+        jab_line  = (
+            "\n- The room is at flashpoint. A sharp personal jab is fair game — their manner, their contradiction, their record. Make it pointed.\n"
+            "- Interrupting is expected at this heat. End mid-sentence with an em-dash (—) if you can't hold back.\n"
+        )
 
     openness = char.get("openness", 5)
     intellectual_honesty = _openness_line(openness)
@@ -268,11 +277,20 @@ def _philosopher_user_prompt(
     if last_msg and hasattr(last_msg, "content") and last_msg.name != safe_name:
         last_speaker = (last_msg.name or "Someone").replace("_", " ")
         last_said = last_msg.content[:300]
-        respond_to = (
-            f'{last_speaker} just said: "{last_said}"\n\n'
-            f"Respond directly to THIS argument. Do not restate your own position — "
-            f"engage with what {last_speaker} specifically argued."
-        )
+        was_cut_off = last_said.rstrip().endswith("—")
+        if was_cut_off:
+            respond_to = (
+                f'{last_speaker} was cut off mid-sentence: "{last_said}"\n\n'
+                f"They didn't finish. You may steamroll past it and make your point, "
+                f"finish their thought sarcastically, or turn the interruption itself into your argument — "
+                f"but do not pretend the cutoff didn't happen."
+            )
+        else:
+            respond_to = (
+                f'{last_speaker} just said: "{last_said}"\n\n'
+                f"Respond directly to THIS argument. Do not restate your own position — "
+                f"engage with what {last_speaker} specifically argued."
+            )
         last_content = last_msg.content.strip()
         word_count = len(last_content.split())
         is_question = last_content.endswith("?") or last_content.count("?") >= 2

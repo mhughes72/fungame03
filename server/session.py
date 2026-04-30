@@ -276,6 +276,27 @@ class Session:
                     self._put(evt.system(f"{name} has had {label} tonight."))
             self.state = {**self.state, "drunk_levels": current}
 
+    def apply_cheat(self, heat: int | None = None, drinks: dict = None) -> None:
+        """Directly mutate heat and/or drunk_levels without starting a new batch."""
+        updates = {}
+        if heat is not None:
+            updates["heat"] = max(0, min(10, heat))
+        if drinks:
+            participants = self.state.get("participants", [])
+            current = dict(self.state.get("drunk_levels") or {})
+            for name, count in drinks.items():
+                if count > 0 and name in participants:
+                    current[name] = current.get(name, 0) + count
+                    total = current[name]
+                    _labels = {1: "one drink", 2: "two drinks", 3: "three drinks"}
+                    label = _labels.get(total, f"{total} drinks")
+                    self._put(evt.system(f"{name} has had {label} tonight."))
+            updates["drunk_levels"] = current
+        if updates:
+            self.state = {**self.state, **updates}
+            concession_total = sum((self.state.get("concession_counts") or {}).values())
+            self._put(evt.bars(self.state.get("heat", 0), concession_total))
+
     def new_topic(self, topic: str) -> None:
         """Reset state for a new topic, keeping the same participants and graph."""
         self.state = reset_for_new_topic(self.state, topic)

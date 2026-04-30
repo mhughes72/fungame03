@@ -7,6 +7,7 @@
  */
 
 import { open as openSteerModal } from './steer.js'
+import { open as openCheatModal } from './cheat.js'
 import * as Seating from './seating.js'
 import { openAbout, openHelp } from './info.js'
 
@@ -19,6 +20,7 @@ export function mount(container, sessionId, participants, topic, styles, api) {
         <span class="debate-topic">${escHtml(topic)}</span>
         <button class="info-btn" id="about-btn">About</button>
         <button class="info-btn" id="help-btn">Help</button>
+        <button class="cheat-btn" id="cheat-btn">Cheat</button>
         <button class="quit-btn" id="quit-btn">Quit</button>
       </header>
 
@@ -37,6 +39,7 @@ export function mount(container, sessionId, participants, topic, styles, api) {
   const leftCol   = container.querySelector('#left-col')
 
   let currentStyle = 'socratic'
+  let currentHeat  = 0
   let closeStream  = null
   let gameEnded    = false
   let lastState    = { turn: 0, heat: 0, concession_total: 0, partial_agreements: [], remaining_disagreements: [], drift_topic: '' }
@@ -68,6 +71,7 @@ export function mount(container, sessionId, participants, topic, styles, api) {
         break
 
       case 'bars':
+        currentHeat = data.heat ?? currentHeat
         updateBars(sidebar, data.heat, data.concession_total ?? 0)
         break
 
@@ -82,6 +86,7 @@ export function mount(container, sessionId, participants, topic, styles, api) {
 
       case 'state':
         currentStyle = data.moderator_style
+        currentHeat  = data.heat ?? currentHeat
         lastState = data
         renderSidebar(sidebar, { topic, ...data })
         break
@@ -165,6 +170,9 @@ export function mount(container, sessionId, participants, topic, styles, api) {
 
   container.querySelector('#about-btn').addEventListener('click', openAbout)
   container.querySelector('#help-btn').addEventListener('click', openHelp)
+  container.querySelector('#cheat-btn').addEventListener('click', () => {
+    openCheatModal(sessionId, currentHeat, participants, api.cheat)
+  })
 
   container.querySelector('#quit-btn').addEventListener('click', () => {
     if (gameEnded) { quit(); return }

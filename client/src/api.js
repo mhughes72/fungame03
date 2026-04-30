@@ -58,6 +58,12 @@ export async function fetchNewspaper(sessionId) {
   return post(`/sessions/${sessionId}/newspaper`, {})
 }
 
+export async function cheat(sessionId, heat, drinks = {}) {
+  const body = { drinks }
+  if (heat !== null) body.heat = heat
+  return post(`/sessions/${sessionId}/cheat`, body)
+}
+
 /**
  * Open an SSE stream for a session.
  *

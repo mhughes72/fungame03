@@ -106,6 +106,11 @@ class SearchRequest(BaseModel):
     query: str = Field(..., min_length=1, max_length=300)
 
 
+class CheatRequest(BaseModel):
+    heat: Optional[int] = None   # 0–10; if set, overrides current heat directly
+    drinks: dict[str, int] = {}  # {name: count} — drinks to add per character
+
+
 class NewTopicRequest(BaseModel):
     topic: str = Field(..., min_length=1, max_length=500)
 
@@ -250,6 +255,18 @@ async def steer_session(session_id: str, req: SteerRequest):
         drinks=req.drinks,
     )
     loop.run_in_executor(None, session.run_batch)
+    return {"ok": True}
+
+
+@app.post("/api/sessions/{session_id}/cheat")
+async def cheat_session(session_id: str, req: CheatRequest):
+    """Directly override heat and/or drunk_levels without triggering a new batch."""
+    session = store.get(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    if req.heat is not None and not (0 <= req.heat <= 10):
+        raise HTTPException(status_code=400, detail="heat must be 0–10")
+    session.apply_cheat(heat=req.heat, drinks=req.drinks)
     return {"ok": True}
 
 

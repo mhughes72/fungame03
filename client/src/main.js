@@ -27,6 +27,7 @@ async function showSetup() {
 function showDebate(sessionId, participants, topic, styles) {
   debate.mount(app, sessionId, participants, topic, styles, {
     steer:          api.steer,
+    cheat:          api.cheat,
     deleteSession:  api.deleteSession,
     newTopic:       api.newTopic,
     openStream:     api.openStream,

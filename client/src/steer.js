@@ -13,25 +13,6 @@ function escHtml(str) {
 
 export function open(currentStyle, styles, summary = '', drawerContainer, searchFn = null, participants = []) {
   return new Promise((resolve) => {
-    const drinkCounts = {}
-    participants.forEach(p => { drinkCounts[p] = 0 })
-
-    const drinksHtml = participants.length ? `
-      <div class="steer-or">── buy a round ──</div>
-      <div class="drinks-grid" id="drinks-grid">
-        ${participants.map(p => `
-          <div class="drink-row" data-name="${escHtml(p)}">
-            <span class="drink-name">${escHtml(p)}</span>
-            <div class="drink-controls">
-              <button class="drink-btn drink-minus" data-name="${escHtml(p)}">−</button>
-              <span class="drink-count" id="drink-count-${escHtml(p.replace(/ /g,'_'))}">0</span>
-              <button class="drink-btn drink-plus" data-name="${escHtml(p)}">+</button>
-            </div>
-          </div>
-        `).join('')}
-      </div>
-    ` : ''
-
     const drawer = document.createElement('div')
     drawer.className = 'steer-drawer'
     drawer.innerHTML = `
@@ -52,8 +33,6 @@ export function open(currentStyle, styles, summary = '', drawerContainer, search
         />
         <button class="steer-submit-btn" id="steer-submit">Steer ▶</button>
       </div>
-
-      ${drinksHtml}
 
       <div class="steer-or">── inject evidence ──</div>
 
@@ -96,18 +75,6 @@ export function open(currentStyle, styles, summary = '', drawerContainer, search
 
     let selectedStyle  = currentStyle
     let pendingEvidence = ''
-
-    // ── drink controls ──
-    drawer.querySelectorAll('.drink-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const name = btn.dataset.name
-        const delta = btn.classList.contains('drink-plus') ? 1 : -1
-        drinkCounts[name] = Math.max(0, (drinkCounts[name] || 0) + delta)
-        const key = name.replace(/ /g, '_')
-        const el = drawer.querySelector(`#drink-count-${key}`)
-        if (el) el.textContent = drinkCounts[name]
-      })
-    })
 
     // ── evidence search ──
     async function doSearch() {
@@ -160,11 +127,8 @@ export function open(currentStyle, styles, summary = '', drawerContainer, search
 
     function submit() {
       const text = textInput.value.trim()
-      const drinks = Object.fromEntries(
-        Object.entries(drinkCounts).filter(([, v]) => v > 0)
-      )
       drawer.remove()
-      resolve({ text, style: selectedStyle, evidence: pendingEvidence, drinks })
+      resolve({ text, style: selectedStyle, evidence: pendingEvidence })
     }
 
     drawer.querySelector('#steer-submit').addEventListener('click', submit)
