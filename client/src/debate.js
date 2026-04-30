@@ -132,7 +132,7 @@ export function mount(container, sessionId, participants, topic, styles, api) {
               .catch(err => appendSystem(convoPane, `Error: ${err.message}`))
           },
           onQuit: quit,
-        }, lastState, sessionId, api)
+        }, lastState, sessionId, api, participants)
         break
 
       case 'game_over':
@@ -253,7 +253,7 @@ function appendEvidence(el, finding) {
   scrollAppend(el, div)
 }
 
-function appendConsensus(el, { summary, points }, { onNewTopic, onQuit }, state = {}, sessionId, api) {
+function appendConsensus(el, { summary, points }, { onNewTopic, onQuit }, state = {}, sessionId, api, participants = []) {
   const div = document.createElement('div')
   div.className = 'consensus-panel'
   div.innerHTML = `
@@ -289,7 +289,7 @@ function appendConsensus(el, { summary, points }, { onNewTopic, onQuit }, state 
     }
   })
   div.querySelector('#consensus-end').addEventListener('click', onQuit)
-  div.querySelector('#consensus-paper').addEventListener('click', () => openNewspaper(sessionId, api))
+  div.querySelector('#consensus-paper').addEventListener('click', () => openNewspaper(sessionId, api, participants))
 }
 
 function appendGameOver(el, state, participants, onQuit, sessionId, api) {
@@ -311,12 +311,12 @@ function appendGameOver(el, state, participants, onQuit, sessionId, api) {
   `
   scrollAppend(el, div)
   div.querySelector('#game-over-leave').addEventListener('click', onQuit)
-  if (sessionId) div.querySelector('#game-over-paper')?.addEventListener('click', () => openNewspaper(sessionId, api))
+  if (sessionId) div.querySelector('#game-over-paper')?.addEventListener('click', () => openNewspaper(sessionId, api, participants))
 }
 
 // ── newspaper modal ──────────────────────────────────────────────────── //
 
-async function openNewspaper(sessionId, api) {
+async function openNewspaper(sessionId, api, participants = []) {
   const overlay = document.createElement('div')
   overlay.className = 'newspaper-overlay'
   overlay.innerHTML = `
@@ -354,6 +354,20 @@ async function openNewspaper(sessionId, api) {
 
         <div class="newspaper-headline">${escHtml(paper.headline)}</div>
         <div class="newspaper-subhead">${escHtml(paper.subheadline)}</div>
+
+        ${participants.length ? `
+        <div class="newspaper-portrait-strip">
+          ${participants.map(p => `
+            <div class="newspaper-portrait-item">
+              <img class="newspaper-portrait-img"
+                   src="/newspaper_portraits/${encodeURIComponent(p.replace(/ /g, '_'))}.png"
+                   alt="${escHtml(p)}"
+                   onerror="this.closest('.newspaper-portrait-item').style.display='none'">
+              <div class="newspaper-portrait-name">${escHtml(p)}</div>
+            </div>
+          `).join('')}
+        </div>
+        ` : ''}
 
         <div class="newspaper-columns">
           <div class="newspaper-main-col">
