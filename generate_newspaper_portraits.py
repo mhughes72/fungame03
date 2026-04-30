@@ -136,7 +136,7 @@ def _download(url: str, dest: Path) -> None:
 
 # ── Main generation ────────────────────────────────────────────────────────────
 
-def generate_newspaper_portraits(names: list[str] | None = None, overwrite: bool = False) -> None:
+def generate_newspaper_portraits(names: list[str] | None = None, overwrite: bool = False, force_wiki: bool = False) -> None:
     load_dotenv()
 
     out = Path(OUTPUT_DIR)
@@ -164,8 +164,8 @@ def generate_newspaper_portraits(names: list[str] | None = None, overwrite: bool
             continue
 
         # ── Wikipedia path ──────────────────────────────────────────────────
-        if name in WIKIPEDIA_SOURCES:
-            article = WIKIPEDIA_SOURCES[name]
+        if name in WIKIPEDIA_SOURCES or force_wiki:
+            article = WIKIPEDIA_SOURCES.get(name, name.replace(" ", "_"))
             print(f"[{i}/{total}] {name} (wikipedia) … ", end="", flush=True)
             img_url = _fetch_wikipedia_image(article)
             if img_url:
@@ -210,5 +210,6 @@ def generate_newspaper_portraits(names: list[str] | None = None, overwrite: bool
 
 if __name__ == "__main__":
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
-    overwrite = "--overwrite" in sys.argv
-    generate_newspaper_portraits(names=args or None, overwrite=overwrite)
+    overwrite  = "--overwrite" in sys.argv
+    force_wiki = "--wiki"      in sys.argv
+    generate_newspaper_portraits(names=args or None, overwrite=overwrite, force_wiki=force_wiki)

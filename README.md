@@ -103,6 +103,20 @@ Style is era-aware:
 - **Photography era** (died after 1845): vintage sepia press-photo style
 - **Pre-photography** (died before 1845 — Newton, Mozart, Socrates, Sun Tzu): Victorian woodcut / cross-hatch engraving style
 
+### Forcing a Wikipedia lookup
+
+If a DALL-E result doesn't look like the real person, pass `--wiki` to fetch the main Wikipedia photo instead:
+
+```bash
+python generate_portraits.py Feynman --wiki --overwrite
+python generate_newspaper_portraits.py Einstein --wiki --overwrite
+
+# Works with multiple names
+python generate_portraits.py Newton Tesla Lincoln --wiki --overwrite
+```
+
+`--wiki` uses the character's name as the Wikipedia article title. If Wikipedia has no image it falls back to DALL-E automatically. Characters already in `WIKIPEDIA_SOURCES` always use Wikipedia regardless.
+
 Both scripts require `OPENAI_API_KEY` in `.env` for DALL-E generation. Wikipedia fetches need no key.
 
 ---

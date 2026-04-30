@@ -102,7 +102,7 @@ def _download(url: str, dest: Path) -> None:
         dest.write_bytes(resp.read())
 
 
-def generate_portraits(names: list[str] | None = None, overwrite: bool = False) -> None:
+def generate_portraits(names: list[str] | None = None, overwrite: bool = False, force_wiki: bool = False) -> None:
     load_dotenv()
     client = OpenAI()
     out = Path(OUTPUT_DIR)
@@ -127,9 +127,9 @@ def generate_portraits(names: list[str] | None = None, overwrite: bool = False) 
             continue
 
         # ── Wikipedia path ──────────────────────────────────────────────────
-        if name in WIKIPEDIA_SOURCES:
+        if name in WIKIPEDIA_SOURCES or force_wiki:
             print(f"[{i}/{total}] {name} (wikipedia) … ", end="", flush=True)
-            img_url = _fetch_wikipedia_image(WIKIPEDIA_SOURCES[name])
+            img_url = _fetch_wikipedia_image(WIKIPEDIA_SOURCES.get(name, name.replace(" ", "_")))
             if img_url:
                 try:
                     _download(img_url, dest)
@@ -166,5 +166,6 @@ def generate_portraits(names: list[str] | None = None, overwrite: bool = False) 
 
 if __name__ == "__main__":
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
-    overwrite = "--overwrite" in sys.argv
-    generate_portraits(names=args or None, overwrite=overwrite)
+    overwrite    = "--overwrite" in sys.argv
+    force_wiki   = "--wiki"      in sys.argv
+    generate_portraits(names=args or None, overwrite=overwrite, force_wiki=force_wiki)
