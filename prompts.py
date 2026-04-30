@@ -88,10 +88,27 @@ def _philosopher_system_prompt(
     coalition_section = ""
     if partial_agreements:
         allied, opposing = [], []
+        alliance_tensions = []
         for a in partial_agreements:
             if name in a["participants"]:
                 others = [p for p in a["participants"] if p != name]
                 allied.append(f"  - You and {', '.join(others)} are converging on: {a['on']}")
+                # Surface the social tension of unexpected alliances using dynamics data
+                my_dynamics = char.get("dynamics", {})
+                for ally in others:
+                    rel = my_dynamics.get(ally, "")
+                    if rel:
+                        rel_snippet = rel.strip()[:200] + ("…" if len(rel.strip()) > 200 else "")
+                        alliance_tensions.append(
+                            f"  - Your view of {ally}: \"{rel_snippet}\"\n"
+                            f"    Yet here you are finding common ground. Let that tension show — "
+                            f"acknowledge the surprise, express cautious respect, or note what still divides you."
+                        )
+                    else:
+                        alliance_tensions.append(
+                            f"  - You are aligning with {ally} on this point. "
+                            f"If that feels unexpected or uneasy, name it — don't paper over the tension."
+                        )
             else:
                 allied_names = " and ".join(a["participants"])
                 opposing.append(f"  - {allied_names} are converging on: {a['on']}")
@@ -99,6 +116,10 @@ def _philosopher_system_prompt(
             coalition_section += (
                 f"\n\nYou are part of an emerging alignment:\n" + "\n".join(allied) + "\n"
                 "When relevant, deepen this common ground and try to bring others around to it."
+            )
+        if alliance_tensions:
+            coalition_section += (
+                f"\n\nSocial texture of these alliances:\n" + "\n".join(alliance_tensions) + "\n"
             )
         if opposing:
             coalition_section += (
