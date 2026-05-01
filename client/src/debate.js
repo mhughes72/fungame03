@@ -348,6 +348,7 @@ async function openNewspaper(sessionId, api, participants = []) {
   overlay.innerHTML = `
     <div class="newspaper-modal">
       <button class="newspaper-close" id="newspaper-close">✕ Close</button>
+      <button class="newspaper-download" id="newspaper-download">⬇ Save as PDF</button>
       <div class="newspaper-page">
 
         <div class="newspaper-masthead">
@@ -401,6 +402,25 @@ async function openNewspaper(sessionId, api, participants = []) {
 
   overlay.querySelector('#newspaper-close').addEventListener('click', () => overlay.remove())
   overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove() })
+
+  overlay.querySelector('#newspaper-download').addEventListener('click', () => {
+    const pageHtml = overlay.querySelector('.newspaper-page').outerHTML
+    const styleHref = document.querySelector('link[rel=stylesheet]')?.href || ''
+    const win = window.open('', '_blank')
+    win.document.write(`<!DOCTYPE html>
+<html><head>
+<meta charset="UTF-8">
+<title>${escHtml(paper.newspaper_name)}</title>
+${styleHref ? `<link rel="stylesheet" href="${styleHref}">` : ''}
+<style>
+  body { margin: 0; background: #f2ebd4; }
+  .newspaper-page { max-width: 760px; margin: 0 auto; padding: 2.5rem 2.5rem 2rem; }
+  @media print { body { margin: 0; } }
+</style>
+</head><body>${pageHtml}</body></html>`)
+    win.document.close()
+    win.addEventListener('load', () => { win.focus(); win.print() })
+  })
 }
 
 function _debateStats(state) {

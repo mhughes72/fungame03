@@ -1187,6 +1187,21 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 }
 .newspaper-close:hover { color: #1a1008; }
 
+.newspaper-download {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.9rem;
+  background: none;
+  border: 1px solid #8a6a20;
+  color: #5a4020;
+  font-family: Georgia, serif;
+  font-size: 0.75rem;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  padding: 0.15rem 0.5rem;
+}
+.newspaper-download:hover { color: #1a1008; border-color: #1a1008; }
+
 .newspaper-masthead {
   text-align: center;
   margin-bottom: 0.6rem;
