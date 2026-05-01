@@ -1146,7 +1146,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   background: rgba(0, 0, 0, 0.82);
   z-index: 2000;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   padding: 1.5rem;
   overflow-y: auto;
