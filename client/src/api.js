@@ -22,6 +22,12 @@ async function del(path) {
   await fetch(`${BASE}${path}`, { method: 'DELETE' })
 }
 
+export async function fetchDebateOfTheDay() {
+  const res = await fetch(`${BASE}/debate-of-the-day`)
+  if (!res.ok) throw new Error('Failed to load debate of the day')
+  return res.json()   // { characters, topic, tagline, category }
+}
+
 export async function fetchCharacters() {
   const res = await fetch(`${BASE}/characters`)
   if (!res.ok) throw new Error('Failed to load characters')

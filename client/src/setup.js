@@ -7,6 +7,7 @@
  */
 
 import { openAbout, openHelp } from './info.js'
+import { fetchDebateOfTheDay } from './api.js'
 
 export function mount(container, characters, onStart) {
   container.innerHTML = `
@@ -14,6 +15,10 @@ export function mount(container, characters, onStart) {
       <div class="setup-box">
         <h1 class="setup-title">THE PHILOSOPHER'S BAR</h1>
         <p class="setup-sub">Select 2–4 thinkers for tonight's debate</p>
+
+        <div class="dotd-card" id="dotd-card">
+          <div class="dotd-loading">generating tonight's debate…</div>
+        </div>
 
         <input
           id="char-filter"
@@ -113,8 +118,45 @@ export function mount(container, characters, onStart) {
   container.querySelector('#setup-about').addEventListener('click', openAbout)
   container.querySelector('#setup-help').addEventListener('click', openHelp)
 
+  // ── Debate of the Day ──────────────────────────────────────────────────── //
+  const dotdCard = container.querySelector('#dotd-card')
+
+  const catColors = {
+    heated:        'var(--red)',
+    historic:      'var(--blue)',
+    philosophical: 'var(--gold-dim)',
+    scientific:    'var(--blue)',
+    cultural:      'var(--amber)',
+    political:     'var(--green)',
+  }
+
+  fetchDebateOfTheDay().then(dotd => {
+    const color = catColors[dotd.category] || 'var(--text-dim)'
+    dotdCard.innerHTML = `
+      <div class="dotd-header">
+        <span class="dotd-label">── DEBATE OF THE DAY ──</span>
+        <span class="dotd-category" style="color:${color}">${dotd.category.toUpperCase()}</span>
+      </div>
+      <div class="dotd-cast">${dotd.characters.join(' · ')}</div>
+      <div class="dotd-topic">${escHtml(dotd.topic)}</div>
+      <div class="dotd-tagline">${escHtml(dotd.tagline)}</div>
+      <button class="dotd-start-btn" id="dotd-start">Start this debate ▶</button>
+    `
+    dotdCard.querySelector('#dotd-start').addEventListener('click', () => {
+      onStart({ characters: dotd.characters, topic: dotd.topic })
+    })
+  }).catch(() => {
+    dotdCard.style.display = 'none'
+  })
+
   // Expose a way to show errors without tearing down the screen
   return {
     showError(msg) { errorEl.textContent = msg },
   }
+}
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 }

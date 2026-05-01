@@ -15,6 +15,7 @@ from __future__ import annotations
 import asyncio
 import os
 import sys
+from datetime import date as _date
 from pathlib import Path
 from typing import Optional
 
@@ -69,6 +70,55 @@ app.add_middleware(
 )
 
 store = SessionStore()
+
+# --------------------------------------------------------------------------- #
+# Debate of the Day — generated once per calendar day, cached in memory        #
+# --------------------------------------------------------------------------- #
+
+_dotd_cache: dict = {"date": None, "result": None}
+
+
+class _DotDSchema(BaseModel):
+    characters: list[str]   # 2–4 names from CHARACTERS
+    topic: str
+    tagline: str            # one punchy sentence, ≤15 words
+    category: str           # heated | historic | philosophical | scientific | cultural | political
+
+
+def _generate_dotd() -> _DotDSchema:
+    roster = "\n".join(
+        f"- {name}: {data['known_for'][:90]}"
+        for name, data in CHARACTERS.items()
+    )
+    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.9)
+    result: _DotDSchema = llm.with_structured_output(_DotDSchema).invoke([
+        SystemMessage(content=(
+            "You are curating today's featured debate between historical and contemporary figures. "
+            "From the roster provided, pick 2–4 participants and a debate topic. "
+            "Aim for combinations that are genuinely compelling: ideologically opposed, historically charged, "
+            "philosophically explosive, or scientifically fascinating. "
+            "The topic must be specific enough to generate real, substantive disagreement. "
+            "Write a punchy tagline of no more than 15 words that would make someone want to watch. "
+            "For category choose exactly one of: heated, historic, philosophical, scientific, cultural, political."
+        )),
+        HumanMessage(content=f"Available participants:\n{roster}"),
+    ])
+    # Sanitise — drop any hallucinated names
+    valid = set(CHARACTERS.keys())
+    result.characters = [c for c in result.characters if c in valid]
+    if len(result.characters) < 2:
+        raise ValueError("Too few valid characters in generated debate")
+    return result
+
+
+def _get_or_generate_dotd() -> _DotDSchema:
+    today = _date.today().isoformat()
+    if _dotd_cache["date"] == today and _dotd_cache["result"] is not None:
+        return _dotd_cache["result"]
+    result = _generate_dotd()
+    _dotd_cache["date"] = today
+    _dotd_cache["result"] = result
+    return result
 
 
 # --------------------------------------------------------------------------- #
@@ -320,6 +370,17 @@ def delete_session(session_id: str):
     """Clean up a session (client closing tab / quitting)."""
     store.delete(session_id)
     return Response(status_code=204)
+
+
+@app.get("/api/debate-of-the-day")
+async def debate_of_the_day():
+    """Return today's featured debate suggestion, generating it if needed."""
+    loop = asyncio.get_event_loop()
+    try:
+        result = await loop.run_in_executor(None, _get_or_generate_dotd)
+        return result.dict()
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Debate of the day failed: {exc}")
 
 
 # --------------------------------------------------------------------------- #
