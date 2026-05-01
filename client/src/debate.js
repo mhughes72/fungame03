@@ -21,6 +21,7 @@ export function mount(container, sessionId, participants, topic, styles, api) {
         <button class="info-btn" id="about-btn">About</button>
         <button class="info-btn" id="help-btn">Help</button>
         <button class="cheat-btn" id="cheat-btn">Cheat</button>
+        <button class="sidebar-toggle-btn" id="sidebar-toggle">Stats</button>
         <button class="quit-btn" id="quit-btn">Quit</button>
       </header>
 
@@ -176,6 +177,11 @@ export function mount(container, sessionId, participants, topic, styles, api) {
 
   container.querySelector('#about-btn').addEventListener('click', openAbout)
   container.querySelector('#help-btn').addEventListener('click', openHelp)
+  container.querySelector('#sidebar-toggle').addEventListener('click', () => {
+    const shell = container.querySelector('.debate-shell')
+    const open = shell.classList.toggle('sidebar-open')
+    container.querySelector('#sidebar-toggle').textContent = open ? 'Stats ▲' : 'Stats'
+  })
   container.querySelector('#cheat-btn').addEventListener('click', () => {
     openCheatModal(sessionId, currentHeat, participants, api.cheat)
   })
