@@ -13,7 +13,7 @@ function escHtml(str) {
 
 const _HEAT_LABELS = ['arctic', 'cool', 'cool', 'warm', 'warm', 'charged', 'charged', 'heated', 'heated', 'flashpoint', 'flashpoint']
 
-export function open(sessionId, currentHeat, participants, cheatFn) {
+export function open(sessionId, currentHeat, participants, cheatFn, onNewspaper = null) {
   return new Promise((resolve) => {
     const drinkCounts = {}
     participants.forEach(p => { drinkCounts[p] = 0 })
@@ -49,6 +49,7 @@ export function open(sessionId, currentHeat, participants, cheatFn) {
         </div>
 
         <div class="cheat-footer">
+          ${onNewspaper ? `<button class="cheat-paper-btn" id="cheat-paper">See Newspaper 📰</button>` : ''}
           <button class="cheat-apply-btn" id="cheat-apply">Apply ▶</button>
         </div>
       </div>
@@ -96,6 +97,7 @@ export function open(sessionId, currentHeat, participants, cheatFn) {
 
     overlay.querySelector('#cheat-apply').addEventListener('click', apply)
     overlay.querySelector('#cheat-close').addEventListener('click', close)
+    overlay.querySelector('#cheat-paper')?.addEventListener('click', () => { close(); onNewspaper() })
     overlay.addEventListener('click', e => { if (e.target === overlay) close() })
   })
 }

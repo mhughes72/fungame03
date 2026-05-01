@@ -183,7 +183,8 @@ export function mount(container, sessionId, participants, topic, styles, api) {
     container.querySelector('#sidebar-toggle').textContent = open ? 'Stats ▲' : 'Stats'
   })
   container.querySelector('#cheat-btn').addEventListener('click', () => {
-    openCheatModal(sessionId, currentHeat, participants, api.cheat)
+    openCheatModal(sessionId, currentHeat, participants, api.cheat,
+      () => openNewspaper(sessionId, api, participants))
   })
 
   container.querySelector('#quit-btn').addEventListener('click', () => {

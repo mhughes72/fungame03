@@ -1457,9 +1457,22 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 
 .cheat-footer {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   margin-top: 0.3rem;
 }
+
+.cheat-paper-btn {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  cursor: pointer;
+  padding: 0;
+  letter-spacing: 0.02em;
+}
+.cheat-paper-btn:hover { color: var(--amber); }
 
 .cheat-apply-btn {
   background: none;
