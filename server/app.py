@@ -173,8 +173,12 @@ async def stream_session(session_id: str):
     session.loop = loop
 
     async def generate():
-        # Kick off the first batch
-        loop.run_in_executor(None, session.run_batch)
+        # Only kick off the first batch once — EventSource auto-reconnects on
+        # network hiccups and would otherwise fire duplicate batches, burning
+        # OpenAI credits and stacking steer modals on return.
+        if not session._started:
+            session._started = True
+            loop.run_in_executor(None, session.run_batch)
 
         while True:
             item = await session.queue.get()

@@ -38,10 +38,11 @@ export function mount(container, sessionId, participants, topic, styles, api) {
   const sidebar   = container.querySelector('#sidebar')
   const leftCol   = container.querySelector('#left-col')
 
-  let currentStyle = 'socratic'
-  let currentHeat  = 0
-  let closeStream  = null
-  let gameEnded    = false
+  let currentStyle      = 'socratic'
+  let currentHeat       = 0
+  let closeStream       = null
+  let gameEnded         = false
+  let steerModalPending = false
   let lastState    = { turn: 0, heat: 0, concession_total: 0, partial_agreements: [], remaining_disagreements: [], drift_topic: '' }
 
   const seating = Seating.create(seatsBar, participants)
@@ -92,6 +93,8 @@ export function mount(container, sessionId, participants, topic, styles, api) {
         break
 
       case 'steer_needed':
+        if (steerModalPending) break
+        steerModalPending = true
         currentStyle = data.current_style
         if (data.drift_topic) {
           appendSystem(convoPane,
@@ -101,6 +104,7 @@ export function mount(container, sessionId, participants, topic, styles, api) {
         }
         convoPane.scrollTop = convoPane.scrollHeight
         openSteerModal(currentStyle, styles, debateSummary(lastState, participants), leftCol, api.searchEvidence, participants).then(result => {
+          steerModalPending = false
           if (result === null) {
             appendGameOver(convoPane, lastState, participants, quit, sessionId, api)
           } else {

@@ -58,6 +58,7 @@ class Session:
     stop_event: threading.Event = field(default_factory=threading.Event)
     loop: Optional[asyncio.AbstractEventLoop] = None
     _batch_count: int = 0
+    _started: bool = False
 
     # ------------------------------------------------------------------ #
     # Thread-safe queue helpers                                            #
