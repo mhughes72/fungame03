@@ -82,7 +82,7 @@ _dotd_cache: dict = {"date": None, "debates": []}
 
 
 class _DotDSchema(BaseModel):
-    characters: list[str]   # 2–4 names from CHARACTERS
+    characters: list[str] = Field(..., min_items=2, max_items=4)  # 2–4 names from CHARACTERS
     topic: str
     tagline: str            # one punchy sentence, ≤15 words
     category: str           # heated | historic | philosophical | scientific | cultural | political
@@ -104,7 +104,9 @@ def _generate_dotd(existing: list) -> _DotDSchema:
     result: _DotDSchema = llm.with_structured_output(_DotDSchema).invoke([
         SystemMessage(content=(
             "You are curating a featured debate between historical and contemporary figures. "
-            "From the roster provided, pick 2–4 participants and a debate topic. "
+            "From the roster provided, pick 2, 3, or 4 participants and a debate topic. "
+            "2 or 3 participants is often more interesting than 4 — only pick 4 when each person "
+            "has something genuinely distinct to contribute that the others cannot. "
             "Aim for combinations that are genuinely compelling: ideologically opposed, historically charged, "
             "philosophically explosive, or scientifically fascinating. "
             "The topic must be specific enough to generate real, substantive disagreement. "
