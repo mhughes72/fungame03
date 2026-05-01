@@ -406,9 +406,13 @@
   .newspaper-scandal-rule { border: none; border-top: 2px solid #7a1008; margin-bottom: 0.5rem; }
   .newspaper-scandal-body { font-size: 0.84rem; line-height: 1.7; color: #1a1008; text-align: justify; }
 
+  @page { size: A4 portrait; margin: 0.6cm; }
   @media print {
+    html { zoom: 0.68; }
     body { margin: 0; }
-    .newspaper-modal { max-width: 100%; padding: 1rem; }
+    .newspaper-modal { max-width: 100%; padding: 0 0.5rem; }
+    .newspaper-portrait-img { width: 60px; height: 76px; }
+    .newspaper-portrait-strip { gap: 0.6rem; }
   }
 </style>
 </head><body>${r.outerHTML}</body></html>`),d.document.close(),d.addEventListener("load",()=>{d.focus(),d.print()})})}function z(e){const{turn:n=0,heat:t=0,partial_agreements:a=[],points_of_agreement:i=[],remaining_disagreements:r=[]}=e;if(!n)return"";const d=Q(t),s=W(t),p="█".repeat(t),m="░".repeat(10-t);let c='<div class="report-stats">';return c+=`<div class="report-stat-row">

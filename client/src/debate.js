@@ -498,9 +498,13 @@ async function openNewspaper(sessionId, api, participants = []) {
   .newspaper-scandal-rule { border: none; border-top: 2px solid #7a1008; margin-bottom: 0.5rem; }
   .newspaper-scandal-body { font-size: 0.84rem; line-height: 1.7; color: #1a1008; text-align: justify; }
 
+  @page { size: A4 portrait; margin: 0.6cm; }
   @media print {
+    html { zoom: 0.68; }
     body { margin: 0; }
-    .newspaper-modal { max-width: 100%; padding: 1rem; }
+    .newspaper-modal { max-width: 100%; padding: 0 0.5rem; }
+    .newspaper-portrait-img { width: 60px; height: 76px; }
+    .newspaper-portrait-strip { gap: 0.6rem; }
   }
 </style>
 </head><body>${modal.outerHTML}</body></html>`)
