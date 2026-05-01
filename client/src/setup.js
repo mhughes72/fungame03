@@ -130,7 +130,9 @@ export function mount(container, characters, onStart) {
     political:     'var(--green)',
   }
 
-  fetchDebateOfTheDay().then(dotd => {
+  let dotdIndex = 0
+
+  function renderDotd(dotd) {
     const color = catColors[dotd.category] || 'var(--text-dim)'
     dotdCard.innerHTML = `
       <div class="dotd-header">
@@ -140,14 +142,35 @@ export function mount(container, characters, onStart) {
       <div class="dotd-cast">${dotd.characters.join(' · ')}</div>
       <div class="dotd-topic">${escHtml(dotd.topic)}</div>
       <div class="dotd-tagline">${escHtml(dotd.tagline)}</div>
-      <button class="dotd-start-btn" id="dotd-start">Start this debate ▶</button>
+      <div class="dotd-actions">
+        <button class="dotd-new-btn" id="dotd-new">Generate new one ↻</button>
+        <button class="dotd-start-btn" id="dotd-start">Start this debate ▶</button>
+      </div>
     `
     dotdCard.querySelector('#dotd-start').addEventListener('click', () => {
       onStart({ characters: dotd.characters, topic: dotd.topic })
     })
-  }).catch(() => {
-    dotdCard.style.display = 'none'
-  })
+    dotdCard.querySelector('#dotd-new').addEventListener('click', () => {
+      dotdIndex++
+      loadDotd(dotdIndex)
+    })
+  }
+
+  function loadDotd(index) {
+    dotdCard.innerHTML = `<div class="dotd-loading">generating…</div>`
+    fetchDebateOfTheDay(index).then(renderDotd).catch(() => {
+      if (index === 0) dotdCard.style.display = 'none'
+      else {
+        // generation failed mid-cycle — step back and re-render last good one
+        dotdIndex--
+        fetchDebateOfTheDay(dotdIndex).then(renderDotd).catch(() => {
+          dotdCard.style.display = 'none'
+        })
+      }
+    })
+  }
+
+  loadDotd(0)
 
   // Expose a way to show errors without tearing down the screen
   return {

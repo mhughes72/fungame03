@@ -121,9 +121,28 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   line-height: 1.4;
 }
 
-.dotd-start-btn {
-  align-self: flex-end;
+.dotd-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-top: 0.2rem;
+  gap: 0.5rem;
+}
+
+.dotd-new-btn {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  padding: 0;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+}
+.dotd-new-btn:hover { color: var(--amber); }
+.dotd-new-btn:disabled { opacity: 0.4; cursor: default; }
+
+.dotd-start-btn {
   background: none;
   border: 1px solid var(--gold-dim);
   color: var(--gold);
