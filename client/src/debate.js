@@ -405,20 +405,105 @@ async function openNewspaper(sessionId, api, participants = []) {
   overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove() })
 
   overlay.querySelector('#newspaper-download').addEventListener('click', () => {
-    const pageHtml = overlay.querySelector('.newspaper-page').outerHTML
-    const styleHref = document.querySelector('link[rel=stylesheet]')?.href || ''
+    // Make image src attributes absolute so they resolve in the print window
+    const modal = overlay.querySelector('.newspaper-modal').cloneNode(true)
+    modal.querySelectorAll('img').forEach(img => {
+      if (img.src && !img.src.startsWith('http')) {
+        img.src = window.location.origin + img.getAttribute('src')
+      }
+    })
+    // Remove the close / download buttons from the print copy
+    modal.querySelector('#newspaper-close')?.remove()
+    modal.querySelector('#newspaper-download')?.remove()
+
     const win = window.open('', '_blank')
     win.document.write(`<!DOCTYPE html>
 <html><head>
 <meta charset="UTF-8">
 <title>${escHtml(paper.newspaper_name)}</title>
-${styleHref ? `<link rel="stylesheet" href="${styleHref}">` : ''}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
 <style>
-  body { margin: 0; background: #f2ebd4; }
-  .newspaper-page { max-width: 760px; margin: 0 auto; padding: 2.5rem 2.5rem 2rem; }
-  @media print { body { margin: 0; } }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #f2ebd4; font-family: Georgia, 'Times New Roman', serif; }
+
+  .newspaper-modal {
+    background: #f2ebd4; color: #1a1008;
+    max-width: 760px; margin: 0 auto;
+    padding: 2.5rem 2.5rem 2rem;
+    font-family: Georgia, 'Times New Roman', serif;
+  }
+  .newspaper-masthead { text-align: center; margin-bottom: 0.6rem; }
+  .newspaper-name {
+    font-size: 2.4rem; font-weight: 900;
+    font-family: 'IM Fell English', Georgia, serif;
+    letter-spacing: 0.08em; line-height: 1; color: #0d0700; text-transform: uppercase;
+  }
+  .newspaper-meta {
+    font-size: 0.72rem; color: #5a4020; letter-spacing: 0.06em;
+    text-transform: uppercase; margin: 0.35rem 0 0.5rem;
+  }
+  .newspaper-meta-sep { margin: 0 0.5rem; color: #9a7040; }
+  .newspaper-rule { border: none; border-top: 3px double #1a1008; margin: 0.4rem 0 0.8rem; }
+  .newspaper-headline {
+    font-size: 1.9rem; font-weight: 900;
+    font-family: 'IM Fell English', Georgia, serif;
+    line-height: 1.15; text-align: center; margin-bottom: 0.4rem;
+    color: #0d0700; text-transform: uppercase; letter-spacing: 0.01em;
+  }
+  .newspaper-subhead {
+    font-size: 1.0rem; font-style: italic; text-align: center; color: #3a2800;
+    margin-bottom: 1rem; font-family: 'IM Fell English', Georgia, serif;
+    border-top: 1px solid #8a6a20; border-bottom: 1px solid #8a6a20; padding: 0.3rem 0;
+  }
+  .newspaper-portrait-strip {
+    display: flex; justify-content: center; gap: 1rem;
+    margin: 0.75rem 0 1rem; padding: 0.5rem 0;
+    border-top: 1px solid #8a6a20; border-bottom: 1px solid #8a6a20;
+  }
+  .newspaper-portrait-item { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; }
+  .newspaper-portrait-img {
+    width: 80px; height: 100px; object-fit: cover; object-position: top;
+    filter: grayscale(100%) sepia(30%) contrast(1.1); border: 1px solid #8a6a20;
+  }
+  .newspaper-portrait-name {
+    font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.08em;
+    color: #3a2800; font-family: 'IM Fell English', Georgia, serif;
+    text-align: center; max-width: 80px;
+  }
+  .newspaper-columns {
+    display: grid; grid-template-columns: 1fr 220px; gap: 1.5rem;
+    border-top: 2px solid #1a1008; padding-top: 0.9rem;
+  }
+  .newspaper-main-col { display: flex; flex-direction: column; gap: 0.75rem; }
+  .newspaper-lede { font-size: 0.95rem; line-height: 1.7; font-weight: 600; color: #0d0700; }
+  .newspaper-body { font-size: 0.88rem; line-height: 1.75; color: #1a1008; text-align: justify; }
+  .newspaper-pullquote {
+    border-left: 3px solid #8a6a20; border-right: 3px solid #8a6a20;
+    padding: 0.6rem 1rem; text-align: center; margin: 0.5rem 0;
+  }
+  .newspaper-pullquote-text {
+    font-size: 1.05rem; font-style: italic;
+    font-family: 'IM Fell English', Georgia, serif; color: #2a1a00; line-height: 1.5;
+  }
+  .newspaper-pullquote-attr {
+    font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase;
+    color: #5a4020; margin-top: 0.35rem;
+  }
+  .newspaper-scandal-col { border-left: 2px solid #8a6a20; padding-left: 1rem; }
+  .newspaper-scandal-head {
+    font-size: 1.0rem; font-weight: 900; text-transform: uppercase;
+    font-family: 'IM Fell English', Georgia, serif; color: #7a1008; line-height: 1.2; margin-bottom: 0.3rem;
+  }
+  .newspaper-scandal-rule { border: none; border-top: 2px solid #7a1008; margin-bottom: 0.5rem; }
+  .newspaper-scandal-body { font-size: 0.84rem; line-height: 1.7; color: #1a1008; text-align: justify; }
+
+  @media print {
+    body { margin: 0; }
+    .newspaper-modal { max-width: 100%; padding: 1rem; }
+  }
 </style>
-</head><body>${pageHtml}</body></html>`)
+</head><body>${modal.outerHTML}</body></html>`)
     win.document.close()
     win.addEventListener('load', () => { win.focus(); win.print() })
   })
