@@ -50,16 +50,17 @@ export function mount(container, characters, onStart) {
 
         <button class="start-btn" id="start-btn" disabled>Open the bar ▶</button>
         <p class="setup-error" id="setup-error"></p>
-        <div class="setup-footer">
-          <button class="setup-info-btn" id="setup-about">About</button>
-          <span class="setup-footer-sep">·</span>
-          <button class="setup-info-btn" id="setup-help">Help</button>
-        </div>
 
         <div class="setup-or">── or ──</div>
 
         <div class="dotd-card" id="dotd-card">
           <div class="dotd-loading">generating tonight's debate…</div>
+        </div>
+
+        <div class="setup-footer">
+          <button class="setup-info-btn" id="setup-about">About</button>
+          <span class="setup-footer-sep">·</span>
+          <button class="setup-info-btn" id="setup-help">Help</button>
         </div>
       </div>
     </div>
