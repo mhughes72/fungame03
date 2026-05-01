@@ -15,14 +15,24 @@ export function mount(container, characters, onStart) {
         <h1 class="setup-title">THE PHILOSOPHER'S BAR</h1>
         <p class="setup-sub">Select 2–4 thinkers for tonight's debate</p>
 
+        <input
+          id="char-filter"
+          class="char-filter-input"
+          type="text"
+          placeholder="Filter thinkers…"
+          autocomplete="off"
+          spellcheck="false"
+        />
+
         <div class="char-list" id="char-list">
           ${characters.map(c => `
-            <label class="char-row" data-name="${c.name}">
+            <label class="char-row" data-name="${c.name.toLowerCase()}">
               <input type="checkbox" value="${c.name}" />
               <span class="char-name">${c.name}</span>
               <span class="char-era">${c.era}</span>
             </label>
           `).join('')}
+          <div class="char-no-results" id="char-no-results" style="display:none">No match</div>
         </div>
 
         <p class="selection-hint" id="selection-hint">Select 2–4 thinkers</p>
@@ -49,6 +59,20 @@ export function mount(container, characters, onStart) {
   `
 
   const checkboxes = container.querySelectorAll('input[type=checkbox]')
+  const rows      = container.querySelectorAll('.char-row')
+  const noResults = container.querySelector('#char-no-results')
+  const filterInput = container.querySelector('#char-filter')
+
+  filterInput.addEventListener('input', () => {
+    const q = filterInput.value.toLowerCase().trim()
+    let visible = 0
+    rows.forEach(row => {
+      const show = !q || row.dataset.name.includes(q)
+      row.style.display = show ? '' : 'none'
+      if (show) visible++
+    })
+    noResults.style.display = visible === 0 ? '' : 'none'
+  })
 
   const hint    = container.querySelector('#selection-hint')
   const startBtn = container.querySelector('#start-btn')
