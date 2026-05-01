@@ -16,10 +16,6 @@ export function mount(container, characters, onStart) {
         <h1 class="setup-title">THE PHILOSOPHER'S BAR</h1>
         <p class="setup-sub">Select 2–4 thinkers for tonight's debate</p>
 
-        <div class="dotd-card" id="dotd-card">
-          <div class="dotd-loading">generating tonight's debate…</div>
-        </div>
-
         <input
           id="char-filter"
           class="char-filter-input"
@@ -58,6 +54,12 @@ export function mount(container, characters, onStart) {
           <button class="setup-info-btn" id="setup-about">About</button>
           <span class="setup-footer-sep">·</span>
           <button class="setup-info-btn" id="setup-help">Help</button>
+        </div>
+
+        <div class="setup-or">── or ──</div>
+
+        <div class="dotd-card" id="dotd-card">
+          <div class="dotd-loading">generating tonight's debate…</div>
         </div>
       </div>
     </div>

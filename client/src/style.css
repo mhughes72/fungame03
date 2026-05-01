@@ -121,6 +121,14 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   line-height: 1.4;
 }
 
+.setup-or {
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  margin: 0.25rem 0 0;
+}
+
 .dotd-actions {
   display: flex;
   justify-content: space-between;
