@@ -130,8 +130,18 @@ def _fetch_wikipedia_image(article_title: str) -> str | None:
 
 def _download(url: str, dest: Path) -> None:
     req = urllib.request.Request(url, headers={"User-Agent": "PhilosophersBar/1.0"})
-    with urllib.request.urlopen(req, timeout=30) as resp:
-        dest.write_bytes(resp.read())
+    for attempt in range(3):
+        try:
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                dest.write_bytes(resp.read())
+            return
+        except urllib.error.HTTPError as exc:
+            if exc.code == 429 and attempt < 2:
+                wait = 10 * (attempt + 1)
+                print(f"rate limited, waiting {wait}s … ", end="", flush=True)
+                time.sleep(wait)
+            else:
+                raise
 
 
 # ── Main generation ────────────────────────────────────────────────────────────
@@ -159,12 +169,13 @@ def generate_newspaper_portraits(names: list[str] | None = None, overwrite: bool
 
     for i, (name, char) in enumerate(targets.items(), 1):
         dest = out / _safe_filename(name)
-        if dest.exists() and not overwrite:
+        is_wiki = name in WIKIPEDIA_SOURCES or force_wiki
+        if dest.exists() and not overwrite and not is_wiki:
             print(f"[{i}/{total}] {name} — already exists, skipping")
             continue
 
         # ── Wikipedia path ──────────────────────────────────────────────────
-        if name in WIKIPEDIA_SOURCES or force_wiki:
+        if is_wiki:
             article = WIKIPEDIA_SOURCES.get(name, name.replace(" ", "_"))
             print(f"[{i}/{total}] {name} (wikipedia) … ", end="", flush=True)
             img_url = _fetch_wikipedia_image(article)
@@ -172,6 +183,8 @@ def generate_newspaper_portraits(names: list[str] | None = None, overwrite: bool
                 try:
                     _download(img_url, dest)
                     print(f"saved → {dest}")
+                    if i < total:
+                        time.sleep(DELAY_BETWEEN)
                     continue
                 except Exception as exc:
                     print(f"download failed ({exc}), falling back to DALL-E … ", end="", flush=True)
@@ -212,4 +225,4 @@ if __name__ == "__main__":
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     overwrite  = "--overwrite" in sys.argv
     force_wiki = "--wiki"      in sys.argv
-    generate_newspaper_portraits(names=args or None, overwrite=overwrite, force_wiki=force_wiki)
+    generate_newspaper_portraits(names=args or None, overwrite=overwrite or force_wiki, force_wiki=force_wiki)
