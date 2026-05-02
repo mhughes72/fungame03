@@ -64,6 +64,23 @@ export async function fetchNewspaper(sessionId) {
   return post(`/sessions/${sessionId}/newspaper`, {})
 }
 
+export async function exportPodcast(sessionId) {
+  const resp = await fetch(`/api/sessions/${sessionId}/podcast`, { method: 'POST' })
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({ detail: resp.statusText }))
+    throw new Error(err.detail || resp.statusText)
+  }
+  const blob = await resp.blob()
+  const url  = URL.createObjectURL(blob)
+  const a    = document.createElement('a')
+  a.href     = url
+  a.download = `philosophers-bar-podcast.mp3`
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
+}
+
 export async function cheat(sessionId, heat, drinks = {}) {
   const body = { drinks }
   if (heat !== null) body.heat = heat

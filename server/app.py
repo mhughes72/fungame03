@@ -38,6 +38,7 @@ from fastapi import FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.background import BackgroundTasks
 from pydantic import BaseModel, Field
 
 import server.events as evt
@@ -375,6 +376,38 @@ async def newspaper(session_id: str):
         raise HTTPException(status_code=502, detail=f"Newspaper generation failed: {exc}")
 
     return result.dict()
+
+
+@app.post("/api/sessions/{session_id}/podcast")
+async def podcast(session_id: str):
+    """Generate a podcast MP3 from the debate transcript and return it as a download."""
+    session = store.get(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    from export_podcast import export_podcast as _export_podcast
+    import tempfile, pathlib
+
+    state = session.state
+    loop = asyncio.get_event_loop()
+    try:
+        dest = await loop.run_in_executor(None, lambda: _export_podcast(
+            messages=state.get("messages", []),
+            participants=state.get("participants", []),
+            topic=state.get("topic", "debate"),
+            session_id=session_id,
+        ))
+    except RuntimeError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Podcast generation failed: {exc}")
+
+    return FileResponse(
+        path=str(dest),
+        media_type="audio/mpeg",
+        filename=dest.name,
+        headers={"Content-Disposition": f'attachment; filename="{dest.name}"'},
+    )
 
 
 @app.delete("/api/sessions/{session_id}", status_code=204)

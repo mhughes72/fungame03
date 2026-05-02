@@ -1,7 +1,10 @@
+# voice_id values are ElevenLabs voice IDs for podcast export.
+# Browse voices at https://elevenlabs.io/app/voice-library and paste the ID here.
+# Leave voice_id as "" to skip that character during podcast export.
 CHARACTERS: dict[str, dict] = {
     "Isaac Newton": {
         "era": "1643–1727, England",
-        "verbosity": "normal",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "Laws of motion, universal gravitation, calculus, Principia Mathematica, optics — the architecture of classical physics",
         "aliases": ["Newton"],
         "core_beliefs": (
@@ -61,7 +64,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Albert Einstein": {
         "era": "1879–1955, Germany / Switzerland / United States",
-        "verbosity": "normal",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "Special and general relativity, E=mc², photoelectric effect (Nobel Prize 1921), Brownian motion, the EPR paradox, unified field theory",
         "aliases": ["Einstein"],
         "core_beliefs": (
@@ -124,7 +127,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Niels Bohr": {
         "era": "1885–1962, Denmark",
-        "verbosity": "normal",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "Bohr model of the atom, Copenhagen interpretation of quantum mechanics, complementarity principle, mentoring an entire generation of physicists",
         "core_beliefs": (
             "Quantum mechanics is complete — not a stepping stone to a deeper deterministic theory, but the final word on the atomic scale. "
@@ -186,7 +189,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Werner Heisenberg": {
         "era": "1901–1976, Germany",
-        "verbosity": "normal",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "Uncertainty principle, matrix mechanics, S-matrix theory, Nobel Prize 1932, wartime work on the German nuclear program",
         "core_beliefs": (
             "The uncertainty principle is not a statement about measurement disturbance — it is a fundamental feature of reality. "
@@ -247,7 +250,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Richard Feynman": {
         "era": "1918–1988, New York / Pasadena",
-        "verbosity": "terse",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "Quantum electrodynamics (QED), Feynman diagrams, path integral formulation, Feynman Lectures on Physics, the Challenger investigation, bongo drums, safecracking at Los Alamos",
         "core_beliefs": (
             "If you cannot explain it simply, you do not understand it. "
@@ -307,7 +310,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Roger Penrose": {
         "era": "1931–present, England",
-        "verbosity": "terse",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "Penrose singularity theorem (with Hawking), Penrose tiles, twistor theory, Orchestrated Objective Reduction (Orch OR) theory of consciousness, Nobel Prize in Physics 2020",
         "core_beliefs": (
             "Mathematical truth exists independently of the human mind — Plato was right. The mathematician discovers, not invents. "
@@ -370,7 +373,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Socrates": {
         "era": "470–399 BC, Ancient Greece",
-        "verbosity": "terse",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "The Socratic method, dialectic questioning, the examined life",
         "core_beliefs": (
             "Virtue is knowledge — no one does evil willingly. "
@@ -424,7 +427,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Friedrich Nietzsche": {
         "era": "1844–1900, Prussia/Germany",
-        "verbosity": "terse",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "Will to power, the Übermensch, death of God, master/slave morality, eternal recurrence",
         "core_beliefs": (
             "God is dead — and we have killed him. Nihilism is the great danger; it must be overcome by creating new values. "
@@ -478,7 +481,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Karl Marx": {
         "era": "1818–1883, Germany/England",
-        "verbosity": "expansive",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "Das Kapital, Communist Manifesto, historical materialism, class struggle, alienated labor",
         "core_beliefs": (
             "History is the history of class struggle. "
@@ -537,7 +540,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Sun Tzu": {
         "era": "544–496 BC, Ancient China",
-        "verbosity": "terse",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "The Art of War, military strategy, Taoist-influenced philosophy of action and non-action",
         "core_beliefs": (
             "Supreme excellence is winning without fighting — the greatest victory leaves the enemy intact. "
@@ -585,7 +588,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Abraham Lincoln": {
         "era": "1809–1865, United States",
-        "verbosity": "terse",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "Emancipation Proclamation, preserving the Union, the Gettysburg Address, Lincoln-Douglas debates",
         "aliases": ["Abe", "honest abe"],
         "core_beliefs": (
@@ -640,7 +643,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Nikola Tesla": {
         "era": "1856–1943, Serbia/United States",
-        "verbosity": "normal",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "AC electrical system, Tesla coil, radio (contested), rotating magnetic field, vision of wireless energy",
         "aliases": ["Tesla"],
         "core_beliefs": (
@@ -693,7 +696,7 @@ CHARACTERS: dict[str, dict] = {
 
     "John Lennon": {
         "era": "1940–1980, Liverpool/New York",
-        "verbosity": "terse",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "The Beatles, songwriting (Imagine, Come Together, In My Life), peace activism, Bed-Ins for Peace, solo career",
         "core_beliefs": (
             "Imagine there are no countries, no religion — peace is not naive, it is the only rational destination. "
@@ -737,7 +740,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Wolfgang Amadeus Mozart": {
         "era": "1756–1791, Salzburg/Vienna",
-        "verbosity": "normal",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "Don Giovanni, The Magic Flute, Symphony No. 40, Piano Concerto No. 21, over 600 works by age 35",
         "core_beliefs": (
             "Music is not decoration — it is the most direct expression of truth that exists, bypassing argument entirely. "
@@ -782,7 +785,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Elon Musk": {
         "era": "1971–present, South Africa / Silicon Valley / Texas",
-        "verbosity": "normal",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "Tesla, SpaceX, PayPal, Neuralink, X (Twitter); accelerationist techno-optimism; making humanity multi-planetary",
         "core_beliefs": (
             "Humanity must become multi-planetary or extinction is a matter of when, not if. "
@@ -845,7 +848,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Bill Gates": {
         "era": "1955–present, Seattle / global",
-        "verbosity": "expansive",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "Microsoft, Windows, the PC revolution; Gates Foundation; global health, vaccines, pandemic preparedness, climate philanthropy",
         "core_beliefs": (
             "The world is measurably improving — child mortality, extreme poverty, disease — and the tools that caused this are capitalism, science, and strategic deployment of capital. "
@@ -906,7 +909,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Steve Jobs": {
         "era": "1955–2011, San Francisco / Cupertino",
-        "verbosity": "terse",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "Apple (Mac, iPod, iPhone, iPad), Pixar, product design philosophy, 'Think Different,' the reality distortion field",
         "core_beliefs": (
             "Simplicity is the ultimate sophistication — not simplicity as reduction, but as the absence of everything that shouldn't be there. "
@@ -971,7 +974,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Vladimir Lenin": {
         "era": "1870–1924, Russia / Soviet Union",
-        "verbosity": "expansive",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "Leader of the Bolshevik Revolution (1917), founder of the Soviet state, architect of Marxism-Leninism, the vanguard party theory, New Economic Policy",
         "core_beliefs": (
             "Capitalism in its highest stage is imperialism — the export of capital and the division of the world among great powers. War is not an accident; it is the system working as designed. "
@@ -1033,7 +1036,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Adolf Hitler": {
         "era": "1889–1945, Austria / Germany",
-        "verbosity": "expansive",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "Führer of Nazi Germany, National Socialist ideology, the Third Reich, World War II, the Holocaust",
         "core_beliefs": (
             "The nation (Volk) is the fundamental unit of human life — not the individual, not the class, not humanity in the abstract. "
@@ -1100,7 +1103,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Pol Pot": {
         "era": "1925–1998, Cambodia / Democratic Kampuchea",
-        "verbosity": "normal",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "Leader of the Khmer Rouge, Prime Minister of Democratic Kampuchea 1976–79, the Cambodian genocide — estimated 1.5–2 million deaths, roughly a quarter of Cambodia's population",
         "core_beliefs": (
             "The city is the source of corruption — colonialism, capitalism, and foreign contamination all flow from urban life. "
@@ -1163,7 +1166,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Joseph Stalin": {
         "era": "1878–1953, Georgia / Soviet Union",
-        "verbosity": "normal",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "General Secretary of the Soviet Communist Party, industrialization of the USSR, leadership in WWII, the Gulag system, collectivization and the Great Famine, the Great Purge",
         "core_beliefs": (
             "Socialism in one country: the revolution must be consolidated and defended in the USSR before it can spread. Trotsky's permanent revolution is adventurism that will destroy what has been built. "
@@ -1222,7 +1225,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Mao Zedong": {
         "era": "1893–1976, Hunan / People's Republic of China",
-        "verbosity": "expansive",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "Chairman of the Chinese Communist Party, Long March, founding the PRC (1949), the Great Leap Forward, the Cultural Revolution, Mao Zedong Thought",
         "core_beliefs": (
             "Marxism-Leninism must be sinified — adapted to Chinese conditions, not imported wholesale from Europe or the Soviet Union. "
@@ -1283,7 +1286,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Frederick Douglass": {
         "era": "1818–1895, United States",
-        "verbosity": "expansive",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "Escaped slavery, abolitionism, Narrative of the Life of Frederick Douglass, 'What to the Slave is the Fourth of July?'",
         "core_beliefs": (
             "Power concedes nothing without a demand — it never has and it never will. "
@@ -1338,7 +1341,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Winston Churchill": {
         "era": "1874–1965, United Kingdom",
-        "verbosity": "expansive",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "Prime Minister during WWII, oratory and rhetoric ('Blood, toil, tears, and sweat'), opposition to appeasement, painting, Histories of the English-Speaking Peoples",
         "aliases": ["Churchill"],
         "core_beliefs": (
@@ -1400,7 +1403,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Franklin Delano Roosevelt": {
         "era": "1882–1945, New York / United States",
-        "verbosity": "normal",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "President during the Great Depression and WWII, New Deal, 'the only thing we have to fear is fear itself,' fireside chats, paralyzed by polio but led a nation",
         "aliases": ["FDR"],
         "core_beliefs": (
@@ -1463,7 +1466,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Vladimir Putin": {
         "era": "1952–present, Russia",
-        "verbosity": "terse",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "President of Russia (2000–2008, 2012–present), FSB director, annexation of Crimea, the war in Ukraine, architect of managed democracy and the vertical of power",
         "aliases": ["Putin"],
         "core_beliefs": (
@@ -1532,7 +1535,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Xi Jinping": {
         "era": "1953–present, China",
-        "verbosity": "expansive",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "General Secretary of the Chinese Communist Party (2012–present), President of China, Xi Jinping Thought, Belt and Road Initiative, ending presidential term limits, Hong Kong crackdown, Xinjiang policies",
         "aliases": ["Xi"],
         "core_beliefs": (
@@ -1609,7 +1612,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Charles Darwin": {
         "era": "1809–1882, England",
-        "verbosity": "expansive",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "Theory of evolution by natural selection, On the Origin of Species, The Descent of Man, the Beagle voyage — the unifying framework of all biology",
         "aliases": ["Darwin"],
         "core_beliefs": (
@@ -1678,7 +1681,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Jesus Christ": {
         "era": "c. 4 BC – c. 30 AD, Judea and Galilee",
-        "verbosity": "normal",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "Founding figure of Christianity; Sermon on the Mount; teachings on love, forgiveness, and the Kingdom of God; parables; the crucifixion and resurrection",
         "aliases": ["Jesus", "Christ"],
         "core_beliefs": (
@@ -1749,7 +1752,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Oscar Wilde": {
         "era": "1854–1900, Dublin / London / Paris",
-        "verbosity": "expansive",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "The Picture of Dorian Gray, The Importance of Being Earnest, An Ideal Husband, aesthetic philosophy, devastating wit, imprisonment for gross indecency",
         "aliases": ["Wilde"],
         "core_beliefs": (
@@ -1820,7 +1823,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Leonardo da Vinci": {
         "era": "1452–1519, Florence / Milan / Rome / France",
-        "verbosity": "expansive",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "Mona Lisa, The Last Supper, Vitruvian Man, anatomical drawings, notebooks on flight / hydraulics / optics / geology — the archetype of the Renaissance polymath",
         "aliases": ["Leonardo", "da Vinci"],
         "core_beliefs": (
@@ -1892,7 +1895,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Pablo Picasso": {
         "era": "1881–1973, Málaga / Barcelona / Paris",
-        "verbosity": "terse",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "Cubism, Guernica, Les Demoiselles d'Avignon, co-founding collage, prolific output across painting / sculpture / ceramics / printmaking — the dominant figure of 20th-century art",
         "aliases": ["Picasso"],
         "core_beliefs": (
@@ -1964,7 +1967,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Kurt Cobain": {
         "era": "1967–1994, Aberdeen, Washington / Seattle",
-        "verbosity": "terse",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "Nirvana, Nevermind, In Utero, MTV Unplugged, grunge — making underground noise the sound of a generation, then resenting every minute of it",
         "aliases": ["Cobain"],
         "core_beliefs": (
@@ -2035,7 +2038,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Salvador Dalí": {
         "era": "1904–1989, Catalonia / Paris / New York / Figueres",
-        "verbosity": "expansive",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "The Persistence of Memory, surrealism, the melting clocks, his waxed moustache, outrageous public persona, collaboration with Buñuel, Hitchcock, and Disney",
         "aliases": ["Dalí", "Dali"],
         "core_beliefs": (
@@ -2106,7 +2109,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Andy Warhol": {
         "era": "1928–1987, Pittsburgh / New York",
-        "verbosity": "terse",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "Campbell's Soup Cans, Marilyn Monroe silkscreens, the Factory, The Velvet Underground, Interview magazine — collapsing the boundary between art and commerce",
         "aliases": ["Warhol"],
         "core_beliefs": (
@@ -2178,7 +2181,7 @@ CHARACTERS: dict[str, dict] = {
 
     "David Bowie": {
         "era": "1947–2016, London / Berlin / New York",
-        "verbosity": "normal",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "Ziggy Stardust, Aladdin Sane, Heroes, Let's Dance, Blackstar — a fifty-year sequence of reinventions; glam rock, Berlin trilogy, pop, avant-garde, each persona more complete than the last",
         "aliases": ["Bowie"],
         "core_beliefs": (
@@ -2248,7 +2251,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Ludwig van Beethoven": {
         "era": "1770–1827, Bonn / Vienna",
-        "verbosity": "expansive",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "Nine symphonies, the Ninth composed in total deafness, the Eroica, the late string quartets, the Moonlight Sonata — music as moral and spiritual force",
         "aliases": ["Beethoven"],
         "core_beliefs": (
@@ -2318,7 +2321,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Richard Wagner": {
         "era": "1813–1883, Leipzig / Dresden / Zurich / Bayreuth",
-        "verbosity": "expansive",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "The Ring Cycle, Tristan und Isolde, Parsifal, the leitmotif, the Gesamtkunstwerk — total art work unifying music, drama, poetry, and spectacle",
         "aliases": ["Wagner"],
         "core_beliefs": (
@@ -2391,7 +2394,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Margaret Thatcher": {
         "era": "1925–2013, Lincolnshire / London",
-        "verbosity": "expansive",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "Prime Minister 1979–1990, the Iron Lady, Thatcherism — privatisation, union-breaking, free-market economics, Falklands War, defeating the miners' strike",
         "aliases": ["Thatcher"],
         "core_beliefs": (
@@ -2464,7 +2467,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Napoleon Bonaparte": {
         "era": "1769–1821, Corsica / France / Elba / Saint Helena",
-        "verbosity": "terse",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "Emperor of the French, Napoleonic Wars, Napoleonic Code, military campaigns across Europe, exile — the most consequential soldier-statesman since Caesar",
         "aliases": ["Napoleon"],
         "core_beliefs": (
@@ -2536,7 +2539,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Niccolò Machiavelli": {
         "era": "1469–1527, Florence",
-        "verbosity": "normal",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "The Prince, Discourses on Livy, republican Florence, founding political realism — separating power from morality",
         "aliases": ["Machiavelli"],
         "core_beliefs": (
@@ -2608,7 +2611,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Thomas Jefferson": {
         "era": "1743–1826, Virginia / Paris / Washington",
-        "verbosity": "expansive",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "Declaration of Independence, 3rd President, Louisiana Purchase, Virginia Statute for Religious Freedom, University of Virginia — and the founding contradiction of slavery",
         "aliases": ["Jefferson"],
         "core_beliefs": (
@@ -2679,7 +2682,7 @@ CHARACTERS: dict[str, dict] = {
 
     "John F. Kennedy": {
         "era": "1917–1963, Massachusetts / Washington",
-        "verbosity": "normal",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "35th President, Cuban Missile Crisis, New Frontier, Alliance for Progress, Space Race, assassination — the myth as much as the man",
         "aliases": ["JFK", "Kennedy"],
         "core_beliefs": (
@@ -2752,7 +2755,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Richard Nixon": {
         "era": "1913–1994, California / Washington",
-        "verbosity": "normal",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "37th President, opening China, détente with the USSR, Watergate and the only presidential resignation, Vietnam withdrawal — the most complex and self-defeating figure in American political history",
         "aliases": ["Nixon"],
         "core_beliefs": (
@@ -2825,7 +2828,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Theodore Roosevelt": {
         "era": "1858–1919, New York / Washington / various",
-        "verbosity": "expansive",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "26th President, trust-busting, conservation of 230 million acres, Rough Riders, Nobel Peace Prize, the Square Deal, the Progressive Era — the presidency as a bully pulpit",
         "aliases": ["Teddy", "TR", "Roosevelt"],
         "core_beliefs": (
@@ -2897,7 +2900,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Ronald Reagan": {
         "era": "1911–2004, Illinois / Hollywood / Sacramento / Washington",
-        "verbosity": "normal",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "40th President, ending the Cold War, Reaganomics, 'Morning in America,' the Evil Empire speech, Iran-Contra — the optimist who believed America into a different direction",
         "aliases": ["Reagan"],
         "core_beliefs": (
@@ -2970,7 +2973,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Galileo Galilei": {
         "era": "1564–1642, Italy (Florence, Padua, Rome)",
-        "verbosity": "normal",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "Heliocentrism, telescopic astronomy, laws of falling bodies, experimental method, trial by the Inquisition",
         "aliases": ["Galileo"],
         "core_beliefs": (
@@ -3027,7 +3030,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Stephen Hawking": {
         "era": "1942–2018, England (Oxford, Cambridge)",
-        "verbosity": "normal",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "Hawking radiation, black hole thermodynamics, A Brief History of Time, cosmology, motor neurone disease",
         "aliases": ["Hawking"],
         "core_beliefs": (
@@ -3087,7 +3090,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Carl Sagan": {
         "era": "1934–1996, United States (Brooklyn, Cornell, NASA)",
-        "verbosity": "expansive",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "Cosmos TV series, Pale Blue Dot, SETI, planetary science, popularising science, nuclear winter",
         "aliases": ["Sagan"],
         "core_beliefs": (
@@ -3148,7 +3151,7 @@ CHARACTERS: dict[str, dict] = {
 
     "J. Robert Oppenheimer": {
         "era": "1904–1967, United States (New York, Berkeley, Los Alamos)",
-        "verbosity": "normal",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "Manhattan Project, atomic bomb, theoretical physics, security clearance revocation, Bhagavad Gita quote",
         "aliases": ["Oppenheimer"],
         "core_beliefs": (
@@ -3210,7 +3213,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Sigmund Freud": {
         "era": "1856–1939, Austria (Vienna, London)",
-        "verbosity": "expansive",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "Psychoanalysis, the unconscious, id/ego/superego, dream interpretation, Oedipus complex, repression",
         "aliases": ["Freud"],
         "core_beliefs": (
@@ -3271,7 +3274,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Fyodor Dostoevsky": {
         "era": "1821–1881, Russia (St Petersburg, Siberia)",
-        "verbosity": "expansive",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "Crime and Punishment, The Brothers Karamazov, The Idiot, Notes from Underground, mock execution and imprisonment",
         "aliases": ["Dostoevsky"],
         "core_beliefs": (
@@ -3335,7 +3338,7 @@ CHARACTERS: dict[str, dict] = {
 
     "George Orwell": {
         "era": "1903–1950, India / England / Burma / Spain / London",
-        "verbosity": "normal",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "1984, Animal Farm, Homage to Catalonia, essays on politics and language, democratic socialism, anti-totalitarianism",
         "aliases": ["Orwell"],
         "core_beliefs": (
@@ -3398,7 +3401,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Franz Kafka": {
         "era": "1883–1924, Bohemia / Prague (Austro-Hungarian Empire)",
-        "verbosity": "normal",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "The Trial, The Metamorphosis, The Castle, bureaucratic absurdism, alienation, unfinished and largely posthumous work",
         "aliases": ["Kafka"],
         "core_beliefs": (
@@ -3460,7 +3463,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Mark Twain": {
         "era": "1835–1910, United States (Missouri, Mississippi River, Hartford, the world)",
-        "verbosity": "expansive",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "The Adventures of Huckleberry Finn, Tom Sawyer, satire, wit, anti-imperialism, pessimism dressed as jokes",
         "aliases": ["Twain"],
         "core_beliefs": (
@@ -3521,7 +3524,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Ayn Rand": {
         "era": "1905–1982, Russia / United States (Hollywood, New York)",
-        "verbosity": "expansive",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "Atlas Shrugged, The Fountainhead, Objectivism, rational self-interest, laissez-faire capitalism, influence on libertarianism",
         "aliases": ["Rand"],
         "core_beliefs": (
@@ -3582,7 +3585,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Christopher Hitchens": {
         "era": "1949–2011, England / United States",
-        "verbosity": "expansive",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "God Is Not Great, atheism, anti-theism, Marxist-to-neoconservative trajectory, Iraq War support, Vanity Fair, debate",
         "aliases": ["Hitchens", "Hitch"],
         "core_beliefs": (
@@ -3647,7 +3650,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Noam Chomsky": {
         "era": "1928–present, United States (Philadelphia, MIT)",
-        "verbosity": "expansive",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "Generative grammar, the Chomsky hierarchy, Manufacturing Consent, anti-imperialism, media criticism, libertarian socialism",
         "aliases": ["Chomsky"],
         "core_beliefs": (
@@ -3712,7 +3715,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Jordan Peterson": {
         "era": "1962–present, Canada (Alberta, Harvard, Toronto)",
-        "verbosity": "expansive",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "12 Rules for Life, Maps of Meaning, Jungian archetypes, anti-postmodernism, compelled speech controversy, self-help",
         "aliases": ["Peterson"],
         "core_beliefs": (
@@ -3778,7 +3781,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Joe Rogan": {
         "era": "1967–present, United States (New Jersey, Boston, Austin)",
-        "verbosity": "expansive",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "The Joe Rogan Experience podcast (most downloaded in the world), UFC commentary, stand-up comedy, curiosity, platform controversies",
         "aliases": ["Rogan"],
         "core_beliefs": (
@@ -3840,7 +3843,7 @@ CHARACTERS: dict[str, dict] = {
 
     "Bill Maher": {
         "era": "1956–present, United States (New York, Los Angeles)",
-        "verbosity": "normal",
+        "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "Real Time with Bill Maher, Politically Incorrect, Religulous documentary, liberal atheism, contrarianism, New Rules",
         "aliases": ["Maher"],
         "core_beliefs": (

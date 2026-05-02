@@ -1161,6 +1161,42 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   padding: 3rem;
 }
 
+.podcast-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 3rem 2rem;
+  font-family: var(--mono);
+  color: var(--amber);
+  text-align: center;
+}
+.podcast-loading-icon { font-size: 2.5rem; }
+.podcast-loading-title {
+  font-size: 1rem;
+  letter-spacing: 0.12em;
+  color: var(--text);
+}
+.podcast-loading-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+.podcast-step {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  transition: color 0.4s;
+}
+.podcast-step.active { color: var(--amber); }
+.podcast-step.done   { color: var(--text-dim); text-decoration: line-through; }
+.podcast-loading-note {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  margin-top: 0.5rem;
+  font-style: italic;
+}
+
 .newspaper-modal {
   position: relative;
   background: #f2ebd4;
