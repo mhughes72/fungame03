@@ -14,9 +14,9 @@ async function showSetup() {
     return
   }
 
-  const screen = setup.mount(app, characters, async ({ characters: chosen, topic, commentator = true, moderator = true }) => {
+  const screen = setup.mount(app, characters, async ({ characters: chosen, topic, commentator = true, moderator = true, diagrams = false }) => {
     try {
-      const session = await api.createSession(chosen, topic, commentator, moderator)
+      const session = await api.createSession(chosen, topic, commentator, moderator, diagrams)
       showDebate(session.session_id, chosen, topic, styles)
     } catch (err) {
       screen.showError(`Could not start session: ${err.message}`)

@@ -1,7 +1,10 @@
 import re
 import time
+import json
 import random
 import warnings
+import urllib.parse
+import urllib.request as _urllib_request
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 warnings.filterwarnings("ignore", category=UserWarning, module="pydantic")
@@ -95,6 +98,108 @@ def _generate_backchannel(reactor: str, winner_content: str) -> str | None:
         return None
 
 
+_WIKIPEDIA_API    = "https://en.wikipedia.org/w/api.php"
+_COMMONS_API      = "https://commons.wikimedia.org/w/api.php"
+_WIKIMEDIA_EXTS   = {".jpg", ".jpeg", ".png", ".gif"}   # SVGs excluded — rendering unreliable
+
+
+
+def _fetch_wikipedia_image(article: str, exclude_urls: set | None = None) -> dict | None:
+    """Fetch the lead image of a Wikipedia article via the pageimages API."""
+    params = urllib.parse.urlencode({
+        "action":      "query",
+        "titles":      article,
+        "prop":        "pageimages",
+        "pithumbsize": "500",
+        "pilicense":   "any",
+        "format":      "json",
+    })
+    req = _urllib_request.Request(
+        f"{_WIKIPEDIA_API}?{params}",
+        headers={"User-Agent": "PhilosophersBar/1.0 (educational game)"},
+    )
+    try:
+        with _urllib_request.urlopen(req, timeout=6) as resp:
+            data = json.loads(resp.read())
+    except Exception:
+        return None
+
+    pages = (data.get("query") or {}).get("pages") or {}
+    for page in pages.values():
+        if page.get("ns", 0) != 0:
+            continue
+        thumb = page.get("thumbnail") or {}
+        url   = thumb.get("source", "")
+        if not url:
+            continue
+        if exclude_urls and url in exclude_urls:
+            return None   # only one result per article, so nothing to fall back to
+        safe = urllib.parse.quote(article.replace(" ", "_"))
+        return {
+            "url":       url,
+            "thumb_url": url,
+            "title":     page.get("pageimage", article),
+            "page_url":  f"https://en.wikipedia.org/wiki/{safe}",
+        }
+    return None
+
+
+def _fetch_commons_fallback(query: str, exclude_urls: set | None = None) -> dict | None:
+    """Commons keyword search — used when Wikipedia has no lead image for the article."""
+    params = urllib.parse.urlencode({
+        "action":       "query",
+        "generator":    "search",
+        "gsrnamespace": "6",
+        "gsrsearch":    query,
+        "prop":         "imageinfo",
+        "iiprop":       "url",
+        "iiurlwidth":   "500",
+        "format":       "json",
+        "gsrlimit":     "10",
+    })
+    req = _urllib_request.Request(
+        f"{_COMMONS_API}?{params}",
+        headers={"User-Agent": "PhilosophersBar/1.0 (educational game)"},
+    )
+    try:
+        with _urllib_request.urlopen(req, timeout=6) as resp:
+            data = json.loads(resp.read())
+    except Exception:
+        return None
+
+    pages = (data.get("query") or {}).get("pages") or {}
+    for page in sorted(pages.values(), key=lambda p: p.get("index", 99)):
+        title = page.get("title", "")
+        ext   = ("." + title.rsplit(".", 1)[-1].lower()) if "." in title else ""
+        if ext not in _WIKIMEDIA_EXTS:
+            continue
+        info_list = page.get("imageinfo") or []
+        if not info_list:
+            continue
+        url       = info_list[0].get("url", "")
+        thumb_url = info_list[0].get("thumburl") or url
+        if not url:
+            continue
+        if exclude_urls and url in exclude_urls:
+            continue
+        safe = title.replace(" ", "_")
+        return {
+            "url":       url,
+            "thumb_url": thumb_url,
+            "title":     title.replace("File:", ""),
+            "page_url":  f"https://commons.wikimedia.org/wiki/{urllib.parse.quote(safe)}",
+        }
+    return None
+
+
+def _fetch_diagram_image(article: str, exclude_urls: set | None = None) -> dict | None:
+    """Fetch a diagram: Wikipedia lead image first, Commons keyword search as fallback."""
+    result = _fetch_wikipedia_image(article, exclude_urls)
+    if result:
+        return result
+    return _fetch_commons_fallback(article, exclude_urls)
+
+
 _CANDIDATE_HISTORY = 6  # max messages passed to each candidate call
 
 
@@ -128,7 +233,8 @@ def _generate_candidate(name: str, state: RoomState) -> dict:
     drunk_level         = drunk_levels.get(name, 0)
     if drunk_level:
         dbg.dlog("PHILOSOPHER", f"{name} — drunk level {drunk_level}")
-    system_prompt = _philosopher_system_prompt(name, participants, partial_agreements, own_summary, heat, evidence_this_turn)
+    diagrams_enabled = state.get("diagrams_enabled", False)
+    system_prompt = _philosopher_system_prompt(name, participants, partial_agreements, own_summary, heat, evidence_this_turn, diagrams_enabled)
     user_prompt   = _philosopher_user_prompt(
         name, state["messages"], topic, argument_log, turn_count, concession_counts,
         concession_log, challenge_counts, drunk_level, drunk_levels,
@@ -286,6 +392,29 @@ def parallel_turn_node(state: RoomState) -> dict:
         score    = heat_fut.result()
         bc       = bc_fut.result() if bc_fut else None
 
+    # Parse [DIAGRAM: article title] marker the philosopher may have embedded
+    shown_diagram_urls = set(state.get("shown_diagram_urls") or [])
+    diagram_this_turn  = {}
+    new_shown_urls     = list(shown_diagram_urls)
+
+    dbg.dlog("PHILOSOPHER", f"{winner['name']} response tail: ...{winner['content'][-120:]!r}")
+    diagram_match = re.search(r'\[DIAGRAM:\s*([^\]]+)\]', winner["content"], re.IGNORECASE)
+    if diagram_match:
+        article = diagram_match.group(1).strip()
+        winner["content"] = re.sub(r'\s*\[DIAGRAM:[^\]]+\]', '', winner["content"], flags=re.IGNORECASE).strip()
+        dbg.dlog("PHILOSOPHER", f"{winner['name']} diagram: fetching Wikipedia '{article}'")
+        image = _fetch_diagram_image(article, exclude_urls=shown_diagram_urls)
+        if image:
+            diagram_this_turn = {
+                "speaker": winner["name"].replace("_", " "),
+                "article": article,
+                **image,
+            }
+            new_shown_urls = list(shown_diagram_urls | {image["url"]})
+            dbg.dlog("PHILOSOPHER", f"{winner['name']} diagram: found '{image['title']}'")
+        else:
+            dbg.dlog("PHILOSOPHER", f"{winner['name']} diagram: nothing found for '{article}'")
+
     dbg.dlog("PHILOSOPHER", f"heat score for {winner['name']}", {
         "delta": score.delta,
         "conceded": score.conceded,
@@ -314,7 +443,7 @@ def parallel_turn_node(state: RoomState) -> dict:
         dbg.dlog("PHILOSOPHER", f"{reactor} [aside]: {bc}")
 
     return {
-        "messages":          out_msgs,
+        "messages":           out_msgs,
         "current_speaker":    winner["name"],
         "recent_speakers":    new_recent,
         "turn_count":         turn_count + 1,
@@ -324,6 +453,8 @@ def parallel_turn_node(state: RoomState) -> dict:
         "challenge_counts":   challenge_counts,
         "forced_speaker":     "",
         "heat":               heat,
+        "diagram_this_turn":  diagram_this_turn,
+        "shown_diagram_urls": new_shown_urls,
     }
 
 
@@ -698,16 +829,32 @@ def generate_commentator_recap(state: RoomState) -> str:
             "Be entertainingly cruel about it. Name them specifically."
         )
 
+    diagram_this_turn = state.get("diagram_this_turn") or {}
+    diagram_line = ""
+    diagram_instruction = ""
+    if diagram_this_turn.get("url"):
+        diagram_line = (
+            f"\nDiagram produced: {diagram_this_turn['speaker']} pulled out "
+            f"a diagram from the Wikipedia article '{diagram_this_turn.get('article', diagram_this_turn['title'])}' "
+            f"to support their argument."
+        )
+        diagram_instruction = (
+            " A diagram was produced this round — mention it with a colorful sports metaphor "
+            "(like producing evidence from a briefcase, pulling out a playbook, or showing film)."
+        )
+
     prompt = (
         f'Topic: "{topic}"\n'
         f"Participants: {', '.join(participants)}\n"
         f"Turn: {turn_count} | Heat: {heat}/10\n"
         f"Concessions this debate: {concession_lines}\n"
-        f"Alignments so far: {agreement_lines}\n\n"
+        f"Alignments so far: {agreement_lines}\n"
+        f"{diagram_line}\n"
         f"Recent exchange:\n{recent_text}\n"
         f"{drunk_instruction}\n\n"
         "Give a punchy 2–3 sentence play-by-play on what just happened. "
-        "Use sports metaphors. Name the participants specifically. "
+        "Use sports metaphors. Name the participants specifically."
+        f"{diagram_instruction} "
         "End with one line teasing what to watch for next round."
     )
 

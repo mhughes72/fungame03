@@ -96,6 +96,18 @@ def evidence(finding: str, source: str) -> dict:
     return _evt("evidence", {"finding": finding, "source": source})
 
 
+def diagram(speaker: str, article: str, url: str, thumb_url: str, title: str, page_url: str) -> dict:
+    """A supporting diagram or image presented by a character — rendered inline in the convo pane."""
+    return _evt("diagram", {
+        "speaker":   speaker,
+        "article":   article,
+        "url":       url,
+        "thumb_url": thumb_url,
+        "title":     title,
+        "page_url":  page_url,
+    })
+
+
 def commentator(text: str) -> dict:
     """Sports-style play-by-play recap — fired at each steer break (batch 2+)."""
     return _evt("commentator", {"text": text})

@@ -183,6 +183,11 @@ export function mount(container, sessionId, participants, topic, styles, api) {
         appendEvidence(convoPane, data.finding)
         break
 
+      case 'diagram':
+        clearStarting()
+        appendDiagram(convoPane, data)
+        break
+
       case 'system':
         clearStarting()
         appendSystem(convoPane, data.text)
@@ -299,6 +304,18 @@ function appendEvidence(el, finding) {
   const div = document.createElement('div')
   div.className = 'msg msg-evidence'
   div.innerHTML = `<span class="evidence-label">── EVIDENCE ──</span> ${escHtml(finding)}`
+  scrollAppend(el, div)
+}
+
+function appendDiagram(el, { speaker, title, thumb_url, url, page_url }) {
+  const div = document.createElement('div')
+  div.className = 'msg msg-diagram'
+  div.innerHTML =
+    `<div class="diagram-label">${escHtml(speaker)} produces a diagram</div>` +
+    `<a class="diagram-link" href="${escHtml(page_url)}" target="_blank" rel="noopener">` +
+      `<img class="diagram-img" src="${escHtml(thumb_url)}" alt="${escHtml(title)}" />` +
+      `<div class="diagram-caption">${escHtml(title)}</div>` +
+    `</a>`
   scrollAppend(el, div)
 }
 

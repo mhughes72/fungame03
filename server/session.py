@@ -62,6 +62,7 @@ class Session:
     _started: bool = False
     commentator_enabled: bool = True
     moderator_enabled: bool = True
+    diagrams_enabled: bool = False
 
     # ------------------------------------------------------------------ #
     # Thread-safe queue helpers                                            #
@@ -119,6 +120,17 @@ class Session:
                     concession_total = sum((snapshot.get("concession_counts") or {}).values())
                     self._put(evt.bars(snapshot.get("heat", 0), concession_total))
 
+                    diagram = snapshot.get("diagram_this_turn") or {}
+                    if self.diagrams_enabled and diagram.get("url"):
+                        self._put(evt.diagram(
+                            speaker   = diagram.get("speaker", ""),
+                            article   = diagram.get("article", ""),
+                            url       = diagram.get("url", ""),
+                            thumb_url = diagram.get("thumb_url", ""),
+                            title     = diagram.get("title", ""),
+                            page_url  = diagram.get("page_url", ""),
+                        ))
+
                 final_state = snapshot
 
         except Exception as exc:
@@ -164,10 +176,6 @@ class Session:
             self._put(evt.message(name, msg.content.strip(), role=role))
 
     def _after_batch(self) -> None:
-        # Clear one-turn evidence flag
-        if self.state.get("evidence_this_turn"):
-            self.state = {**self.state, "evidence_this_turn": ""}
-
         # History compression
         condensed = summarize_history(self.state["messages"], self.state["topic"])
         if len(condensed) < len(self.state["messages"]):
@@ -193,7 +201,8 @@ class Session:
             beat = _BAR_BEATS[(self._batch_count - 2) % len(_BAR_BEATS)]
             self._put(evt.bar_beat(beat))
 
-        # Commentator recap — every steer break
+        # Commentator recap — every steer break (runs before clearing one-turn flags
+        # so it can reference diagram_this_turn)
         if self.commentator_enabled:
             recap = generate_commentator_recap(self.state)
             if recap:
@@ -201,6 +210,15 @@ class Session:
                 log = list(self.state.get("commentator_log") or [])
                 log.append(recap)
                 self.state = {**self.state, "commentator_log": log}
+
+        # Clear one-turn flags after commentator has had a chance to read them
+        updates = {}
+        if self.state.get("evidence_this_turn"):
+            updates["evidence_this_turn"] = ""
+        if self.state.get("diagram_this_turn"):
+            updates["diagram_this_turn"] = {}
+        if updates:
+            self.state = {**self.state, **updates}
 
         if self.state.get("consensus"):
             self._put(evt.consensus(
@@ -325,16 +343,17 @@ class SessionStore:
         self._sessions: dict[str, Session] = {}
         self._lock = threading.Lock()
 
-    def create(self, participants: list[str], topic: str, commentator_enabled: bool = True, moderator_enabled: bool = True) -> Session:
+    def create(self, participants: list[str], topic: str, commentator_enabled: bool = True, moderator_enabled: bool = True, diagrams_enabled: bool = False) -> Session:
         session_id = uuid.uuid4().hex
         graph = build_graph(participants)
-        state = new_room_state(participants, topic, max_turns=24)
+        state = new_room_state(participants, topic, max_turns=24, diagrams_enabled=diagrams_enabled)
         session = Session(
             id=session_id,
             state=state,
             graph=graph,
             commentator_enabled=commentator_enabled,
             moderator_enabled=moderator_enabled,
+            diagrams_enabled=diagrams_enabled,
         )
         with self._lock:
             self._sessions[session_id] = session

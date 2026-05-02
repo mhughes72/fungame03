@@ -161,6 +161,7 @@ class StartRequest(BaseModel):
     topic: str = Field(..., min_length=1, max_length=500)
     commentator_enabled: bool = True
     moderator_enabled: bool = True
+    diagrams_enabled: bool = False
 
 
 class SteerRequest(BaseModel):
@@ -218,6 +219,7 @@ def create_session(req: StartRequest):
         topic=req.topic,
         commentator_enabled=req.commentator_enabled,
         moderator_enabled=req.moderator_enabled,
+        diagrams_enabled=req.diagrams_enabled,
     )
     return {
         "session_id": session.id,

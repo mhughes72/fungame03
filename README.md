@@ -279,6 +279,16 @@ At the same time, a first-person debate arc is generated for each participant in
 
 > **API costs:** with 4 participants, each steer cycle (8 turns) makes ~8 philosopher calls plus 1 moderator call. The consensus checker (`gpt-4o`) runs every 3 cycles. The biggest single cost lever is reducing participants from 4 to 2.
 
+## Diagrams (experimental)
+
+When enabled on the setup screen, characters can produce supporting images during the debate. The feature is off by default.
+
+**How it works:** each philosopher's system prompt includes an optional instruction to embed a `[DIAGRAM: Wikipedia article title]` marker anywhere in their response when they want to physically hold up or sketch something. After generation, the marker is stripped from the displayed text, the named Wikipedia article is queried for its lead image via the Wikipedia pageimages API (with a Wikimedia Commons raster-image fallback), and the image is rendered inline in the conversation pane as a captioned card.
+
+The approach relies on philosopher self-signalling — the character decides when a diagram is warranted and picks the article title. Images already shown in the current session are deduplicated. SVG files are excluded (rendering inconsistency).
+
+**Current limitations:** the LLM picks article titles based on training knowledge of what those articles cover, but has no way to predict what Wikipedia's editorial team has chosen as the lead image. General concept articles (e.g. *Photon*, *Energy*) can return surprising images; named diagram or experiment articles (*Bohr model*, *Photoelectric effect*, *Double-slit experiment*) are much more reliable. The prompt guides characters toward the latter, but this is a heuristic, not a guarantee. A more robust solution would require a vision-model relevance check after fetching the image — not currently implemented.
+
 ## Architecture
 
 ```

@@ -29,6 +29,9 @@ class RoomState(TypedDict):
     evidence_this_turn: str    # non-empty for one batch after evidence is injected; cleared after
     drunk_levels: dict         # {name: int} — cumulative drinks served per character
     commentator_log: list      # [str] — commentator recaps in order, one per steer break
+    diagrams_enabled: bool     # whether diagram generation is active for this session
+    diagram_this_turn: dict    # {speaker, article, url, thumb_url, title, page_url} or {} — cleared each batch
+    shown_diagram_urls: list   # URLs already displayed this session — prevents repeats
 
 
 def new_room_state(
@@ -36,6 +39,7 @@ def new_room_state(
     topic: str,
     max_turns: int = 20,
     moderator_style: str = "socratic",
+    diagrams_enabled: bool = False,
 ) -> RoomState:
     return {
         "messages": [],
@@ -63,6 +67,9 @@ def new_room_state(
         "evidence_this_turn": "",
         "drunk_levels": {},
         "commentator_log": [],
+        "diagrams_enabled": diagrams_enabled,
+        "diagram_this_turn": {},
+        "shown_diagram_urls": [],
     }
 
 
@@ -91,4 +98,6 @@ def reset_for_new_topic(state: RoomState, topic: str) -> RoomState:
         "evidence_this_turn": "",
         "drunk_levels": {},
         "commentator_log": [],
+        "diagram_this_turn": {},
+        "shown_diagram_urls": [],
     }

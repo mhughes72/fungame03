@@ -40,8 +40,8 @@ export async function fetchStyles() {
   return res.json()   // [{ style, description }]
 }
 
-export async function createSession(characters, topic, commentator = true, moderator = true) {
-  return post('/sessions', { characters, topic, commentator_enabled: commentator, moderator_enabled: moderator })
+export async function createSession(characters, topic, commentator = true, moderator = true, diagrams = false) {
+  return post('/sessions', { characters, topic, commentator_enabled: commentator, moderator_enabled: moderator, diagrams_enabled: diagrams })
 }
 
 export async function steer(sessionId, text, style, evidence = '', drinks = {}) {

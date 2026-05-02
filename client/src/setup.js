@@ -27,7 +27,7 @@ export function mount(container, characters, onStart) {
 
         <div class="char-list" id="char-list">
           ${characters.map(c => `
-            <label class="char-row" data-name="${c.name.toLowerCase()}">
+            <label class="char-row" data-name="${c.name.toLowerCase()}" data-desc="${escHtml(c.known_for)}">
               <input type="checkbox" value="${c.name}" />
               <span class="char-name">${c.name}</span>
               <span class="char-era">${c.era}</span>
@@ -58,6 +58,11 @@ export function mount(container, characters, onStart) {
             <input type="checkbox" id="toggle-moderator" checked />
             <span class="toggle-label">Moderator</span>
             <span class="toggle-desc">AI steers debate at each break</span>
+          </label>
+          <label class="setup-toggle">
+            <input type="checkbox" id="toggle-diagrams" />
+            <span class="toggle-label">Diagrams</span>
+            <span class="toggle-desc">characters produce supporting images</span>
           </label>
         </div>
 
@@ -95,6 +100,49 @@ export function mount(container, characters, onStart) {
     noResults.style.display = visible === 0 ? '' : 'none'
   })
 
+  // ── Character tooltip ─────────────────────────────────────────────── //
+  const tooltip = document.createElement('div')
+  tooltip.className = 'char-tooltip'
+  tooltip.style.display = 'none'
+  document.body.appendChild(tooltip)
+
+  function showTooltip(e) {
+    const desc = e.currentTarget.dataset.desc
+    if (!desc) return
+    tooltip.textContent = desc
+    tooltip.style.display = 'block'
+    positionTooltip(e)
+  }
+
+  function positionTooltip(e) {
+    const pad = 14
+    const tw = tooltip.offsetWidth
+    const th = tooltip.offsetHeight
+    let x = e.clientX + pad
+    let y = e.clientY + pad
+    if (x + tw > window.innerWidth - pad)  x = e.clientX - tw - pad
+    if (y + th > window.innerHeight - pad) y = e.clientY - th - pad
+    tooltip.style.left = x + 'px'
+    tooltip.style.top  = y + 'px'
+  }
+
+  function hideTooltip() { tooltip.style.display = 'none' }
+
+  rows.forEach(row => {
+    row.addEventListener('mouseenter', showTooltip)
+    row.addEventListener('mousemove',  positionTooltip)
+    row.addEventListener('mouseleave', hideTooltip)
+  })
+
+  // clean up tooltip when setup screen is replaced
+  const observer = new MutationObserver(() => {
+    if (!document.body.contains(container)) {
+      tooltip.remove()
+      observer.disconnect()
+    }
+  })
+  observer.observe(document.body, { childList: true, subtree: true })
+
   const hint    = container.querySelector('#selection-hint')
   const startBtn = container.querySelector('#start-btn')
   const errorEl  = container.querySelector('#setup-error')
@@ -123,6 +171,7 @@ export function mount(container, characters, onStart) {
     return {
       commentator: container.querySelector('#toggle-commentator').checked,
       moderator:   container.querySelector('#toggle-moderator').checked,
+      diagrams:    container.querySelector('#toggle-diagrams').checked,
     }
   }
 

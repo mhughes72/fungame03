@@ -82,6 +82,7 @@ def _philosopher_system_prompt(
     own_summary: str = "",
     heat: int = 0,
     evidence_this_turn: str = "",
+    diagrams_enabled: bool = False,
 ) -> str:
     char = CHARACTERS[name]
 
@@ -210,6 +211,22 @@ def _philosopher_system_prompt(
         "Never wrap your entire response in brackets. Your speech is plain text — brackets are for asides only."
         f"{jab_line}"
         f"{evidence_line}"
+        + (
+            "\n- When you reference a specific diagram, illustration, or named equation that you "
+            "would physically hold up or sketch — place this marker on its own line anywhere in "
+            "your response: [DIAGRAM: Wikipedia article title]. Use a real Wikipedia article title. "
+            "The title must name a specific diagram, model, or experiment — not a general concept. "
+            "Good examples: 'Bohr model', 'Feynman diagram', 'Photoelectric effect', 'Natural selection', "
+            "'Double-slit experiment', 'Krebs cycle', 'Geodesic'. "
+            "Bad examples: 'Photon', 'Quantum mechanics', 'Energy', 'Evolution' — these are concept "
+            "articles whose lead images are unpredictable. "
+            "Use it when the image is your evidence — not for abstract concepts or passing mentions. "
+            "When you include the marker, also gesture at the diagram in plain spoken text (not in "
+            "brackets) — e.g. 'as this diagram shows,' or 'consider this illustration —' woven "
+            "naturally into your sentence. The article title should specifically illustrate the "
+            "claim you are making right now, not your broader worldview."
+            if diagrams_enabled else ""
+        )
     )
 
 
