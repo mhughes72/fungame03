@@ -151,6 +151,10 @@ def _mount_static() -> None:
 
 _mount_static()
 
+# Feature flags — set PODCAST_ENABLED=true in .env to enable podcast export.
+# Off by default so hosted deployments don't incur ElevenLabs costs.
+_PODCAST_ENABLED = os.environ.get("PODCAST_ENABLED", "false").lower() == "true"
+
 
 # --------------------------------------------------------------------------- #
 # Request / response models                                                     #
@@ -162,6 +166,7 @@ class StartRequest(BaseModel):
     commentator_enabled: bool = True
     moderator_enabled: bool = True
     diagrams_enabled: bool = False
+    audience_level: str = "university"
 
 
 class SteerRequest(BaseModel):
@@ -196,6 +201,7 @@ def list_characters():
             "name": name,
             "era": data["era"],
             "known_for": data["known_for"],
+            "category": data.get("category", ""),
         }
         for name, data in CHARACTERS.items()
     ]
@@ -205,6 +211,12 @@ def list_characters():
 def list_styles():
     """Return all moderator styles."""
     return [{"style": s, "description": d} for s, d in _MODERATOR_STYLES]
+
+
+@app.get("/api/features")
+def get_features():
+    """Return server-side feature flags for the frontend."""
+    return {"podcast": _PODCAST_ENABLED}
 
 
 @app.post("/api/sessions", status_code=201)
@@ -220,6 +232,7 @@ def create_session(req: StartRequest):
         commentator_enabled=req.commentator_enabled,
         moderator_enabled=req.moderator_enabled,
         diagrams_enabled=req.diagrams_enabled,
+        audience_level=req.audience_level,
     )
     return {
         "session_id": session.id,
@@ -390,6 +403,8 @@ async def newspaper(session_id: str):
 @app.post("/api/sessions/{session_id}/podcast")
 async def podcast(session_id: str):
     """Generate a podcast MP3 from the debate transcript and return it as a download."""
+    if not _PODCAST_ENABLED:
+        raise HTTPException(status_code=403, detail="Podcast export is not enabled on this server.")
     session = store.get(session_id)
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")

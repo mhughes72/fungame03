@@ -23,6 +23,7 @@ from prompts import (
     _heat_description,
     _philosopher_system_prompt,
     _philosopher_user_prompt,
+    AUDIENCE_LEVELS,
 )
 from scoring import _top_candidates, _select_winner
 from summarization import summarize_history, generate_character_summaries
@@ -234,7 +235,8 @@ def _generate_candidate(name: str, state: RoomState) -> dict:
     if drunk_level:
         dbg.dlog("PHILOSOPHER", f"{name} — drunk level {drunk_level}")
     diagrams_enabled = state.get("diagrams_enabled", False)
-    system_prompt = _philosopher_system_prompt(name, participants, partial_agreements, own_summary, heat, evidence_this_turn, diagrams_enabled)
+    audience_level   = state.get("audience_level") or "university"
+    system_prompt = _philosopher_system_prompt(name, participants, partial_agreements, own_summary, heat, evidence_this_turn, diagrams_enabled, audience_level)
     user_prompt   = _philosopher_user_prompt(
         name, state["messages"], topic, argument_log, turn_count, concession_counts,
         concession_log, challenge_counts, drunk_level, drunk_levels,
@@ -749,6 +751,11 @@ def generate_moderator_steer(state: RoomState) -> str:
 
     style = state.get("moderator_style") or "socratic"
     system_msg, style_instruction = _STYLE_CONFIGS.get(style, _STYLE_CONFIGS["socratic"])
+
+    audience_level = state.get("audience_level") or "university"
+    audience_instruction = AUDIENCE_LEVELS.get(audience_level)
+    if audience_instruction:
+        system_msg = system_msg + f"\n\n{audience_instruction}"
 
     binary_close = (
         f"\n\nRegardless of style: your steer must end with a single direct question aimed at {target}. "

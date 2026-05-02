@@ -40,8 +40,14 @@ export async function fetchStyles() {
   return res.json()   // [{ style, description }]
 }
 
-export async function createSession(characters, topic, commentator = true, moderator = true, diagrams = false) {
-  return post('/sessions', { characters, topic, commentator_enabled: commentator, moderator_enabled: moderator, diagrams_enabled: diagrams })
+export async function fetchFeatures() {
+  const res = await fetch(`${BASE}/features`)
+  if (!res.ok) return {}   // graceful degradation — hide optional features
+  return res.json()   // { podcast: bool }
+}
+
+export async function createSession(characters, topic, commentator = true, moderator = true, diagrams = false, audienceLevel = 'university') {
+  return post('/sessions', { characters, topic, commentator_enabled: commentator, moderator_enabled: moderator, diagrams_enabled: diagrams, audience_level: audienceLevel })
 }
 
 export async function steer(sessionId, text, style, evidence = '', drinks = {}) {

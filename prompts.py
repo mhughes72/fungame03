@@ -4,6 +4,38 @@ from personas import CHARACTERS
 _CONCESSION_THRESHOLD = 8   # turns before no-concession pressure kicks in
 _BACKCHANNEL_CHANCE   = 0.5
 
+# Audience level instructions injected near the TOP of philosopher and moderator prompts.
+# Edit these freely — keys must match the values sent from the frontend/CLI.
+# None = no injection (full academic register, current default).
+AUDIENCE_LEVELS: dict[str, str | None] = {
+    "grade5": (
+        "⚠ AUDIENCE CONSTRAINT — THIS OVERRIDES YOUR DEFAULT SPEAKING REGISTER.\n"
+        "You are speaking to a curious 10-year-old. This is non-negotiable.\n"
+        "Rules for language:\n"
+        "- No jargon, no academic terms, no Latin phrases — ever.\n"
+        '  Translate before you speak: "class struggle" → "some people have much less than others and that feels unfair"; '
+        '"collectivism" → "working together as a group"; '
+        '"dialectic" → "arguing back and forth to find the truth"; '
+        '"individualism" → "believing each person should live by their own rules".\n'
+        "- Short sentences. One idea per sentence. Use words a 10-year-old would know.\n"
+        "- Use everyday analogies: food, school, sport, games, playground, weather.\n"
+        "- You must still argue passionately and stay completely in character — just speak plainly.\n"
+    ),
+    "highschool": (
+        "⚠ AUDIENCE CONSTRAINT — THIS OVERRIDES YOUR DEFAULT SPEAKING REGISTER.\n"
+        "You are speaking to a smart teenager. Rules for language:\n"
+        "- Technical terms are allowed only if you immediately explain them in plain words in the same sentence.\n"
+        "- No dense academic prose. Clear, direct sentences.\n"
+        "- Use real-world examples — current events, sports, pop culture — over abstract theory.\n"
+        "- No Latin phrases without translation. Stay forceful and in character.\n"
+    ),
+    "university": (
+        "AUDIENCE: You are speaking to an educated adult familiar with key ideas in your field. "
+        "Use field-specific vocabulary freely. No constraint on register."
+    ),
+    "expert": None,  # no instruction injected — full register, current default behaviour
+}
+
 
 def _heat_description(heat: int) -> str:
     if heat <= 4:
@@ -83,6 +115,7 @@ def _philosopher_system_prompt(
     heat: int = 0,
     evidence_this_turn: str = "",
     diagrams_enabled: bool = False,
+    audience_level: str = "university",
 ) -> str:
     char = CHARACTERS[name]
 
@@ -185,9 +218,13 @@ def _philosopher_system_prompt(
         "your position — but you must address it.\n"
     ) if evidence_this_turn else ""
 
+    audience_block = AUDIENCE_LEVELS.get(audience_level)
+    audience_line = f"\n{audience_block}\n" if audience_block else ""
+
     return (
         f"You are {name} ({char['era']}).\n\n"
-        f"Known for: {char['known_for']}\n\n"
+        f"Known for: {char['known_for']}\n"
+        f"{audience_line}\n"
         f"{reference_sections}"
         f"{intellectual_honesty}"
         f"{change_line}"

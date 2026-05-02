@@ -213,15 +213,50 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 .char-tooltip {
   position: fixed;
   z-index: 9999;
-  max-width: 280px;
+  max-width: 300px;
   background: var(--bg-mid);
   border: 1px solid var(--border-hi);
   color: var(--text);
   font-size: 0.78rem;
   line-height: 1.5;
-  padding: 0.5rem 0.75rem;
+  padding: 0.6rem;
   pointer-events: none;
   box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+}
+.tt-inner {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+}
+.tt-portrait {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 4px;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+}
+.tt-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.tt-category {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--gold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.tt-desc {
+  color: var(--amber);
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+.toggle-wip {
+  color: var(--red);
+  font-size: 0.72rem;
+  opacity: 0.8;
 }
 
 .selection-hint { font-size: 0.8rem; color: var(--text-dim); min-height: 1.2em; }
@@ -276,6 +311,36 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 .setup-toggle:has(input:checked) { color: var(--amber); }
 .toggle-label { font-weight: 600; }
 .toggle-desc { color: var(--text-dim); font-size: 0.75rem; }
+
+.setup-audience {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0 0 0.75rem;
+  flex-wrap: wrap;
+}
+.audience-label {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.audience-options {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+.audience-opt {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.audience-opt input[type=radio] { accent-color: var(--gold); cursor: pointer; }
+.audience-opt:has(input:checked) { color: var(--amber); }
 
 .setup-error { color: var(--red); font-size: 0.85rem; min-height: 1.2em; text-align: center; }
 

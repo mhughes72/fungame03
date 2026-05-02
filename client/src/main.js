@@ -5,18 +5,20 @@ import * as debate from './debate.js'
 
 const app = document.querySelector('#app')
 
+let _features = {}
+
 async function showSetup() {
   let characters, styles
   try {
-    ;[characters, styles] = await Promise.all([api.fetchCharacters(), api.fetchStyles()])
+    ;[characters, styles, _features] = await Promise.all([api.fetchCharacters(), api.fetchStyles(), api.fetchFeatures()])
   } catch (err) {
     app.innerHTML = `<div class="fatal-error">Could not reach the server.<br/>${err.message}</div>`
     return
   }
 
-  const screen = setup.mount(app, characters, async ({ characters: chosen, topic, commentator = true, moderator = true, diagrams = false }) => {
+  const screen = setup.mount(app, characters, async ({ characters: chosen, topic, commentator = true, moderator = true, diagrams = false, audienceLevel = 'university' }) => {
     try {
-      const session = await api.createSession(chosen, topic, commentator, moderator, diagrams)
+      const session = await api.createSession(chosen, topic, commentator, moderator, diagrams, audienceLevel)
       showDebate(session.session_id, chosen, topic, styles)
     } catch (err) {
       screen.showError(`Could not start session: ${err.message}`)
@@ -33,7 +35,7 @@ function showDebate(sessionId, participants, topic, styles) {
     openStream:     api.openStream,
     searchEvidence: api.searchEvidence,
     fetchNewspaper: api.fetchNewspaper,
-    exportPodcast:  api.exportPodcast,
+    exportPodcast:  _features.podcast ? api.exportPodcast : null,
   })
 
   app.addEventListener('debate:quit', () => showSetup(), { once: true })

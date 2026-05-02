@@ -27,7 +27,11 @@ export function mount(container, characters, onStart) {
 
         <div class="char-list" id="char-list">
           ${characters.map(c => `
-            <label class="char-row" data-name="${c.name.toLowerCase()}" data-desc="${escHtml(c.known_for)}">
+            <label class="char-row"
+              data-name="${c.name.toLowerCase()}"
+              data-desc="${escHtml(c.known_for)}"
+              data-category="${escHtml(c.category || '')}"
+              data-portrait="${escHtml(c.name.replace(/ /g, '_'))}">
               <input type="checkbox" value="${c.name}" />
               <span class="char-name">${c.name}</span>
               <span class="char-era">${c.era}</span>
@@ -62,8 +66,18 @@ export function mount(container, characters, onStart) {
           <label class="setup-toggle">
             <input type="checkbox" id="toggle-diagrams" />
             <span class="toggle-label">Diagrams</span>
-            <span class="toggle-desc">characters produce supporting images</span>
+            <span class="toggle-desc">characters produce supporting images <span class="toggle-wip">· work in progress</span></span>
           </label>
+        </div>
+
+        <div class="setup-audience">
+          <span class="audience-label">Audience level</span>
+          <div class="audience-options">
+            <label class="audience-opt"><input type="radio" name="audience" value="grade5" /> Grade 5</label>
+            <label class="audience-opt"><input type="radio" name="audience" value="highschool" /> High School</label>
+            <label class="audience-opt"><input type="radio" name="audience" value="university" checked /> University</label>
+            <label class="audience-opt"><input type="radio" name="audience" value="expert" /> Expert</label>
+          </div>
         </div>
 
         <button class="start-btn" id="start-btn" disabled>Open the bar ▶</button>
@@ -107,9 +121,17 @@ export function mount(container, characters, onStart) {
   document.body.appendChild(tooltip)
 
   function showTooltip(e) {
-    const desc = e.currentTarget.dataset.desc
+    const { desc, category, portrait } = e.currentTarget.dataset
     if (!desc) return
-    tooltip.textContent = desc
+    const portraitUrl = `/portraits/${portrait}.png`
+    tooltip.innerHTML = `
+      <div class="tt-inner">
+        <img class="tt-portrait" src="${portraitUrl}" alt="" onerror="this.style.display='none'" />
+        <div class="tt-body">
+          ${category ? `<span class="tt-category">${escHtml(category)}</span>` : ''}
+          <span class="tt-desc">${escHtml(desc)}</span>
+        </div>
+      </div>`
     tooltip.style.display = 'block'
     positionTooltip(e)
   }
@@ -168,10 +190,12 @@ export function mount(container, characters, onStart) {
   checkboxes.forEach(cb => cb.addEventListener('change', updateHint))
 
   function getToggles() {
+    const audienceEl = container.querySelector('input[name="audience"]:checked')
     return {
-      commentator: container.querySelector('#toggle-commentator').checked,
-      moderator:   container.querySelector('#toggle-moderator').checked,
-      diagrams:    container.querySelector('#toggle-diagrams').checked,
+      commentator:  container.querySelector('#toggle-commentator').checked,
+      moderator:    container.querySelector('#toggle-moderator').checked,
+      diagrams:     container.querySelector('#toggle-diagrams').checked,
+      audienceLevel: audienceEl ? audienceEl.value : 'university',
     }
   }
 

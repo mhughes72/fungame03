@@ -63,6 +63,7 @@ class Session:
     commentator_enabled: bool = True
     moderator_enabled: bool = True
     diagrams_enabled: bool = False
+    audience_level: str = "university"
 
     # ------------------------------------------------------------------ #
     # Thread-safe queue helpers                                            #
@@ -343,10 +344,10 @@ class SessionStore:
         self._sessions: dict[str, Session] = {}
         self._lock = threading.Lock()
 
-    def create(self, participants: list[str], topic: str, commentator_enabled: bool = True, moderator_enabled: bool = True, diagrams_enabled: bool = False) -> Session:
+    def create(self, participants: list[str], topic: str, commentator_enabled: bool = True, moderator_enabled: bool = True, diagrams_enabled: bool = False, audience_level: str = "university") -> Session:
         session_id = uuid.uuid4().hex
         graph = build_graph(participants)
-        state = new_room_state(participants, topic, max_turns=24, diagrams_enabled=diagrams_enabled)
+        state = new_room_state(participants, topic, max_turns=24, diagrams_enabled=diagrams_enabled, audience_level=audience_level)
         session = Session(
             id=session_id,
             state=state,
@@ -354,6 +355,7 @@ class SessionStore:
             commentator_enabled=commentator_enabled,
             moderator_enabled=moderator_enabled,
             diagrams_enabled=diagrams_enabled,
+            audience_level=audience_level,
         )
         with self._lock:
             self._sessions[session_id] = session

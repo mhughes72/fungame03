@@ -32,6 +32,7 @@ class RoomState(TypedDict):
     diagrams_enabled: bool     # whether diagram generation is active for this session
     diagram_this_turn: dict    # {speaker, article, url, thumb_url, title, page_url} or {} — cleared each batch
     shown_diagram_urls: list   # URLs already displayed this session — prevents repeats
+    audience_level: str        # "grade5" | "highschool" | "university" | "expert"
 
 
 def new_room_state(
@@ -40,6 +41,7 @@ def new_room_state(
     max_turns: int = 20,
     moderator_style: str = "socratic",
     diagrams_enabled: bool = False,
+    audience_level: str = "university",
 ) -> RoomState:
     return {
         "messages": [],
@@ -70,6 +72,7 @@ def new_room_state(
         "diagrams_enabled": diagrams_enabled,
         "diagram_this_turn": {},
         "shown_diagram_urls": [],
+        "audience_level": audience_level,
     }
 
 
