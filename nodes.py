@@ -651,6 +651,81 @@ def generate_moderator_steer(state: RoomState) -> str:
 
 
 # --------------------------------------------------------------------------- #
+# Commentator recap                                                             #
+# --------------------------------------------------------------------------- #
+
+_DRUNK_LABELS = {1: "one drink in", 2: "visibly tipsy", 3: "clearly drunk", 4: "absolutely hammered"}
+
+
+def generate_commentator_recap(state: RoomState) -> str:
+    """Generate a wry sports-style play-by-play recap of the last round."""
+    topic             = state["topic"]
+    participants      = state["participants"]
+    messages          = state.get("messages") or []
+    heat              = state.get("heat") or 0
+    concession_counts = state.get("concession_counts") or {}
+    partial_agreements = state.get("partial_agreements") or []
+    turn_count        = state.get("turn_count") or 0
+    drunk_levels      = state.get("drunk_levels") or {}
+
+    recent_text = "\n".join(
+        f"{(m.name or 'User').replace('_', ' ')}: {m.content[:200]}"
+        for m in messages[-8:]
+        if hasattr(m, "content") and not (getattr(m, "name", "") or "").endswith("_bc")
+    )
+
+    concession_lines = ", ".join(
+        f"{n.replace('_', ' ')} ({c} concession{'s' if c != 1 else ''})"
+        for n, c in concession_counts.items() if c > 0
+    ) or "none"
+
+    agreement_lines = "; ".join(
+        f"{' & '.join(a['participants'])} on {a['on']}" for a in partial_agreements
+    ) or "none"
+
+    drunk_lines = ", ".join(
+        f"{n.replace('_', ' ')} ({_DRUNK_LABELS.get(lvl, 'wrecked')})"
+        for n, lvl in drunk_levels.items()
+        if lvl > 0 and n in participants
+    )
+
+    drunk_instruction = ""
+    if drunk_lines:
+        drunk_instruction = (
+            f"\nIMPORTANT: The following participants have been drinking: {drunk_lines}. "
+            "You MUST make at least one snide, amused remark about their condition — "
+            "how it's affecting their arguments, their composure, or their credibility. "
+            "Be entertainingly cruel about it. Name them specifically."
+        )
+
+    prompt = (
+        f'Topic: "{topic}"\n'
+        f"Participants: {', '.join(participants)}\n"
+        f"Turn: {turn_count} | Heat: {heat}/10\n"
+        f"Concessions this debate: {concession_lines}\n"
+        f"Alignments so far: {agreement_lines}\n\n"
+        f"Recent exchange:\n{recent_text}\n"
+        f"{drunk_instruction}\n\n"
+        "Give a punchy 2–3 sentence play-by-play on what just happened. "
+        "Use sports metaphors. Name the participants specifically. "
+        "End with one line teasing what to watch for next round."
+    )
+
+    try:
+        response = ChatOpenAI(model="gpt-4o-mini", temperature=0.9).invoke([
+            SystemMessage(content=(
+                "You are a wry sports commentator calling a live philosophical debate "
+                "like it's a boxing match or football game. Be punchy, colorful, and specific. "
+                "Use sports metaphors freely. Never be dry or academic — you're broadcasting to an audience."
+            )),
+            HumanMessage(content=prompt),
+        ])
+        return response.content.strip()
+    except Exception:
+        return ""
+
+
+# --------------------------------------------------------------------------- #
 # Post-debate newspaper                                                         #
 # --------------------------------------------------------------------------- #
 

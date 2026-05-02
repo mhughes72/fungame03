@@ -37,6 +37,7 @@ import server.events as evt
 from graph import build_graph
 from nodes import (
     generate_character_summaries,
+    generate_commentator_recap,
     generate_moderator_steer,
     summarize_history,
     detect_forced_speaker,
@@ -59,6 +60,8 @@ class Session:
     loop: Optional[asyncio.AbstractEventLoop] = None
     _batch_count: int = 0
     _started: bool = False
+    commentator_enabled: bool = True
+    moderator_enabled: bool = True
 
     # ------------------------------------------------------------------ #
     # Thread-safe queue helpers                                            #
@@ -190,6 +193,15 @@ class Session:
             beat = _BAR_BEATS[(self._batch_count - 2) % len(_BAR_BEATS)]
             self._put(evt.bar_beat(beat))
 
+        # Commentator recap — every steer break
+        if self.commentator_enabled:
+            recap = generate_commentator_recap(self.state)
+            if recap:
+                self._put(evt.commentator(recap))
+                log = list(self.state.get("commentator_log") or [])
+                log.append(recap)
+                self.state = {**self.state, "commentator_log": log}
+
         if self.state.get("consensus"):
             self._put(evt.consensus(
                 summary=self.state.get("consensus_summary", ""),
@@ -242,7 +254,7 @@ class Session:
                 ],
             }
             self._put(evt.message("User", text, role="user"))
-        else:
+        elif self.moderator_enabled:
             steer = generate_moderator_steer(self.state)
             forced = detect_forced_speaker(steer, participants)
             self.state = {
@@ -313,11 +325,17 @@ class SessionStore:
         self._sessions: dict[str, Session] = {}
         self._lock = threading.Lock()
 
-    def create(self, participants: list[str], topic: str) -> Session:
+    def create(self, participants: list[str], topic: str, commentator_enabled: bool = True, moderator_enabled: bool = True) -> Session:
         session_id = uuid.uuid4().hex
         graph = build_graph(participants)
         state = new_room_state(participants, topic, max_turns=24)
-        session = Session(id=session_id, state=state, graph=graph)
+        session = Session(
+            id=session_id,
+            state=state,
+            graph=graph,
+            commentator_enabled=commentator_enabled,
+            moderator_enabled=moderator_enabled,
+        )
         with self._lock:
             self._sessions[session_id] = session
         return session

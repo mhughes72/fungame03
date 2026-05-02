@@ -243,6 +243,26 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 .start-btn:hover:not(:disabled) { background: var(--border-hi); }
 .start-btn:disabled { opacity: 0.4; cursor: default; }
 
+.setup-toggles {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin: 0.5rem 0 0.75rem;
+}
+.setup-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  user-select: none;
+}
+.setup-toggle input[type=checkbox] { accent-color: var(--gold); cursor: pointer; }
+.setup-toggle:has(input:checked) { color: var(--amber); }
+.toggle-label { font-weight: 600; }
+.toggle-desc { color: var(--text-dim); font-size: 0.75rem; }
+
 .setup-error { color: var(--red); font-size: 0.85rem; min-height: 1.2em; text-align: center; }
 
 .setup-footer {
@@ -559,6 +579,26 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   margin: 0.25rem 0;
 }
 
+/* commentator recap */
+.msg-commentator {
+  border-left: 3px solid var(--blue);
+  padding: 0.45rem 0.75rem;
+  margin: 0.75rem 0;
+  font-size: 0.85rem;
+  font-style: italic;
+  color: var(--blue);
+  background: rgba(122, 184, 245, 0.06);
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+.commentator-icon {
+  flex-shrink: 0;
+  font-style: normal;
+  opacity: 0.8;
+}
+.commentator-text { line-height: 1.6; }
+
 /* evidence injection */
 .msg-evidence {
   border-left: 3px solid var(--amber);
@@ -600,6 +640,18 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   0%, 80%, 100% { opacity: 0.15; }
   40%           { opacity: 1; }
 }
+
+/* debate starting indicator */
+.debate-starting {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  font-style: italic;
+  padding: 2rem 1.5rem;
+}
+.debate-starting-text { color: var(--gold-dim); }
 
 
 /* ── sidebar ────────────────────────────────────────────────────────── */
@@ -1159,42 +1211,6 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   font-size: 1.1rem;
   text-align: center;
   padding: 3rem;
-}
-
-.podcast-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-  padding: 3rem 2rem;
-  font-family: var(--mono);
-  color: var(--amber);
-  text-align: center;
-}
-.podcast-loading-icon { font-size: 2.5rem; }
-.podcast-loading-title {
-  font-size: 1rem;
-  letter-spacing: 0.12em;
-  color: var(--text);
-}
-.podcast-loading-steps {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  margin-top: 0.5rem;
-}
-.podcast-step {
-  font-size: 0.85rem;
-  color: var(--text-dim);
-  transition: color 0.4s;
-}
-.podcast-step.active { color: var(--amber); }
-.podcast-step.done   { color: var(--text-dim); text-decoration: line-through; }
-.podcast-loading-note {
-  font-size: 0.78rem;
-  color: var(--text-dim);
-  margin-top: 0.5rem;
-  font-style: italic;
 }
 
 .newspaper-modal {

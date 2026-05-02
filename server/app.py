@@ -159,6 +159,8 @@ _mount_static()
 class StartRequest(BaseModel):
     characters: list[str] = Field(..., min_length=2, max_length=4)
     topic: str = Field(..., min_length=1, max_length=500)
+    commentator_enabled: bool = True
+    moderator_enabled: bool = True
 
 
 class SteerRequest(BaseModel):
@@ -211,7 +213,12 @@ def create_session(req: StartRequest):
     if unknown:
         raise HTTPException(status_code=400, detail=f"Unknown characters: {unknown}")
 
-    session = store.create(participants=req.characters, topic=req.topic)
+    session = store.create(
+        participants=req.characters,
+        topic=req.topic,
+        commentator_enabled=req.commentator_enabled,
+        moderator_enabled=req.moderator_enabled,
+    )
     return {
         "session_id": session.id,
         "participants": req.characters,
@@ -396,6 +403,7 @@ async def podcast(session_id: str):
             participants=state.get("participants", []),
             topic=state.get("topic", "debate"),
             session_id=session_id,
+            commentator_log=state.get("commentator_log") or [],
         ))
     except RuntimeError as exc:
         raise HTTPException(status_code=422, detail=str(exc))

@@ -48,6 +48,19 @@ export function mount(container, characters, onStart) {
           autocomplete="off"
         />
 
+        <div class="setup-toggles">
+          <label class="setup-toggle">
+            <input type="checkbox" id="toggle-commentator" checked />
+            <span class="toggle-label">Commentator</span>
+            <span class="toggle-desc">play-by-play after each round</span>
+          </label>
+          <label class="setup-toggle">
+            <input type="checkbox" id="toggle-moderator" checked />
+            <span class="toggle-label">Moderator</span>
+            <span class="toggle-desc">AI steers debate at each break</span>
+          </label>
+        </div>
+
         <button class="start-btn" id="start-btn" disabled>Open the bar ▶</button>
         <p class="setup-error" id="setup-error"></p>
 
@@ -66,7 +79,7 @@ export function mount(container, characters, onStart) {
     </div>
   `
 
-  const checkboxes = container.querySelectorAll('input[type=checkbox]')
+  const checkboxes = container.querySelectorAll('#char-list input[type=checkbox]')
   const rows      = container.querySelectorAll('.char-row')
   const noResults = container.querySelector('#char-no-results')
   const filterInput = container.querySelector('#char-filter')
@@ -106,12 +119,19 @@ export function mount(container, characters, onStart) {
   updateHint()
   checkboxes.forEach(cb => cb.addEventListener('change', updateHint))
 
+  function getToggles() {
+    return {
+      commentator: container.querySelector('#toggle-commentator').checked,
+      moderator:   container.querySelector('#toggle-moderator').checked,
+    }
+  }
+
   startBtn.addEventListener('click', () => {
     const selected = [...checkboxes].filter(cb => cb.checked).map(cb => cb.value)
     const topic = container.querySelector('#topic-input').value.trim()
                   || 'What is the nature of justice?'
     errorEl.textContent = ''
-    onStart({ characters: selected, topic })
+    onStart({ characters: selected, topic, ...getToggles() })
   })
 
   container.querySelector('#topic-input').addEventListener('keydown', e => {
@@ -151,7 +171,7 @@ export function mount(container, characters, onStart) {
       </div>
     `
     dotdCard.querySelector('#dotd-start').addEventListener('click', () => {
-      onStart({ characters: dotd.characters, topic: dotd.topic })
+      onStart({ characters: dotd.characters, topic: dotd.topic, ...getToggles() })
     })
     dotdCard.querySelector('#dotd-new').addEventListener('click', () => {
       dotdIndex++

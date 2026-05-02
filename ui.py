@@ -17,6 +17,7 @@ from graph import build_graph
 from nodes import (
     summarize_history,
     generate_character_summaries,
+    generate_commentator_recap,
     generate_moderator_steer,
     detect_forced_speaker,
     MODERATOR_STYLES as _MODERATOR_STYLES,
@@ -462,6 +463,7 @@ class PhilosopherBar(App):
         self._displayed_count = 0
         self._prev_partial: list = []
         self._waiting_for_input = False
+        self._pending_commentator: str = ""
         self._new_topic_mode = False
 
     # ---------------------------------------------------------------------- #
@@ -528,6 +530,10 @@ class PhilosopherBar(App):
             final_state = snapshot
 
         self.state = final_state
+
+        # Generate commentator recap in thread (LLM call) — every steer break
+        self._pending_commentator = generate_commentator_recap(self.state)
+
         self.call_from_thread(self._after_batch)
 
     def _after_batch(self) -> None:
@@ -550,6 +556,10 @@ class PhilosopherBar(App):
             batch_num = turn // (n * 2)
             if batch_num > 0:
                 self._log_bar_beat(_BAR_BEATS[(batch_num - 1) % len(_BAR_BEATS)])
+
+        if self._pending_commentator:
+            self._log_commentator(self._pending_commentator)
+            self._pending_commentator = ""
 
         if self.state.get("consensus"):
             self._log_system("━━━ CONSENSUS REACHED ━━━")
@@ -702,6 +712,10 @@ class PhilosopherBar(App):
     def _log_system(self, text: str) -> None:
         log = self.query_one("#conversation", RichLog)
         log.write(f"[#5c3a00]{text}[/]")
+
+    def _log_commentator(self, text: str) -> None:
+        log = self.query_one("#conversation", RichLog)
+        log.write(f"\n[#7ab8f5]📢 {text.strip()}[/]\n")
 
     def _log_bar_beat(self, text: str) -> None:
         log = self.query_one("#conversation", RichLog)

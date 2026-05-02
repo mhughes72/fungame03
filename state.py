@@ -28,6 +28,7 @@ class RoomState(TypedDict):
     drift_topic: str           # non-empty when conversation has wandered from original topic
     evidence_this_turn: str    # non-empty for one batch after evidence is injected; cleared after
     drunk_levels: dict         # {name: int} — cumulative drinks served per character
+    commentator_log: list      # [str] — commentator recaps in order, one per steer break
 
 
 def new_room_state(
@@ -61,6 +62,7 @@ def new_room_state(
         "drift_topic": "",
         "evidence_this_turn": "",
         "drunk_levels": {},
+        "commentator_log": [],
     }
 
 
@@ -88,4 +90,5 @@ def reset_for_new_topic(state: RoomState, topic: str) -> RoomState:
         "drift_topic": "",
         "evidence_this_turn": "",
         "drunk_levels": {},
+        "commentator_log": [],
     }

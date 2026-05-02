@@ -96,6 +96,11 @@ def evidence(finding: str, source: str) -> dict:
     return _evt("evidence", {"finding": finding, "source": source})
 
 
+def commentator(text: str) -> dict:
+    """Sports-style play-by-play recap — fired at each steer break (batch 2+)."""
+    return _evt("commentator", {"text": text})
+
+
 def bars(heat: int, concession_total: int) -> dict:
     """Lightweight per-turn update for just the heat and concession bars."""
     return _evt("bars", {"heat": heat, "concession_total": concession_total})

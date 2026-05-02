@@ -57,16 +57,34 @@ export function mount(container, sessionId, participants, topic, styles, api) {
     remaining_disagreements: [],
   })
 
+  // ── initial loading indicator ──────────────────────────────────────── //
+
+  {
+    const startDiv = document.createElement('div')
+    startDiv.id = 'debate-starting'
+    startDiv.className = 'debate-starting'
+    startDiv.innerHTML =
+      `<span class="debate-starting-text">Opening the bar</span>` +
+      `<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span>`
+    convoPane.appendChild(startDiv)
+  }
+
+  function clearStarting() {
+    convoPane.querySelector('#debate-starting')?.remove()
+  }
+
   // ── event handler ──────────────────────────────────────────────────── //
 
   function onEvent({ type, data }) {
     switch (type) {
       case 'speaker':
+        clearStarting()
         seating.setThinking(data.name)
         showTyping(convoPane, data.name)
         break
 
       case 'message':
+        clearStarting()
         clearTyping(convoPane)
         if (!data.backchannel) seating.setSpeaking(data.name)
         appendMessage(convoPane, data)
@@ -87,6 +105,7 @@ export function mount(container, sessionId, participants, topic, styles, api) {
       }
 
       case 'state':
+        clearTyping(convoPane)
         currentStyle = data.moderator_style
         currentHeat  = data.heat ?? currentHeat
         lastState = data
@@ -150,18 +169,27 @@ export function mount(container, sessionId, participants, topic, styles, api) {
         break
 
       case 'bar_beat':
+        clearStarting()
         appendBarBeat(convoPane, data.text)
         break
 
+      case 'commentator':
+        clearStarting()
+        appendCommentator(convoPane, data.text)
+        break
+
       case 'evidence':
+        clearStarting()
         appendEvidence(convoPane, data.finding)
         break
 
       case 'system':
+        clearStarting()
         appendSystem(convoPane, data.text)
         break
 
       case 'error':
+        clearStarting()
         appendSystem(convoPane, `⚠ ${data.text}`)
         break
     }
@@ -258,6 +286,15 @@ function appendSystem(el, text) {
   scrollAppend(el, div)
 }
 
+function appendCommentator(el, text) {
+  const div = document.createElement('div')
+  div.className = 'msg msg-commentator'
+  div.innerHTML =
+    `<span class="commentator-icon">📢</span>` +
+    `<span class="commentator-text">${escHtml(text)}</span>`
+  scrollAppend(el, div)
+}
+
 function appendEvidence(el, finding) {
   const div = document.createElement('div')
   div.className = 'msg msg-evidence'
@@ -282,7 +319,6 @@ function appendConsensus(el, { summary, points }, { onNewTopic, onQuit }, state 
              type="text" placeholder="New topic…" autocomplete="off" />
       <button class="consensus-continue-btn" id="consensus-continue">Continue ▶</button>
       <button class="newspaper-btn" id="consensus-paper">Read the morning paper 📰</button>
-      <button class="newspaper-btn" id="consensus-podcast">Export as Podcast 🎙</button>
       <button class="consensus-end-btn" id="consensus-end">End the evening</button>
     </div>
   `
@@ -303,7 +339,6 @@ function appendConsensus(el, { summary, points }, { onNewTopic, onQuit }, state 
   })
   div.querySelector('#consensus-end').addEventListener('click', onQuit)
   div.querySelector('#consensus-paper').addEventListener('click', () => openNewspaper(sessionId, api, participants))
-  div.querySelector('#consensus-podcast').addEventListener('click', () => exportPodcast(sessionId, api))
 }
 
 function appendGameOver(el, state, participants, onQuit, sessionId, api) {
@@ -320,14 +355,12 @@ function appendGameOver(el, state, participants, onQuit, sessionId, api) {
     ${_debateStats(state)}
     <div class="game-over-actions">
       ${sessionId ? `<button class="newspaper-btn" id="game-over-paper">Read the morning paper 📰</button>` : ''}
-      ${sessionId ? `<button class="newspaper-btn" id="game-over-podcast">Export as Podcast 🎙</button>` : ''}
       <button class="consensus-end-btn" id="game-over-leave">Leave the bar</button>
     </div>
   `
   scrollAppend(el, div)
   div.querySelector('#game-over-leave').addEventListener('click', onQuit)
   if (sessionId) div.querySelector('#game-over-paper')?.addEventListener('click', () => openNewspaper(sessionId, api, participants))
-  if (sessionId) div.querySelector('#game-over-podcast')?.addEventListener('click', () => exportPodcast(sessionId, api))
 }
 
 // ── podcast export ───────────────────────────────────────────────────── //
@@ -336,42 +369,18 @@ async function exportPodcast(sessionId, api) {
   const overlay = document.createElement('div')
   overlay.className = 'newspaper-overlay'
   overlay.innerHTML = `
-    <div class="podcast-loading">
-      <div class="podcast-loading-icon">🎙</div>
-      <div class="podcast-loading-title">RECORDING IN PROGRESS</div>
-      <div class="podcast-loading-steps" id="podcast-steps">
-        <div class="podcast-step active" id="pstep-1">── preprocessing transcript ──</div>
-        <div class="podcast-step" id="pstep-2">── synthesising voices ──</div>
-        <div class="podcast-step" id="pstep-3">── encoding audio ──</div>
-      </div>
-      <div class="podcast-loading-note">This may take a minute…</div>
+    <div class="newspaper-loading">
+      <div class="newspaper-loading-text">Preprocessing transcript… rendering voices… this takes a minute</div>
     </div>
   `
   document.body.appendChild(overlay)
-
-  // Animate steps to give a sense of progress
-  const stepTimers = [
-    setTimeout(() => {
-      overlay.querySelector('#pstep-1')?.classList.add('done')
-      overlay.querySelector('#pstep-2')?.classList.add('active')
-    }, 8000),
-    setTimeout(() => {
-      overlay.querySelector('#pstep-2')?.classList.add('done')
-      overlay.querySelector('#pstep-3')?.classList.add('active')
-    }, 20000),
-  ]
-
   try {
     await api.exportPodcast(sessionId)
   } catch (err) {
+    alert(`Podcast failed: ${err.message}`)
+  } finally {
     overlay.remove()
-    stepTimers.forEach(clearTimeout)
-    alert(`Podcast export failed: ${err.message}`)
-    return
   }
-
-  stepTimers.forEach(clearTimeout)
-  overlay.remove()
 }
 
 // ── newspaper modal ──────────────────────────────────────────────────── //

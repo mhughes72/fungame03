@@ -13,7 +13,7 @@ from langchain_core.messages import HumanMessage, AIMessage
 
 from personas import CHARACTERS
 from graph import build_graph, save_graph_image
-from nodes import summarize_history, generate_character_summaries, generate_moderator_steer, detect_forced_speaker, MODERATOR_STYLES as _MODERATOR_STYLES
+from nodes import summarize_history, generate_character_summaries, generate_commentator_recap, generate_moderator_steer, detect_forced_speaker, MODERATOR_STYLES as _MODERATOR_STYLES
 from state import RoomState, new_room_state, reset_for_new_topic
 import debug as dbg
 
@@ -318,6 +318,10 @@ def run_game():
         else:
             _display_no_consensus(state)
             print()
+            # Commentator recap — every steer break
+            recap = generate_commentator_recap(state)
+            if recap:
+                print(f"  📢 {recap}\n")
             current_style = state.get("moderator_style", "socratic")
             _display_style_bar(current_style)
             print()
