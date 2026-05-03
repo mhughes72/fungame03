@@ -7,7 +7,7 @@
  */
 
 import { openAbout, openHelp } from './info.js'
-import { fetchDebateOfTheDay } from './api.js'
+import { fetchTopics } from './api.js'
 
 export function mount(container, characters, onStart) {
   container.innerHTML = `
@@ -214,7 +214,7 @@ export function mount(container, characters, onStart) {
   container.querySelector('#setup-about').addEventListener('click', openAbout)
   container.querySelector('#setup-help').addEventListener('click', openHelp)
 
-  // ── Debate of the Day ──────────────────────────────────────────────────── //
+  // ── Suggested Debate ──────────────────────────────────────────────────── //
   const dotdCard = container.querySelector('#dotd-card')
 
   const catColors = {
@@ -226,47 +226,78 @@ export function mount(container, characters, onStart) {
     political:     'var(--green)',
   }
 
-  let dotdIndex = 0
+  let allTopics    = []
+  let currentTopic = null
 
-  function renderDotd(dotd) {
-    const color = catColors[dotd.category] || 'var(--text-dim)'
+  function getLevel() {
+    const el = container.querySelector('input[name="audience"]:checked')
+    return el ? el.value : 'university'
+  }
+
+  function topicsForLevel(level) {
+    return allTopics.filter(t => t.audience_level === level)
+  }
+
+  function weightedPick(pool, exclude = null) {
+    if (!pool.length) return null
+    const available = exclude ? pool.filter(t => t.id !== exclude.id) : pool
+    const src = available.length ? available : pool
+    const weighted = []
+    for (const t of src) {
+      weighted.push(t)
+      if (t.source === 'curated') { weighted.push(t); weighted.push(t) }
+    }
+    return weighted[Math.floor(Math.random() * weighted.length)]
+  }
+
+  function renderDotd(topic) {
+    currentTopic = topic
+    const color = catColors[topic.category] || 'var(--text-dim)'
+    const sourceBadge = topic.source === 'curated'
+      ? '<span class="dotd-curated">★ curated</span>'
+      : '<span class="dotd-generated">AI</span>'
     dotdCard.innerHTML = `
       <div class="dotd-header">
-        <span class="dotd-label">── DEBATE OF THE DAY ──</span>
-        <span class="dotd-category" style="color:${color}">${dotd.category.toUpperCase()}</span>
+        <span class="dotd-label">── SUGGESTED DEBATE ──</span>
+        <span class="dotd-badges">
+          <span class="dotd-category" style="color:${color}">${topic.category.toUpperCase()}</span>
+          ${sourceBadge}
+        </span>
       </div>
-      <div class="dotd-cast">${dotd.characters.join(' · ')}</div>
-      <div class="dotd-topic">${escHtml(dotd.topic)}</div>
-      <div class="dotd-tagline">${escHtml(dotd.tagline)}</div>
+      <div class="dotd-cast">${topic.characters.join(' · ')}</div>
+      <div class="dotd-topic">${escHtml(topic.topic)}</div>
+      <div class="dotd-tagline">${escHtml(topic.tagline)}</div>
       <div class="dotd-actions">
-        <button class="dotd-new-btn" id="dotd-new">Generate new one ↻</button>
+        <button class="dotd-new-btn" id="dotd-new">Next suggestion ↻</button>
         <button class="dotd-start-btn" id="dotd-start">Start this debate ▶</button>
       </div>
     `
     dotdCard.querySelector('#dotd-start').addEventListener('click', () => {
-      onStart({ characters: dotd.characters, topic: dotd.topic, ...getToggles() })
+      onStart({ characters: topic.characters, topic: topic.topic, ...getToggles() })
     })
     dotdCard.querySelector('#dotd-new').addEventListener('click', () => {
-      dotdIndex++
-      loadDotd(dotdIndex)
+      const next = weightedPick(topicsForLevel(getLevel()), currentTopic)
+      if (next) renderDotd(next)
     })
   }
 
-  function loadDotd(index) {
-    dotdCard.innerHTML = `<div class="dotd-loading">generating…</div>`
-    fetchDebateOfTheDay(index).then(renderDotd).catch(() => {
-      if (index === 0) dotdCard.style.display = 'none'
-      else {
-        // generation failed mid-cycle — step back and re-render last good one
-        dotdIndex--
-        fetchDebateOfTheDay(dotdIndex).then(renderDotd).catch(() => {
-          dotdCard.style.display = 'none'
-        })
-      }
-    })
+  function loadSuggestion() {
+    const pick = weightedPick(topicsForLevel(getLevel()))
+    if (pick) renderDotd(pick)
+    else dotdCard.style.display = 'none'
   }
 
-  loadDotd(0)
+  fetchTopics().then(topics => {
+    allTopics = topics
+    loadSuggestion()
+  }).catch(() => {
+    dotdCard.style.display = 'none'
+  })
+
+  // Re-pick when audience level changes
+  container.querySelectorAll('input[name="audience"]').forEach(radio => {
+    radio.addEventListener('change', loadSuggestion)
+  })
 
   // Expose a way to show errors without tearing down the screen
   return {

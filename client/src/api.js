@@ -22,10 +22,11 @@ async function del(path) {
   await fetch(`${BASE}${path}`, { method: 'DELETE' })
 }
 
-export async function fetchDebateOfTheDay(index = 0) {
-  const res = await fetch(`${BASE}/debate-of-the-day?index=${index}`)
-  if (!res.ok) throw new Error('Failed to load debate of the day')
-  return res.json()   // { characters, topic, tagline, category, index, total }
+export async function fetchTopics(level = null) {
+  const url = level ? `${BASE}/topics?level=${encodeURIComponent(level)}` : `${BASE}/topics`
+  const res = await fetch(url)
+  if (!res.ok) throw new Error('Failed to load topics')
+  return res.json()   // [{ id, topic, tagline, characters, category, theme, audience_level, source, ... }]
 }
 
 export async function fetchCharacters() {

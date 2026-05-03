@@ -13,9 +13,9 @@ mount or a CDN and tighten ``allow_origins``.
 from __future__ import annotations
 
 import asyncio
+import json
 import os
 import sys
-from datetime import date as _date
 from pathlib import Path
 from typing import Optional
 
@@ -51,7 +51,8 @@ from nodes import MODERATOR_STYLES as _MODERATOR_STYLES, generate_newspaper as _
 # App + middleware                                                               #
 # --------------------------------------------------------------------------- #
 
-_DIST = Path(__file__).parent.parent / "client" / "dist"
+_DIST        = Path(__file__).parent.parent / "client" / "dist"
+_TOPICS_FILE = Path(__file__).parent.parent / "debate_topics.json"
 
 app = FastAPI(title="The Philosopher's Bar")
 
@@ -71,68 +72,6 @@ app.add_middleware(
 )
 
 store = SessionStore()
-
-# --------------------------------------------------------------------------- #
-# Debate of the Day — list cached per calendar day, grows on demand            #
-# --------------------------------------------------------------------------- #
-
-# debates: list of _DotDSchema generated today; resets at midnight.
-# Clients pass ?index=N; server returns debates[N] from cache or generates
-# and appends until the list is long enough.
-_dotd_cache: dict = {"date": None, "debates": []}
-
-
-class _DotDSchema(BaseModel):
-    characters: list[str] = Field(..., min_items=2, max_items=4)  # 2–4 names from CHARACTERS
-    topic: str
-    tagline: str            # one punchy sentence, ≤15 words
-    category: str           # heated | historic | philosophical | scientific | cultural | political
-
-
-def _generate_dotd(existing: list) -> _DotDSchema:
-    roster = "\n".join(
-        f"- {name}: {data['known_for'][:90]}"
-        for name, data in CHARACTERS.items()
-    )
-    already = (
-        "\n\nAlready suggested today (do not repeat these combinations):\n" +
-        "\n".join(
-            f"- {', '.join(d.characters)}: {d.topic}"
-            for d in existing
-        )
-    ) if existing else ""
-    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.9)
-    result: _DotDSchema = llm.with_structured_output(_DotDSchema).invoke([
-        SystemMessage(content=(
-            "You are curating a featured debate between historical and contemporary figures. "
-            "From the roster provided, pick 2, 3, or 4 participants and a debate topic. "
-            "2 or 3 participants is often more interesting than 4 — only pick 4 when each person "
-            "has something genuinely distinct to contribute that the others cannot. "
-            "Aim for combinations that are genuinely compelling: ideologically opposed, historically charged, "
-            "philosophically explosive, or scientifically fascinating. "
-            "The topic must be specific enough to generate real, substantive disagreement. "
-            "Write a punchy tagline of no more than 15 words that would make someone want to watch. "
-            "For category choose exactly one of: heated, historic, philosophical, scientific, cultural, political."
-        )),
-        HumanMessage(content=f"Available participants:\n{roster}{already}"),
-    ])
-    valid = set(CHARACTERS.keys())
-    result.characters = [c for c in result.characters if c in valid]
-    if len(result.characters) < 2:
-        raise ValueError("Too few valid characters in generated debate")
-    return result
-
-
-def _get_dotd(index: int) -> _DotDSchema:
-    today = _date.today().isoformat()
-    if _dotd_cache["date"] != today:
-        _dotd_cache["date"] = today
-        _dotd_cache["debates"] = []
-    debates = _dotd_cache["debates"]
-    while len(debates) <= index:
-        debates.append(_generate_dotd(debates))
-    return debates[index]
-
 
 # --------------------------------------------------------------------------- #
 # Static frontend — mounted AFTER all API routes so /api/* routes win          #
@@ -442,17 +381,19 @@ def delete_session(session_id: str):
     return Response(status_code=204)
 
 
-@app.get("/api/debate-of-the-day")
-async def debate_of_the_day(index: int = 0):
-    """Return the debate at position `index` in today's list, generating if needed."""
-    if index < 0:
-        raise HTTPException(status_code=400, detail="index must be >= 0")
-    loop = asyncio.get_event_loop()
-    try:
-        result = await loop.run_in_executor(None, lambda: _get_dotd(index))
-        return {**result.dict(), "index": index, "total": len(_dotd_cache["debates"])}
-    except Exception as exc:
-        raise HTTPException(status_code=502, detail=f"Debate of the day failed: {exc}")
+# --------------------------------------------------------------------------- #
+# Pre-generated debate topics                                                   #
+# --------------------------------------------------------------------------- #
+
+@app.get("/api/topics")
+def get_topics(level: str | None = None):
+    """Return pre-generated debate topics from debate_topics.json."""
+    if not _TOPICS_FILE.exists():
+        return []
+    topics = json.loads(_TOPICS_FILE.read_text(encoding="utf-8"))
+    if level:
+        topics = [t for t in topics if t.get("audience_level") == level]
+    return topics
 
 
 # --------------------------------------------------------------------------- #

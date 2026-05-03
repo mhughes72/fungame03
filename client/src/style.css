@@ -87,6 +87,25 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   gap: 0.5rem;
 }
 
+.dotd-badges {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+
+.dotd-curated {
+  font-size: 0.65rem;
+  color: var(--gold);
+  letter-spacing: 0.05em;
+}
+
+.dotd-generated {
+  font-size: 0.62rem;
+  color: var(--text-dim);
+  letter-spacing: 0.05em;
+  opacity: 0.6;
+}
+
 .dotd-label {
   color: var(--gold-dim);
   font-size: 0.72rem;

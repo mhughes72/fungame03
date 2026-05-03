@@ -7,6 +7,15 @@ _BACKCHANNEL_CHANCE   = 0.5
 # Audience level instructions injected near the TOP of philosopher and moderator prompts.
 # Edit these freely — keys must match the values sent from the frontend/CLI.
 # None = no injection (full academic register, current default).
+# Display names for audience levels — keep keys in sync with AUDIENCE_LEVELS below.
+# This is the single source of truth for level keys and human-readable labels.
+AUDIENCE_LEVEL_NAMES: dict[str, str] = {
+    "grade5":     "Grade 5",
+    "highschool": "High School",
+    "university": "University",
+    "expert":     "Expert",
+}
+
 AUDIENCE_LEVELS: dict[str, str | None] = {
     "grade5": (
         "⚠ AUDIENCE CONSTRAINT — THIS OVERRIDES YOUR DEFAULT SPEAKING REGISTER.\n"

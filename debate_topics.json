@@ -1,0 +1,1298 @@
+[
+  {
+    "id": "b51719da",
+    "topic": "Should social media be regulated to protect mental health?",
+    "tagline": "Is social media a danger or a necessity for youth?",
+    "characters": [
+      "Jordan Peterson",
+      "Bill Maher"
+    ],
+    "category": "philosophical",
+    "audience_level": "highschool",
+    "rationale": "The clash between personal responsibility and societal influence creates a rich debate.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "59f4f06d",
+    "topic": "The Ethical Implications of Technological Accelerationism",
+    "tagline": "Is the relentless pursuit of technology our salvation or doom?",
+    "characters": [
+      "Elon Musk",
+      "Bill Gates",
+      "Friedrich Nietzsche"
+    ],
+    "category": "philosophical",
+    "audience_level": "university",
+    "rationale": "This trio represents divergent views on technology's role in society, invoking existential questions.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "496655f2",
+    "topic": "The Ethical Implications of AI in Warfare: Justified Weaponization or Moral Treachery?",
+    "tagline": "Is AI in warfare a leap forward or a dangerous moral failure?",
+    "characters": [
+      "Sun Tzu",
+      "Margaret Thatcher",
+      "Elon Musk"
+    ],
+    "category": "philosophical",
+    "audience_level": "expert",
+    "rationale": "This cast contrasts historical military strategy with modern ethical dilemmas surrounding technology.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "6e284db6",
+    "topic": "Should the use of Artificial Intelligence be regulated to prevent job loss?",
+    "tagline": "AI: Innovation or Job Killer? Let's Debate!",
+    "characters": [
+      "Elon Musk",
+      "Bill Gates",
+      "Friedrich Nietzsche"
+    ],
+    "category": "political",
+    "audience_level": "highschool",
+    "rationale": "This cast brings together a tech visionary, a philanthropy-focused entrepreneur, and a philosopher questioning human value in the age of AI.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "51bf39df",
+    "topic": "The Morality of State Surveillance: Security vs. Privacy",
+    "tagline": "Is national security worth the cost of personal privacy?",
+    "characters": [
+      "George Orwell",
+      "Bill Maher",
+      "Elon Musk"
+    ],
+    "category": "political",
+    "audience_level": "university",
+    "rationale": "This trio brings a critical intersection of literature, political commentary, and technological perspective.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "97506890",
+    "topic": "The Role of Central Planning in Economic Development: Catalyst or Hindrance?",
+    "tagline": "Is central planning a boon or a burden for economies?",
+    "characters": [
+      "Karl Marx",
+      "Friedrich Nietzsche",
+      "Margaret Thatcher"
+    ],
+    "category": "philosophical",
+    "audience_level": "expert",
+    "rationale": "This cast contrasts ideological foundations on economic management, central planning, and individual agency.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "3c60abf4",
+    "topic": "Is capitalism the best system for societal progress?",
+    "tagline": "Exploring the clash between capitalism and communism!",
+    "characters": [
+      "Karl Marx",
+      "Margaret Thatcher"
+    ],
+    "category": "political",
+    "audience_level": "highschool",
+    "rationale": "Marx and Thatcher represent opposing views on capitalism's role in society, sparking real debate.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "c346a217",
+    "topic": "The Nature of Free Will: Illusion or Reality?",
+    "tagline": "Is free will a construct or a true human capability?",
+    "characters": [
+      "Socrates",
+      "Friedrich Nietzsche",
+      "Sigmund Freud"
+    ],
+    "category": "philosophical",
+    "audience_level": "university",
+    "rationale": "This diverse trio presents contrasting views on free will from philosophy, existentialism, and psychology.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "e0301013",
+    "topic": "The Role of Ideology in Shaping Economic Policy: Liberation or Tyranny?",
+    "tagline": "Does ideology free economies or bind them in chains?",
+    "characters": [
+      "Friedrich Nietzsche",
+      "Karl Marx",
+      "Noam Chomsky"
+    ],
+    "category": "philosophical",
+    "audience_level": "expert",
+    "rationale": "This trio represents a clash between individualism, collectivism, and critique of power structures in economics.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "bab908b1",
+    "topic": "Should censorship of art be allowed to protect society from harmful ideas?",
+    "tagline": "Art's Impact: Freedom or Censorship?",
+    "characters": [
+      "John Lennon",
+      "George Orwell",
+      "Friedrich Nietzsche"
+    ],
+    "category": "cultural",
+    "audience_level": "highschool",
+    "rationale": "Each participant embodies unique perspectives on freedom of expression and societal values.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "7715c12b",
+    "topic": "The Ethical Dimensions of AI: Progress vs. Dystopia",
+    "tagline": "Are we crafting a tool or a tyrant?",
+    "characters": [
+      "Isaac Newton",
+      "Jordan Peterson",
+      "Noam Chomsky"
+    ],
+    "category": "philosophical",
+    "audience_level": "university",
+    "rationale": "This trio embodies distinct perspectives on technology's role in society, balancing optimism, ethical scrutiny, and critique of power dynamics.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "4af7b724",
+    "topic": "The Nature of Reality: Is Physicalism Sufficient or is Dualism Necessary?",
+    "tagline": "Is everything physical, or is there more to existence?",
+    "characters": [
+      "Niels Bohr",
+      "Werner Heisenberg",
+      "Sigmund Freud"
+    ],
+    "category": "philosophical",
+    "audience_level": "expert",
+    "rationale": "This debate contrasts quantum mechanics and psychology's implications on reality's nature.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "57164ebc",
+    "topic": "Should we prioritize technological advancement over environmental sustainability?",
+    "tagline": "Tech dreams or green reality: What should we value more?",
+    "characters": [
+      "Elon Musk",
+      "Bill Gates"
+    ],
+    "category": "cultural",
+    "audience_level": "highschool",
+    "rationale": "This cast clashes deeply on the balance between innovation and environmental health.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "da9fc229",
+    "topic": "The Role of Government in Economic Redistribution: Capitalism vs. Collectivism",
+    "tagline": "Redistribute wealth or preserve individual initiative? A clash of ideologies!",
+    "characters": [
+      "Karl Marx",
+      "Margaret Thatcher",
+      "Winston Churchill"
+    ],
+    "category": "political",
+    "audience_level": "university",
+    "rationale": "Each participant embodies a distinct perspective on economic governance, fostering rich ideological conflict.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "637d429d",
+    "topic": "The Ethics of Genetic Editing: A Tool for Progress or a Step into Eugenics?",
+    "tagline": "Is CRISPR a blessing or a curse for humanity's future?",
+    "characters": [
+      "Richard Feynman",
+      "Carl Sagan",
+      "Jordan Peterson"
+    ],
+    "category": "philosophical",
+    "audience_level": "expert",
+    "rationale": "This trio offers a blend of scientific insight, philosophical questioning, and ethical implications around genetic advancements.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "7e46bc15",
+    "topic": "Is the pursuit of individual freedom more important than social responsibility?",
+    "tagline": "Freedom vs. Responsibility: Which matters more in society?",
+    "characters": [
+      "Ayn Rand",
+      "Karl Marx",
+      "Frederick Douglass"
+    ],
+    "category": "philosophical",
+    "audience_level": "highschool",
+    "rationale": "These figures represent starkly different ideologies around freedom, responsibility, and social justice.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "127ae40d",
+    "topic": "The Role of Suffering in the Human Experience",
+    "tagline": "Is suffering essential to personal and societal growth?",
+    "characters": [
+      "Fyodor Dostoevsky",
+      "Christopher Hitchens"
+    ],
+    "category": "philosophical",
+    "audience_level": "university",
+    "rationale": "This cast represents profound opposing perspectives on suffering's value and necessity.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "9d38bd5b",
+    "topic": "The Nature of Free Will: Determinism vs. Existential Choice",
+    "tagline": "Is our destiny predetermined or crafted by personal choice?",
+    "characters": [
+      "Socrates",
+      "Sigmund Freud",
+      "Albert Einstein"
+    ],
+    "category": "philosophical",
+    "audience_level": "expert",
+    "rationale": "This cast brings together philosophical inquiry, psychological analysis, and scientific perspective on free will.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "92c77a8d",
+    "topic": "Is patriotism a force for good or a source of division?",
+    "tagline": "Patriotism: Uniting people or splintering societies?",
+    "characters": [
+      "Winston Churchill",
+      "George Orwell",
+      "Margaret Thatcher"
+    ],
+    "category": "political",
+    "audience_level": "highschool",
+    "rationale": "This cast provides contrasting perspectives on the implications of patriotism in society.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "7398d5f6",
+    "topic": "The Relationship Between War and Political Philosophy: Just War vs. Pacifism",
+    "tagline": "Are wars justified or should we pursue peace at all costs?",
+    "characters": [
+      "Sun Tzu",
+      "Niccolò Machiavelli"
+    ],
+    "category": "political",
+    "audience_level": "university",
+    "rationale": "This cast brings divergent views on the ethics of warfare and statecraft, fueling profound debate.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "1a784096",
+    "topic": "The Role of Military Strategy in Achieving Political Objectives",
+    "tagline": "Can warfare be an effective tool of statecraft?",
+    "characters": [
+      "Sun Tzu",
+      "Niccolò Machiavelli",
+      "Winston Churchill"
+    ],
+    "category": "political",
+    "audience_level": "expert",
+    "rationale": "This cast contrasts ancient wisdom, realism, and modern strategy, providing diverse perspectives on military ethics and effectiveness.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "4d833640",
+    "topic": "Should art serve a social purpose or exist purely for aesthetic enjoyment?",
+    "tagline": "Art: A mirror to society or a canvas for imagination?",
+    "characters": [
+      "Oscar Wilde",
+      "Pablo Picasso",
+      "John Lennon"
+    ],
+    "category": "cultural",
+    "audience_level": "highschool",
+    "rationale": "This cast brings contrasting views on the role of art in society, aligning with their backgrounds.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "21d42b6d",
+    "topic": "The Nature of Human Creativity: Innate Talent vs. Cultivated Skill",
+    "tagline": "Is creativity a gift or a skill we can nurture?",
+    "characters": [
+      "Leonardo da Vinci",
+      "Wolfgang Amadeus Mozart",
+      "Oscar Wilde"
+    ],
+    "category": "cultural",
+    "audience_level": "university",
+    "rationale": "This cast provides diverse perspectives on the essence of creativity across different domains.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "1364ccaa",
+    "topic": "The Role of History in Shaping Political Ideologies: Continuity or Break?",
+    "tagline": "Do historical narratives define our political beliefs or do they merely reflect them?",
+    "characters": [
+      "Abraham Lincoln",
+      "Niccolò Machiavelli",
+      "George Orwell"
+    ],
+    "category": "political",
+    "audience_level": "expert",
+    "rationale": "Each character brings a unique perspective on the interplay between historical context and political thought.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "56bf5927",
+    "topic": "Should scientific advancement prioritize ethical considerations over technological progress?",
+    "tagline": "Science vs. ethics: what should lead our future?",
+    "characters": [
+      "Albert Einstein",
+      "Niels Bohr",
+      "Jordan Peterson"
+    ],
+    "category": "philosophical",
+    "audience_level": "highschool",
+    "rationale": "This cast contrasts scientific progress with ethical implications, invoking real-world dilemmas for youth.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "e999a5f2",
+    "topic": "The Morality of Scientific Progress: Should Ethical Considerations Limit Innovation?",
+    "tagline": "Is the pursuit of knowledge worth the cost of morality?",
+    "characters": [
+      "Niels Bohr",
+      "Richard Feynman",
+      "Margaret Thatcher"
+    ],
+    "category": "philosophical",
+    "audience_level": "university",
+    "rationale": "This cast explores contrasting views on scientific advancement's ethical implications, highlighting genuine ideological conflict.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "763aaa75",
+    "topic": "The Role of Technology in Artistic Creation: Enhancer or Destroyer of Authenticity?",
+    "tagline": "Can technology truly elevate art, or does it dilute creativity?",
+    "characters": [
+      "Pablo Picasso",
+      "Andy Warhol",
+      "John Lennon"
+    ],
+    "category": "cultural",
+    "audience_level": "expert",
+    "rationale": "This diverse trio offers contrasting perspectives on technology's impact on art and authenticity.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "723c9c2d",
+    "topic": "Is environmentalism incompatible with economic growth?",
+    "tagline": "Can we save the planet without sacrificing prosperity?",
+    "characters": [
+      "Richard Nixon",
+      "Winston Churchill",
+      "Abraham Lincoln"
+    ],
+    "category": "heated",
+    "audience_level": "highschool",
+    "rationale": "These participants represent differing views on balancing progress and preservation, enriching the debate.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "4f46cb2f",
+    "topic": "The Role of Art in Society: Duty vs. Freedom",
+    "tagline": "Is art a tool for change or a realm of personal expression?",
+    "characters": [
+      "Pablo Picasso",
+      "Oscar Wilde",
+      "Carl Sagan"
+    ],
+    "category": "cultural",
+    "audience_level": "university",
+    "rationale": "This diverse cast showcases contrasting views on art's social responsibility and personal liberty.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "6116de2a",
+    "topic": "The Implications of Technological Progress on Human Agency: Liberation or Subjugation?",
+    "tagline": "Is technology freeing us or controlling us?",
+    "characters": [
+      "Elon Musk",
+      "Jordan Peterson",
+      "Isaac Newton"
+    ],
+    "category": "political",
+    "audience_level": "expert",
+    "rationale": "Musk's accelerationism clashes with Peterson's caution over technology's impact on agency and Newton's scientific perspective.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "256e3536",
+    "topic": "Should society prioritize technological advancement over ethical considerations?",
+    "tagline": "Tech innovation or moral responsibility: What should win?",
+    "characters": [
+      "Isaac Newton",
+      "Albert Einstein",
+      "Richard Feynman"
+    ],
+    "category": "scientific",
+    "audience_level": "highschool",
+    "rationale": "This trio presents conflicting views on the intersections of technology and ethics, ideal for engaging debate.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "07b3bf70",
+    "topic": "The Intersection of Technology and Democracy: Progress or Control?",
+    "tagline": "Is technology safeguarding democracy or undermining it?",
+    "characters": [
+      "Ayn Rand",
+      "Albert Einstein",
+      "Noam Chomsky"
+    ],
+    "category": "cultural",
+    "audience_level": "university",
+    "rationale": "This trio encapsulates contrasting views on technology's role in shaping societal structures.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "2e44bca4",
+    "topic": "The Role of Collective Memory in Shaping National Identity: Myth or Reality?",
+    "tagline": "Do shared memories forge a nation's identity or are they mere fabrications?",
+    "characters": [
+      "Frederick Douglass",
+      "George Orwell",
+      "Winston Churchill"
+    ],
+    "category": "cultural",
+    "audience_level": "expert",
+    "rationale": "This cast provides diverse perspectives on memory, identity, and nationalism, sparking profound debate.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "2383d8e2",
+    "topic": "Should governments prioritize individual rights over collective security during crises?",
+    "tagline": "Balancing freedom and safety: where should we draw the line?",
+    "characters": [
+      "Abraham Lincoln",
+      "Niccolò Machiavelli",
+      "Friedrich Nietzsche"
+    ],
+    "category": "heated",
+    "audience_level": "highschool",
+    "rationale": "This cast engages deeply with the tension between rights and security through historical and philosophical lenses.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "4c045821",
+    "topic": "The Justification of Revolutionary Violence: Is It Ever Acceptable?",
+    "tagline": "Revolutionary ethics: freedom or violence?",
+    "characters": [
+      "Vladimir Lenin",
+      "Mao Zedong",
+      "Frederick Douglass"
+    ],
+    "category": "political",
+    "audience_level": "university",
+    "rationale": "Lenin and Mao represent revolutionary violence for political change, while Douglass emphasizes nonviolent resistance.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "08cc4ccb",
+    "topic": "The Nature of Consciousness: Is It a Product of Biology or a Separate Entity?",
+    "tagline": "Mind vs. Matter: What Truly Defines Consciousness?",
+    "characters": [
+      "Richard Feynman",
+      "Roger Penrose",
+      "Jesus Christ"
+    ],
+    "category": "philosophical",
+    "audience_level": "expert",
+    "rationale": "This trio brings together scientific, philosophical, and theological perspectives on consciousness.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "9a688951",
+    "topic": "Is it ethical to use psychological manipulation in advertising?",
+    "tagline": "Advertising: Persuasion or Deception?",
+    "characters": [
+      "Sigmund Freud",
+      "Christopher Hitchens",
+      "Ayn Rand"
+    ],
+    "category": "cultural",
+    "audience_level": "highschool",
+    "rationale": "This cast offers diverse perspectives on ethics, psychology, and capitalism in advertising.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "48cf11b9",
+    "topic": "Should dystopian fiction be censored for its potential to harm society?",
+    "tagline": "Literature's dark mirror: safeguard or censorship?",
+    "characters": [
+      "George Orwell",
+      "Sigmund Freud",
+      "Kurt Cobain"
+    ],
+    "category": "cultural",
+    "audience_level": "highschool",
+    "rationale": "This mix contrasts ideas on societal impact, psychological effects, and artistic freedom.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "2b3a748e",
+    "topic": "The Nature of Reality: Is It Objective or Subjective?",
+    "tagline": "Discover whether reality exists outside our perception!",
+    "characters": [
+      "Albert Einstein",
+      "Niels Bohr",
+      "Socrates"
+    ],
+    "category": "philosophical",
+    "audience_level": "university",
+    "rationale": "Einstein's and Bohr's scientific perspectives clash with Socratic philosophical inquiry, sparking deep discourse.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "89fa84c7",
+    "topic": "The Ethics of Technology in Art: Innovation or Dehumanization?",
+    "tagline": "Is technology enhancing the human touch in art or erasing it?",
+    "characters": [
+      "Salvador Dalí",
+      "Andy Warhol",
+      "Oscar Wilde"
+    ],
+    "category": "cultural",
+    "audience_level": "expert",
+    "rationale": "This trio represents the evolution of artistic expression amidst innovation, raising profound ethical questions.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "47edfa9d",
+    "topic": "Should societal norms or scientific evidence guide ethical decisions in emerging technologies?",
+    "tagline": "Debating ethics: scientific rigor vs. societal beliefs in technology's future!",
+    "characters": [
+      "Richard Feynman",
+      "Jesus Christ",
+      "Niels Bohr"
+    ],
+    "category": "heated",
+    "audience_level": "highschool",
+    "rationale": "This cast combines scientific insight with moral philosophy to discuss ethical dilemmas in technology.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "61f3361e",
+    "topic": "The Impact of Leadership Styles on Societal Progress: Democracy vs. Totalitarianism",
+    "tagline": "Can freedom fuel progress more than authority?",
+    "characters": [
+      "Abraham Lincoln",
+      "Mao Zedong",
+      "Winston Churchill"
+    ],
+    "category": "political",
+    "audience_level": "university",
+    "rationale": "This cast brings contrasting perspectives on governance and societal development from historical leaders.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "3c10e13a",
+    "topic": "The Role of Technology in Shaping Human Consciousness: Enhancement or Erosion?",
+    "tagline": "Will technology elevate human thought or diminish our essence?",
+    "characters": [
+      "Roger Penrose",
+      "David Bowie",
+      "Noam Chomsky"
+    ],
+    "category": "heated",
+    "audience_level": "expert",
+    "rationale": "This trio brings contrasting perspectives on technology's influence across consciousness, art, and society.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "c034ed44",
+    "topic": "Should governments prioritize art and culture funding over technology and innovation?",
+    "tagline": "Art versus tech: What should governments invest in for the future?",
+    "characters": [
+      "Oscar Wilde",
+      "Andy Warhol",
+      "Elon Musk"
+    ],
+    "category": "cultural",
+    "audience_level": "highschool",
+    "rationale": "This cast embodies contrasting views on art's role versus technology's impact on society.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "83013238",
+    "topic": "The Role of Art in Shaping Social Movements: Aesthetic Values vs. Political Impact",
+    "tagline": "How much should art strive for political relevance?",
+    "characters": [
+      "John Lennon",
+      "Pablo Picasso",
+      "George Orwell"
+    ],
+    "category": "cultural",
+    "audience_level": "university",
+    "rationale": "This trio brings contrasting perspectives on how art engages with and influences society.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "bb35b111",
+    "topic": "The Justification of War: Ethical Imperatives vs. Strategic Necessities",
+    "tagline": "Is war ever morally justifiable? Experts clash on ethical grounds.",
+    "characters": [
+      "John F. Kennedy",
+      "Niccolò Machiavelli",
+      "Thomas Jefferson"
+    ],
+    "category": "heated",
+    "audience_level": "expert",
+    "rationale": "This trio brings distinct ethical and pragmatic views on warfare, ensuring a rich debate.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "7a1ab8d8",
+    "topic": "Is technological progress inherently beneficial to society?",
+    "tagline": "Tech: Progress or Peril? The clash of ideals!",
+    "characters": [
+      "Ludwig van Beethoven",
+      "Elon Musk",
+      "Noam Chomsky"
+    ],
+    "category": "heated",
+    "audience_level": "highschool",
+    "rationale": "This cast presents opposing views on technology's role in society, blending art, innovation, and critique.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "cd363df2",
+    "topic": "The Nature of Chaos: Is Order an Illusion?",
+    "tagline": "Exploring the tension between chaos and order in existence.",
+    "characters": [
+      "Richard Feynman",
+      "Salvador Dalí",
+      "Frederick Douglass"
+    ],
+    "category": "philosophical",
+    "audience_level": "university",
+    "rationale": "These figures each grapple with concepts of chaos and order in distinct fields, generating rich dialogue.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "d67c6556",
+    "topic": "The Role of Economic Systems in Human Evolution: Cooperation vs. Competition",
+    "tagline": "Is our future rooted in collaboration or Darwinian struggle?",
+    "characters": [
+      "Charles Darwin",
+      "Vladimir Lenin",
+      "Ayn Rand"
+    ],
+    "category": "heated",
+    "audience_level": "expert",
+    "rationale": "This cast brings together evolution, communism, and capitalism for a dynamic debate.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "a6a8c3c7",
+    "topic": "Is the pursuit of happiness more important than the pursuit of truth?",
+    "tagline": "Truth vs. happiness: What should we strive for?",
+    "characters": [
+      "Friedrich Nietzsche",
+      "Socrates",
+      "Christopher Hitchens"
+    ],
+    "category": "philosophical",
+    "audience_level": "highschool",
+    "rationale": "Their contrasting philosophies ignite deep discussion on happiness and truth's significance.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "e60b486f",
+    "topic": "The Ethical Implications of Genetic Engineering: Progress or Peril?",
+    "tagline": "Is humanity ready for the consequences of its own genetic design?",
+    "characters": [
+      "Stephen Hawking",
+      "Carl Sagan",
+      "Jordan Peterson"
+    ],
+    "category": "scientific",
+    "audience_level": "university",
+    "rationale": "This trio offers a dynamic dialogue on science, ethics, and human values in genetic advancements.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "9f066cb1",
+    "topic": "The Role of Ethics in Scientific Advancement: Should Morality Constrain Innovation?",
+    "tagline": "Can we afford to ignore ethics for the sake of progress?",
+    "characters": [
+      "Albert Einstein",
+      "Isaac Newton",
+      "Nikola Tesla",
+      "Werner Heisenberg"
+    ],
+    "category": "scientific",
+    "audience_level": "expert",
+    "rationale": "This diverse lineup juxtaposes visionary scientific ethics against unbridled innovation.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "6e0da57c",
+    "topic": "Is art more valuable when it serves a social purpose or is it valuable in its own right?",
+    "tagline": "Art for change or art for art's sake? Let's debate!",
+    "characters": [
+      "Salvador Dalí",
+      "Andy Warhol",
+      "Kurt Cobain"
+    ],
+    "category": "cultural",
+    "audience_level": "highschool",
+    "rationale": "This cast brings diverse artistic philosophies to a critical debate about art's role in society.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "1073f105",
+    "topic": "The Ethical Justification of Revolutionary Change: Violence vs. Nonviolence",
+    "tagline": "Revolutionary ideals clash: Is violence ever justified for change?",
+    "characters": [
+      "Vladimir Lenin",
+      "Karl Marx"
+    ],
+    "category": "political",
+    "audience_level": "university",
+    "rationale": "This cast represents contrasting perspectives on revolutionary ethics and methods of change.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "7194593e",
+    "topic": "The Role of Art in Social Change: Catalyst or Distraction?",
+    "tagline": "Does art inspire revolutions or merely pacify the masses?",
+    "characters": [
+      "Pablo Picasso",
+      "George Orwell",
+      "Kurt Cobain"
+    ],
+    "category": "cultural",
+    "audience_level": "expert",
+    "rationale": "This trio spans eras and styles, bringing diverse perspectives on art's influence in society.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "2a18a7c0",
+    "topic": "Should individuals prioritize community obligations over personal ambitions?",
+    "tagline": "Community vs. Self: What should come first?",
+    "characters": [
+      "Frederick Douglass",
+      "Margaret Thatcher",
+      "Jesus Christ"
+    ],
+    "category": "philosophical",
+    "audience_level": "highschool",
+    "rationale": "This cast explores the tension between individualism and collective responsibility through diverse historical perspectives.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "4456ebc2",
+    "topic": "The Ethics of Pioneering Genetic Technologies: Human Enhancement or Natural Integrity?",
+    "tagline": "Are we playing God or unlocking human potential?",
+    "characters": [
+      "Charles Darwin",
+      "Ayn Rand",
+      "Joseph Stalin"
+    ],
+    "category": "scientific",
+    "audience_level": "expert",
+    "rationale": "This cast explores the implications of genetic engineering through distinct ethical lenses.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "18eb0ea9",
+    "topic": "Is civic duty more important than individual freedom in a democracy?",
+    "tagline": "Civic duty vs. personal freedom: What should take precedence?",
+    "characters": [
+      "John F. Kennedy",
+      "Niccolò Machiavelli",
+      "Karl Marx"
+    ],
+    "category": "political",
+    "audience_level": "highschool",
+    "rationale": "This cast offers unique historical perspectives on governance and individual rights, providing rich ideological tensions.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "08f82ad9",
+    "topic": "The Viability of Technological Utopianism: Delusions or Destiny?",
+    "tagline": "Are we building a just future or a dystopian nightmare?",
+    "characters": [
+      "Elon Musk",
+      "Ayn Rand",
+      "Bill Maher"
+    ],
+    "category": "heated",
+    "audience_level": "university",
+    "rationale": "This cast reflects opposing views on technology's role in shaping society, from idealism to skepticism.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "10164ca4",
+    "topic": "The Role of Aesthetics in Political Ideology: Art as Propaganda or Expression?",
+    "tagline": "Is beauty a vehicle for ideology or a mere adornment?",
+    "characters": [
+      "Oscar Wilde",
+      "Vladimir Lenin",
+      "John Lennon"
+    ],
+    "category": "cultural",
+    "audience_level": "expert",
+    "rationale": "Each participant represents a unique philosophical stance on art's function in society.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "f1bb785e",
+    "topic": "Should technology be embraced for societal change or resisted for its risks?",
+    "tagline": "Tech: Catalyst for progress or recipe for disaster?",
+    "characters": [
+      "Nikola Tesla",
+      "Ludwig van Beethoven",
+      "Joseph Stalin",
+      "David Bowie"
+    ],
+    "category": "heated",
+    "audience_level": "highschool",
+    "rationale": "This dynamic cast brings contrasting views on embracing innovation versus cautioning against societal disruption.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "e288fd38",
+    "topic": "The Role of Morality in Science: Should Ethical Constraints Limit Research?",
+    "tagline": "Exploring the boundaries of morality in scientific inquiry.",
+    "characters": [
+      "J. Robert Oppenheimer",
+      "Werner Heisenberg",
+      "Sigmund Freud"
+    ],
+    "category": "scientific",
+    "audience_level": "university",
+    "rationale": "This cast engages critical perspectives on ethics in the evolution of scientific practices.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "e9cb6582",
+    "topic": "The Justification of Violence in Revolutionary Movements: Necessary Evil or Moral Failure?",
+    "tagline": "Is violence ever justified in the pursuit of revolutionary change?",
+    "characters": [
+      "Abraham Lincoln",
+      "Vladimir Lenin",
+      "Frederick Douglass"
+    ],
+    "category": "historic",
+    "audience_level": "expert",
+    "rationale": "This trio embodies contrasting perspectives on the ethics of revolutionary violence and state action.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "ffb1ec98",
+    "topic": "Do technological advancements justify ethical compromises in the pursuit of progress?",
+    "tagline": "Is progress worth the cost of moral compromise?",
+    "characters": [
+      "Albert Einstein",
+      "Elon Musk",
+      "Jordan Peterson"
+    ],
+    "category": "scientific",
+    "audience_level": "highschool",
+    "rationale": "This cast uniquely contrasts technological optimism with moral philosophy, sparking intense discourse.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "48a9f0d2",
+    "topic": "The Nature of Human Progress: Is it Linear or Cyclical?",
+    "tagline": "Debating whether humanity's progress is an upward spiral or a repeating loop.",
+    "characters": [
+      "Isaac Newton",
+      "Thomas Jefferson",
+      "Karl Marx"
+    ],
+    "category": "philosophical",
+    "audience_level": "university",
+    "rationale": "This cast represents distinct philosophical perspectives on progress, from natural law to revolutionary change.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "4604e314",
+    "topic": "The Validity of Classical vs. Quantum Physics: Can They Coexist or Are They Incompatible?",
+    "tagline": "Are Newton and Einstein destined to clash forever in the world of physics?",
+    "characters": [
+      "Niels Bohr",
+      "Albert Einstein",
+      "Werner Heisenberg"
+    ],
+    "category": "scientific",
+    "audience_level": "expert",
+    "rationale": "This trio embodies the fundamental clash in physics between classical mechanics and quantum theories.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "5f2dd15a",
+    "topic": "Should society prioritize emotional intelligence over traditional academic skills in education?",
+    "tagline": "Emotional smarts vs. book smarts: What's more vital for success?",
+    "characters": [
+      "Jordan Peterson",
+      "Socrates",
+      "Sigmund Freud"
+    ],
+    "category": "philosophical",
+    "audience_level": "highschool",
+    "rationale": "This cast brings contrasting views on the balance between emotional intelligence and traditional skills, stimulating rich debate for teens.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "9346d431",
+    "topic": "The Ethical Implications of Artificial Intelligence in Warfare: Autonomous Weapons vs. Human Oversight",
+    "tagline": "Machines or Men: Who Decides in War?",
+    "characters": [
+      "Elon Musk",
+      "Sun Tzu",
+      "Carl Sagan"
+    ],
+    "category": "heated",
+    "audience_level": "university",
+    "rationale": "This cast juxtaposes ancient and modern warfare philosophies with technological ethics.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "e036ee9a",
+    "topic": "The Role of Technology in Defining Human Ethics: Progress or Moral Decay?",
+    "tagline": "Are we evolving ethically or losing our humanity in the digital age?",
+    "characters": [
+      "Elon Musk",
+      "Carl Sagan",
+      "Stephen Hawking"
+    ],
+    "category": "philosophical",
+    "audience_level": "expert",
+    "rationale": "This cast contrasts techno-optimism with existential concerns over technology's impact on ethics.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "d4a05d96",
+    "topic": "Is it ethical to analyze human behavior through genetics?",
+    "tagline": "Genetics vs. free will: What shapes who we are?",
+    "characters": [
+      "Noam Chomsky",
+      "Jordan Peterson"
+    ],
+    "category": "scientific",
+    "audience_level": "highschool",
+    "rationale": "This cast presents distinct views on genetics, behavior, and free will, sparking real conflict.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "fb336ced",
+    "topic": "The Role of Art in Revolutionary Movements: Aesthetic vs. Political Impact",
+    "tagline": "Art as a Catalyst: Inspiration or Manipulation in Revolution?",
+    "characters": [
+      "John Lennon",
+      "Salvador Dalí",
+      "Niccolò Machiavelli"
+    ],
+    "category": "cultural",
+    "audience_level": "university",
+    "rationale": "This cast contrasts artistic expression with pragmatic political strategy under revolutionary contexts.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "1c50957e",
+    "topic": "The Ethics of Biological Determinism: Are We Prisoners of Our Genes?",
+    "tagline": "Do our genomes dictate our destinies or can we break free?",
+    "characters": [
+      "Jordan Peterson",
+      "Friedrich Nietzsche",
+      "Carl Sagan"
+    ],
+    "category": "philosophical",
+    "audience_level": "expert",
+    "rationale": "This cast uniquely combines psychological, philosophical, and scientific perspectives on human potential versus biological limits.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "6cb8488f",
+    "topic": "Are technological advancements leading humanity towards a utopia or dystopia?",
+    "tagline": "Is progress a promise or a peril for our future?",
+    "characters": [
+      "Elon Musk",
+      "Friedrich Nietzsche",
+      "Stephen Hawking"
+    ],
+    "category": "philosophical",
+    "audience_level": "highschool",
+    "rationale": "This cast combines techno-optimism with philosophical critiques on progress, generating rich debate.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "a10ab030",
+    "topic": "Is it better for humanity to explore space or improve life on Earth?",
+    "tagline": "Space dreams vs. Earth needs: What matters more?",
+    "characters": [
+      "Elon Musk",
+      "Carl Sagan"
+    ],
+    "category": "philosophical",
+    "theme": "space_vs_earth",
+    "audience_level": "grade5",
+    "rationale": "This cast offers diverse perspectives on the future of humanity and our responsibilities.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "b5f3ce3d",
+    "topic": "Can technology make us happier or does it cause more harm?",
+    "tagline": "Is our phone a friend or foe?",
+    "characters": [
+      "John Lennon",
+      "Steve Jobs",
+      "Richard Feynman"
+    ],
+    "category": "philosophical",
+    "theme": "technology_happiness",
+    "audience_level": "grade5",
+    "rationale": "These characters explore the balance of technology, creativity, and happiness.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "14295c3a",
+    "topic": "Is it wrong to break the rules for a greater good?",
+    "tagline": "The rules were made to be broken—right?",
+    "characters": [
+      "Socrates",
+      "Abraham Lincoln",
+      "Oscar Wilde"
+    ],
+    "category": "philosophical",
+    "theme": "rules_vs_morality",
+    "audience_level": "grade5",
+    "rationale": "This cast brings diverse perspectives on morality and justice, sparking engaging debate.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "c998bb82",
+    "topic": "Is pursuing knowledge more important than spreading it?",
+    "tagline": "Knowledge is power, but what if it is withheld?",
+    "characters": [
+      "Socrates",
+      "Friedrich Nietzsche",
+      "Carl Sagan"
+    ],
+    "category": "philosophical",
+    "theme": "knowledge_vs_sharing",
+    "audience_level": "grade5",
+    "rationale": "This cast offers a rich contrast between knowledge, morality, and understanding of our universe.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "5ee16485",
+    "topic": "Should people always tell the truth, even if it hurts someone’s feelings?",
+    "tagline": "Truth hurts, but is honesty the only policy?",
+    "characters": [
+      "Friedrich Nietzsche",
+      "John Lennon",
+      "Jesus Christ"
+    ],
+    "category": "philosophical",
+    "theme": "truth_vs_compassion",
+    "audience_level": "grade5",
+    "rationale": "This cast juxtaposes the value of truth against compassion, revealing deep philosophical divides.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "0f33f269",
+    "topic": "Is it fair for some people to have more power than others?",
+    "tagline": "Power dynamics: fair advantage or unfair inequality?",
+    "characters": [
+      "Abraham Lincoln",
+      "Niccolò Machiavelli",
+      "Frederick Douglass"
+    ],
+    "category": "political",
+    "theme": "fairness_of_power",
+    "audience_level": "grade5",
+    "rationale": "This cast brings contrasting views on power's fairness through history and philosophy.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "50af63b3",
+    "topic": "Is it ever okay to use violence to achieve peace?",
+    "tagline": "Peace or violence: what's the right choice?",
+    "characters": [
+      "Sun Tzu",
+      "Frederick Douglass"
+    ],
+    "category": "philosophical",
+    "theme": "violence_vs_peace",
+    "audience_level": "grade5",
+    "rationale": "This cast blends strategies and philosophies on conflict and resolution.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "f2b139d9",
+    "topic": "Is it better to follow tradition or create new rules?",
+    "tagline": "Old ways vs. new paths: which is better for our future?",
+    "characters": [
+      "Jesus Christ",
+      "Oscar Wilde",
+      "Margaret Thatcher"
+    ],
+    "category": "philosophical",
+    "theme": "tradition_vs_innovation",
+    "audience_level": "grade5",
+    "rationale": "This trio offers diverse viewpoints on tradition versus innovation, appealing to moral and societal understanding.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "431e52f6",
+    "topic": "Is it more important to be honest or to avoid hurting someone's feelings?",
+    "tagline": "Honesty vs. Kindness: What Should We Choose?",
+    "characters": [
+      "Mark Twain",
+      "George Orwell",
+      "Ayn Rand"
+    ],
+    "category": "philosophical",
+    "theme": "honesty_vs_kindness",
+    "audience_level": "grade5",
+    "rationale": "These three authors explore honesty, morality, and individual values in intriguing ways.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "2e9e224d",
+    "topic": "Is it right to sacrifice some for the happiness of many?",
+    "tagline": "What’s more important: the few or the many?",
+    "characters": [
+      "John F. Kennedy",
+      "Winston Churchill",
+      "Karl Marx"
+    ],
+    "category": "political",
+    "theme": "sacrifice_vs_happiness",
+    "audience_level": "grade5",
+    "rationale": "These three figures represent different views on individual rights versus the greater good.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "f680cdd0",
+    "topic": "Should people be rewarded for their differences or for fitting in?",
+    "tagline": "Embrace uniqueness or celebrate sameness?",
+    "characters": [
+      "Margaret Thatcher",
+      "David Bowie",
+      "Niccolò Machiavelli"
+    ],
+    "category": "cultural",
+    "theme": "individuality_vs_conformity",
+    "audience_level": "grade5",
+    "rationale": "This cast brings diverse perspectives on individuality versus conformity in society.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "30822f84",
+    "topic": "Is it better for people to be free or to be safe?",
+    "tagline": "Freedom versus safety: what choice should we make?",
+    "characters": [
+      "Winston Churchill",
+      "Ayn Rand",
+      "Elon Musk"
+    ],
+    "category": "political",
+    "theme": "freedom_vs_safety",
+    "audience_level": "grade5",
+    "rationale": "This cast brings together leaders in freedom, individuality, and technology, sparking real debates.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  },
+  {
+    "id": "98138e25",
+    "topic": "Is it fair to change the rules for some people to help them succeed?",
+    "tagline": "Can bending rules create a better chance for everyone?",
+    "characters": [
+      "Karl Marx",
+      "Abraham Lincoln",
+      "Jordan Peterson"
+    ],
+    "category": "heated",
+    "theme": "equity_vs_fairness",
+    "audience_level": "grade5",
+    "rationale": "This cast contrasts views on fairness and success, sparking rich debate.",
+    "source": "generated",
+    "generated_at": "2026-05-02"
+  }
+]
