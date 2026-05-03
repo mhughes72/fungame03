@@ -36,6 +36,7 @@ function showDebate(sessionId, participants, topic, styles) {
     searchEvidence: api.searchEvidence,
     fetchNewspaper: api.fetchNewspaper,
     exportPodcast:  _features.podcast ? api.exportPodcast : null,
+    isLocal:        !!_features.local,
   })
 
   app.addEventListener('debate:quit', () => showSetup(), { once: true })

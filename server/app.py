@@ -90,9 +90,12 @@ def _mount_static() -> None:
 
 _mount_static()
 
-# Feature flags — set PODCAST_ENABLED=true in .env to enable podcast export.
-# Off by default so hosted deployments don't incur ElevenLabs costs.
-_PODCAST_ENABLED = os.environ.get("PODCAST_ENABLED", "false").lower() == "true"
+# ENVIRONMENT=local → enables all local-only features (podcast, etc.)
+# Leave unset or set to anything else for hosted/production deployments.
+_IS_LOCAL = os.environ.get("ENVIRONMENT", "").lower() == "local"
+
+# Podcast: on when local, or explicitly opted in via PODCAST_ENABLED=true.
+_PODCAST_ENABLED = _IS_LOCAL or os.environ.get("PODCAST_ENABLED", "false").lower() == "true"
 
 
 # --------------------------------------------------------------------------- #
@@ -155,7 +158,7 @@ def list_styles():
 @app.get("/api/features")
 def get_features():
     """Return server-side feature flags for the frontend."""
-    return {"podcast": _PODCAST_ENABLED}
+    return {"local": _IS_LOCAL, "podcast": _PODCAST_ENABLED}
 
 
 @app.post("/api/sessions", status_code=201)
