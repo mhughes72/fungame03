@@ -109,6 +109,9 @@ class StartRequest(BaseModel):
     moderator_enabled: bool = True
     diagrams_enabled: bool = False
     audience_level: str = "university"
+    philosopher_length: str = "normal"
+    commentator_length: str = "normal"
+    moderator_length: str = "normal"
 
 
 class SteerRequest(BaseModel):
@@ -175,6 +178,9 @@ def create_session(req: StartRequest):
         moderator_enabled=req.moderator_enabled,
         diagrams_enabled=req.diagrams_enabled,
         audience_level=req.audience_level,
+        philosopher_length=req.philosopher_length,
+        commentator_length=req.commentator_length,
+        moderator_length=req.moderator_length,
     )
     return {
         "session_id": session.id,

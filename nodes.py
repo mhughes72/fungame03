@@ -237,9 +237,10 @@ def _generate_candidate(name: str, state: RoomState) -> dict:
     diagrams_enabled = state.get("diagrams_enabled", False)
     audience_level   = state.get("audience_level") or "university"
     system_prompt = _philosopher_system_prompt(name, participants, partial_agreements, own_summary, heat, evidence_this_turn, diagrams_enabled, audience_level)
+    philosopher_length = state.get("philosopher_length") or "normal"
     user_prompt   = _philosopher_user_prompt(
         name, state["messages"], topic, argument_log, turn_count, concession_counts,
-        concession_log, challenge_counts, drunk_level, drunk_levels,
+        concession_log, challenge_counts, drunk_level, drunk_levels, philosopher_length,
     )
 
     messages = (
@@ -821,11 +822,18 @@ def generate_moderator_steer(state: RoomState) -> tuple[str, str]:
     if audience_instruction:
         system_msg = system_msg + f"\n\n{audience_instruction}"
 
+    moderator_length = state.get("moderator_length") or "normal"
+    _moderator_length_note = {
+        "brief":     "\n\nLENGTH OVERRIDE: One sentence only — terse and pointed.",
+        "elaborate": "\n\nLENGTH OVERRIDE: 3–4 sentences — set the context, name the stakes, then ask the question.",
+    }.get(moderator_length, "")
+
     binary_close = (
         f"\n\nRegardless of style: your steer must end with a single direct question aimed at {target}. "
         f"State one concrete claim they must affirm or deny — no wriggle room. "
         f"Format: '{target} — [sharp, specific claim]? Yes or no, and why.' "
         "Use the suggested common ground above if it fits."
+        f"{_moderator_length_note}"
     )
 
     prompt = (
@@ -861,6 +869,10 @@ _DRUNK_LABELS = {1: "one drink in", 2: "visibly tipsy", 3: "clearly drunk", 4: "
 
 def generate_commentator_recap(state: RoomState) -> str:
     """Generate a wry sports-style play-by-play recap of the last round."""
+    commentator_length = state.get("commentator_length") or "normal"
+    if commentator_length == "off":
+        return ""
+
     topic             = state["topic"]
     participants      = state["participants"]
     messages          = state.get("messages") or []
@@ -923,7 +935,11 @@ def generate_commentator_recap(state: RoomState) -> str:
         f"{diagram_line}\n"
         f"Recent exchange:\n{recent_text}\n"
         f"{drunk_instruction}\n\n"
-        "Give a punchy 2–3 sentence play-by-play on what just happened. "
+        + (
+            "Give an in-depth 4–6 sentence breakdown of what just happened — tactics, momentum shifts, rhetorical moves. "
+            if commentator_length == "verbose" else
+            "Give a punchy 2–3 sentence play-by-play on what just happened. "
+        ) +
         "Use sports metaphors. Name the participants specifically."
         f"{diagram_instruction} "
         "End with one line teasing what to watch for next round."

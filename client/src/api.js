@@ -47,8 +47,17 @@ export async function fetchFeatures() {
   return res.json()   // { podcast: bool }
 }
 
-export async function createSession(characters, topic, commentator = true, moderator = true, diagrams = false, audienceLevel = 'university') {
-  return post('/sessions', { characters, topic, commentator_enabled: commentator, moderator_enabled: moderator, diagrams_enabled: diagrams, audience_level: audienceLevel })
+export async function createSession(characters, topic, commentator = true, moderator = true, diagrams = false, audienceLevel = 'university', philosopherLength = 'normal', commentatorLength = 'normal', moderatorLength = 'normal') {
+  return post('/sessions', {
+    characters, topic,
+    commentator_enabled: commentator,
+    moderator_enabled: moderator,
+    diagrams_enabled: diagrams,
+    audience_level: audienceLevel,
+    philosopher_length: philosopherLength,
+    commentator_length: commentatorLength,
+    moderator_length: moderatorLength,
+  })
 }
 
 export async function steer(sessionId, text, style, evidence = '', drinks = {}) {

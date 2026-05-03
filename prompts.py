@@ -277,6 +277,14 @@ def _philosopher_system_prompt(
     )
 
 
+# Global length overrides — set via philosopher_length in state (local testing only).
+# "normal" means no override; use the situation×verbosity table as usual.
+_LENGTH_OVERRIDES: dict[str, str] = {
+    "punchy":         "LENGTH: 1–2 sentences maximum. Sharp and direct — no qualifications.",
+    "conversational": "LENGTH: 3–4 sentences. Develop one idea clearly.",
+    "expansive":      "LENGTH: A full paragraph (5–8 sentences). Make multiple connected points.",
+}
+
 # Situation × verbosity → length instruction. Situation is determined by the last
 # message's word count and tone; verbosity comes from the speaker's persona definition.
 _LENGTH_INSTRUCTIONS: dict[tuple[str, str], str] = {
@@ -338,6 +346,7 @@ def _philosopher_user_prompt(
     challenge_counts: dict | None = None,
     drunk_level: int = 0,
     drunk_levels: dict | None = None,
+    philosopher_length: str = "normal",
 ) -> str:
     safe_name = name.replace(" ", "_")
 
@@ -390,7 +399,11 @@ def _philosopher_user_prompt(
         respond_to = "It is your turn to open or advance the debate."
         situation = "opening"
 
-    length_instruction = _LENGTH_INSTRUCTIONS[situation, verbosity]
+    length_instruction = (
+        _LENGTH_OVERRIDES[philosopher_length]
+        if philosopher_length and philosopher_length != "normal" and philosopher_length in _LENGTH_OVERRIDES
+        else _LENGTH_INSTRUCTIONS[situation, verbosity]
+    )
 
     past_claims = (argument_log or {}).get(name, [])
     if past_claims:

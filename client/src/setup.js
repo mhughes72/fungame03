@@ -9,7 +9,7 @@
 import { openAbout, openHelp } from './info.js'
 import { fetchTopics } from './api.js'
 
-export function mount(container, characters, onStart) {
+export function mount(container, characters, onStart, { isLocal = false } = {}) {
   container.innerHTML = `
     <div class="setup-overlay">
       <div class="setup-box">
@@ -77,6 +77,34 @@ export function mount(container, characters, onStart) {
             <label class="audience-opt"><input type="radio" name="audience" value="highschool" /> High School</label>
             <label class="audience-opt"><input type="radio" name="audience" value="university" checked /> University</label>
             <label class="audience-opt"><input type="radio" name="audience" value="expert" /> Expert</label>
+          </div>
+        </div>
+
+        <div class="setup-lengths" id="setup-lengths" style="display:none">
+          <div class="length-group">
+            <span class="length-label">Philosopher length</span>
+            <div class="length-options">
+              <label class="length-opt"><input type="radio" name="phil-length" value="punchy" /> Punchy</label>
+              <label class="length-opt"><input type="radio" name="phil-length" value="normal" checked /> Normal</label>
+              <label class="length-opt"><input type="radio" name="phil-length" value="conversational" /> Conversational</label>
+              <label class="length-opt"><input type="radio" name="phil-length" value="expansive" /> Expansive</label>
+            </div>
+          </div>
+          <div class="length-group">
+            <span class="length-label">Commentator</span>
+            <div class="length-options">
+              <label class="length-opt"><input type="radio" name="comm-length" value="off" /> Off</label>
+              <label class="length-opt"><input type="radio" name="comm-length" value="normal" checked /> Normal</label>
+              <label class="length-opt"><input type="radio" name="comm-length" value="verbose" /> Verbose</label>
+            </div>
+          </div>
+          <div class="length-group">
+            <span class="length-label">Moderator</span>
+            <div class="length-options">
+              <label class="length-opt"><input type="radio" name="mod-length" value="brief" /> Brief</label>
+              <label class="length-opt"><input type="radio" name="mod-length" value="normal" checked /> Normal</label>
+              <label class="length-opt"><input type="radio" name="mod-length" value="elaborate" /> Elaborate</label>
+            </div>
           </div>
         </div>
 
@@ -165,6 +193,8 @@ export function mount(container, characters, onStart) {
   })
   observer.observe(document.body, { childList: true, subtree: true })
 
+  if (isLocal) container.querySelector('#setup-lengths').style.display = ''
+
   const hint    = container.querySelector('#selection-hint')
   const startBtn = container.querySelector('#start-btn')
   const errorEl  = container.querySelector('#setup-error')
@@ -190,12 +220,18 @@ export function mount(container, characters, onStart) {
   checkboxes.forEach(cb => cb.addEventListener('change', updateHint))
 
   function getToggles() {
-    const audienceEl = container.querySelector('input[name="audience"]:checked')
+    const audienceEl  = container.querySelector('input[name="audience"]:checked')
+    const philEl      = container.querySelector('input[name="phil-length"]:checked')
+    const commEl      = container.querySelector('input[name="comm-length"]:checked')
+    const modEl       = container.querySelector('input[name="mod-length"]:checked')
     return {
-      commentator:  container.querySelector('#toggle-commentator').checked,
-      moderator:    container.querySelector('#toggle-moderator').checked,
-      diagrams:     container.querySelector('#toggle-diagrams').checked,
-      audienceLevel: audienceEl ? audienceEl.value : 'university',
+      commentator:       container.querySelector('#toggle-commentator').checked,
+      moderator:         container.querySelector('#toggle-moderator').checked,
+      diagrams:          container.querySelector('#toggle-diagrams').checked,
+      audienceLevel:     audienceEl ? audienceEl.value : 'university',
+      philosopherLength: philEl    ? philEl.value     : 'normal',
+      commentatorLength: commEl    ? commEl.value     : 'normal',
+      moderatorLength:   modEl     ? modEl.value      : 'normal',
     }
   }
 

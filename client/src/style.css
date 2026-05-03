@@ -361,6 +361,38 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 .audience-opt input[type=radio] { accent-color: var(--gold); cursor: pointer; }
 .audience-opt:has(input:checked) { color: var(--amber); }
 
+.setup-lengths {
+  border-top: 1px solid var(--border);
+  padding-top: 0.6rem;
+  margin-top: 0.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.length-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.length-label {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  min-width: 7rem;
+  white-space: nowrap;
+}
+.length-options { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+.length-opt {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  cursor: pointer;
+}
+.length-opt input[type=radio] { accent-color: var(--gold); cursor: pointer; }
+.length-opt:has(input:checked) { color: var(--amber); }
+
 .setup-error { color: var(--red); font-size: 0.85rem; min-height: 1.2em; text-align: center; }
 
 .setup-footer {

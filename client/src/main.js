@@ -16,14 +16,26 @@ async function showSetup() {
     return
   }
 
-  const screen = setup.mount(app, characters, async ({ characters: chosen, topic, commentator = true, moderator = true, diagrams = false, audienceLevel = 'university' }) => {
+  const isLocal = !!_features.local
+
+  const screen = setup.mount(app, characters, async ({
+    characters: chosen,
+    topic,
+    commentator = true,
+    moderator = true,
+    diagrams = false,
+    audienceLevel = 'university',
+    philosopherLength = 'normal',
+    commentatorLength = 'normal',
+    moderatorLength = 'normal',
+  }) => {
     try {
-      const session = await api.createSession(chosen, topic, commentator, moderator, diagrams, audienceLevel)
+      const session = await api.createSession(chosen, topic, commentator, moderator, diagrams, audienceLevel, philosopherLength, commentatorLength, moderatorLength)
       showDebate(session.session_id, chosen, topic, styles)
     } catch (err) {
       screen.showError(`Could not start session: ${err.message}`)
     }
-  })
+  }, { isLocal })
 }
 
 function showDebate(sessionId, participants, topic, styles) {

@@ -33,6 +33,9 @@ class RoomState(TypedDict):
     diagram_this_turn: dict    # {speaker, article, url, thumb_url, title, page_url} or {} — cleared each batch
     shown_diagram_urls: list   # URLs already displayed this session — prevents repeats
     audience_level: str        # "grade5" | "highschool" | "university" | "expert"
+    philosopher_length: str    # "punchy" | "normal" | "conversational" | "expansive"
+    commentator_length: str    # "off" | "normal" | "verbose"
+    moderator_length: str      # "brief" | "normal" | "elaborate"
 
 
 def new_room_state(
@@ -42,6 +45,9 @@ def new_room_state(
     moderator_style: str = "socratic",
     diagrams_enabled: bool = False,
     audience_level: str = "university",
+    philosopher_length: str = "normal",
+    commentator_length: str = "normal",
+    moderator_length: str = "normal",
 ) -> RoomState:
     return {
         "messages": [],
@@ -73,6 +79,9 @@ def new_room_state(
         "diagram_this_turn": {},
         "shown_diagram_urls": [],
         "audience_level": audience_level,
+        "philosopher_length": philosopher_length,
+        "commentator_length": commentator_length,
+        "moderator_length": moderator_length,
     }
 
 

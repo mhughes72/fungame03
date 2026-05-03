@@ -65,6 +65,9 @@ class Session:
     moderator_enabled: bool = True
     diagrams_enabled: bool = False
     audience_level: str = "university"
+    philosopher_length: str = "normal"
+    commentator_length: str = "normal"
+    moderator_length: str = "normal"
 
     # ------------------------------------------------------------------ #
     # Thread-safe queue helpers                                            #
@@ -352,10 +355,10 @@ class SessionStore:
         self._sessions: dict[str, Session] = {}
         self._lock = threading.Lock()
 
-    def create(self, participants: list[str], topic: str, commentator_enabled: bool = True, moderator_enabled: bool = True, diagrams_enabled: bool = False, audience_level: str = "university") -> Session:
+    def create(self, participants: list[str], topic: str, commentator_enabled: bool = True, moderator_enabled: bool = True, diagrams_enabled: bool = False, audience_level: str = "university", philosopher_length: str = "normal", commentator_length: str = "normal", moderator_length: str = "normal") -> Session:
         session_id = uuid.uuid4().hex
         graph = build_graph(participants)
-        state = new_room_state(participants, topic, max_turns=len(participants) * 6, diagrams_enabled=diagrams_enabled, audience_level=audience_level)
+        state = new_room_state(participants, topic, max_turns=len(participants) * 6, diagrams_enabled=diagrams_enabled, audience_level=audience_level, philosopher_length=philosopher_length, commentator_length=commentator_length, moderator_length=moderator_length)
         session = Session(
             id=session_id,
             state=state,
@@ -364,6 +367,9 @@ class SessionStore:
             moderator_enabled=moderator_enabled,
             diagrams_enabled=diagrams_enabled,
             audience_level=audience_level,
+            philosopher_length=philosopher_length,
+            commentator_length=commentator_length,
+            moderator_length=moderator_length,
         )
         with self._lock:
             self._sessions[session_id] = session
