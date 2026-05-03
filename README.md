@@ -200,13 +200,17 @@ Type these at the input prompt:
 Each debate runs in cycles controlled by `participant_count (N)`:
 
 - Every `N × 2` philosopher turns → **steer exit**: graph pauses for player/moderator input
-- Every `N × 6` philosopher turns → **consensus check**: structured analysis of agreements and tensions
-- This means a consensus check fires every 3 steer cycles
+- Every `N × 6` philosopher turns → **consensus check**: structured `gpt-4o` analysis of agreements and tensions
+- Consensus check fires every **3rd** steer break
+- Web UI hard limit: **24 turns** — debate ends without consensus if not reached by then
 
-For 2 participants: steer at turns 4, 8, 16, 20 … consensus at turns 12, 24.  
-For 4 participants: steer at turns 8, 16, 32, 40 … consensus at turns 24, 48.
+| Players | Steer every | Consensus every | Steer breaks before end | Consensus checks before end |
+|---|---|---|---|---|
+| 2 | 4 turns | 12 turns | 6 | 2 |
+| 3 | 6 turns | 18 turns | 4 | 1 |
+| 4 | 8 turns | 24 turns | 3 | 1 |
 
-The debate ends after 24 philosopher turns if no consensus is reached.
+> With 3 or 4 players there is only one consensus check in the whole debate (at turn 18 or 24). Use **Last Call** moderator style in the final steer break to push characters toward agreement before the clock runs out.
 
 ### Who speaks next
 
