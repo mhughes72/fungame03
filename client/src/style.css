@@ -677,6 +677,24 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   margin: 0.25rem 0;
 }
 
+/* drift notice */
+.msg-drift {
+  border-left: 3px solid var(--amber);
+  padding: 0.55rem 0.75rem;
+  margin: 0.9rem 0;
+  background: rgba(210, 140, 40, 0.07);
+}
+.drift-heading {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--amber);
+  text-transform: uppercase;
+  margin-bottom: 0.25rem;
+}
+.drift-new   { font-size: 0.85rem; color: var(--text); }
+.drift-orig  { font-size: 0.75rem; color: var(--text-dim); margin-top: 0.2rem; }
+
 /* commentator recap */
 .msg-commentator {
   border-left: 3px solid var(--blue);

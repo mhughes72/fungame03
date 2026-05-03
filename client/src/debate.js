@@ -117,10 +117,7 @@ export function mount(container, sessionId, participants, topic, styles, api) {
         steerModalPending = true
         currentStyle = data.current_style
         if (data.drift_topic) {
-          appendSystem(convoPane,
-            `── DRIFT ── conversation has shifted to: ${data.drift_topic}`)
-          appendSystem(convoPane,
-            `   original topic: ${topic}`)
+          appendDrift(convoPane, data.drift_topic, topic)
         }
         convoPane.scrollTop = convoPane.scrollHeight
         openSteerModal(currentStyle, styles, debateSummary(lastState, participants), leftCol, api.searchEvidence, participants).then(result => {
@@ -288,6 +285,16 @@ function appendSystem(el, text) {
   const div = document.createElement('div')
   div.className = 'msg msg-system'
   div.textContent = text
+  scrollAppend(el, div)
+}
+
+function appendDrift(el, newTopic, originalTopic) {
+  const div = document.createElement('div')
+  div.className = 'msg msg-drift'
+  div.innerHTML =
+    `<div class="drift-heading">⇌ Topic Drift</div>` +
+    `<div class="drift-new">${escHtml(newTopic)}</div>` +
+    `<div class="drift-orig">original: ${escHtml(originalTopic)}</div>`
   scrollAppend(el, div)
 }
 
