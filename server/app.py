@@ -113,7 +113,7 @@ class StartRequest(BaseModel):
     commentator_length: str = "normal"
     moderator_length: str = "normal"
     debate_format: str = ""
-    format_roles: dict = {}
+    format_roles: dict | None = None
 
 
 class SteerRequest(BaseModel):
