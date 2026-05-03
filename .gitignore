@@ -65,3 +65,5 @@ podcasts/
 
 # Claude Code internals
 .claude/worktrees/
+.claude/settings.local.json
+.claire/
