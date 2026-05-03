@@ -280,7 +280,7 @@ def _philosopher_system_prompt(
 # Global length overrides — set via philosopher_length in state (local testing only).
 # "normal" means no override; use the situation×verbosity table as usual.
 _LENGTH_OVERRIDES: dict[str, str] = {
-    "punchy":         "LENGTH: 1–2 sentences maximum. Sharp and direct — no qualifications.",
+    "punchy":         "LENGTH: ONE sentence only. Maximum 20 words. No qualifications, no elaboration — land the point and stop.",
     "conversational": "LENGTH: 3–4 sentences. Develop one idea clearly.",
     "expansive":      "LENGTH: A full paragraph (5–8 sentences). Make multiple connected points.",
 }
