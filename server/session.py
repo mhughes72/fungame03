@@ -41,6 +41,7 @@ from nodes import (
     generate_moderator_steer,
     summarize_history,
     detect_forced_speaker,
+    analyze_sidebar,
     BAR_BEATS as _BAR_BEATS,
 )
 from state import RoomState, new_room_state, reset_for_new_topic
@@ -183,6 +184,14 @@ class Session:
             self._put(evt.system(f"Earlier conversation summarized — {len(condensed)} messages kept"))
             char_summaries = generate_character_summaries(self.state)
             self.state = {**self.state, "messages": condensed, "character_summaries": char_summaries}
+
+        # Lightweight sidebar refresh at every steer break (not at full consensus
+        # check turns — those already populate these fields via consensus_checker_node)
+        is_steer = self.state.get("current_speaker") == "__steer__"
+        if is_steer:
+            sidebar = analyze_sidebar(self.state)
+            if sidebar:
+                self.state = {**self.state, **sidebar}
 
         # Right-pane stats
         self._put(evt.state_update(

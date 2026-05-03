@@ -573,6 +573,64 @@ def consensus_checker_node(state: RoomState) -> dict:
 
 
 # --------------------------------------------------------------------------- #
+# Lightweight sidebar analysis (every steer break, gpt-4o-mini)                #
+# --------------------------------------------------------------------------- #
+
+class _SidebarUpdate(BaseModel):
+    partial_agreements:      list[_PartialAgreement]
+    points_of_agreement:     list[str]
+    remaining_disagreements: list[_Tension]
+    drifted_topic:           str   # empty if on-topic
+
+
+def analyze_sidebar(state: RoomState) -> dict:
+    """Run a cheap gpt-4o-mini pass to refresh partial agreements and tensions.
+    Does NOT check for full consensus — that stays with consensus_checker_node."""
+    messages     = state["messages"]
+    topic        = state["topic"]
+    participants = state["participants"]
+
+    recent = messages[-8:]
+    transcript = "\n\n".join(
+        f"{(m.name or 'User').replace('_', ' ')}: {m.content}"
+        for m in recent
+        if hasattr(m, "content")
+    )
+
+    prompt = (
+        f'Topic: "{topic}"\n'
+        f"Participants: {', '.join(participants)}\n\n"
+        f"Recent transcript:\n{transcript}\n\n"
+        "Identify any partial agreements (subsets of 2+ participants converging on something), "
+        "any points ALL participants agree on, and the main remaining tensions "
+        "(for each, name the two participants and their opposing stances). "
+        "Also note if the conversation has clearly drifted from the original topic — "
+        "if so set drifted_topic to a short phrase, otherwise leave it empty."
+    )
+
+    try:
+        result: _SidebarUpdate = _chat_llm().with_structured_output(
+            _SidebarUpdate
+        ).invoke([
+            SystemMessage(content="You are a concise analyst of philosophical debates."),
+            HumanMessage(content=prompt),
+        ])
+    except Exception:
+        return {}
+
+    return {
+        "partial_agreements":      [{"participants": p.participants, "on": p.on} for p in result.partial_agreements],
+        "points_of_agreement":     result.points_of_agreement,
+        "remaining_disagreements": [
+            {"topic": t.topic, "participant_a": t.participant_a, "stance_a": t.stance_a,
+             "participant_b": t.participant_b, "stance_b": t.stance_b}
+            for t in result.remaining_disagreements
+        ],
+        "drift_topic": result.drifted_topic,
+    }
+
+
+# --------------------------------------------------------------------------- #
 # Moderator steer                                                               #
 # --------------------------------------------------------------------------- #
 
