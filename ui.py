@@ -626,6 +626,8 @@ class PhilosopherBar(App):
 
     def _inject_moderator_steer(self) -> None:
         steer, steer_target = generate_moderator_steer(self.state)
+        if not steer:
+            return
         self._log_moderator(steer)
         self.state = {
             **self.state,

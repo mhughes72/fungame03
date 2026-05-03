@@ -287,14 +287,15 @@ class Session:
             self._put(evt.message("User", text, role="user"))
         elif self.moderator_enabled:
             steer, steer_target = generate_moderator_steer(self.state)
-            self.state = {
-                **self.state,
-                "forced_speaker": steer_target or "",
-                "messages": list(self.state["messages"]) + [
-                    HumanMessage(content=steer, name="Moderator")
-                ],
-            }
-            self._put(evt.message("Moderator", steer, role="moderator"))
+            if steer:
+                self.state = {
+                    **self.state,
+                    "forced_speaker": steer_target or "",
+                    "messages": list(self.state["messages"]) + [
+                        HumanMessage(content=steer, name="Moderator")
+                    ],
+                }
+                self._put(evt.message("Moderator", steer, role="moderator"))
 
         if evidence:
             from langchain_core.messages import SystemMessage as _SysMsg

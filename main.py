@@ -358,15 +358,16 @@ def run_game():
                 }
             else:
                 steer, steer_target = generate_moderator_steer(state)
-                _display_moderator(steer)
-                dbg.dlog("STATE", "Moderator steer injected", {"content": steer, "forced": steer_target})
-                state = {
-                    **state,
-                    "forced_speaker": steer_target or "",
-                    "messages": list(state["messages"]) + [
-                        HumanMessage(content=steer, name="Moderator")
-                    ],
-                }
+                if steer:
+                    _display_moderator(steer)
+                    dbg.dlog("STATE", "Moderator steer injected", {"content": steer, "forced": steer_target})
+                    state = {
+                        **state,
+                        "forced_speaker": steer_target or "",
+                        "messages": list(state["messages"]) + [
+                            HumanMessage(content=steer, name="Moderator")
+                        ],
+                    }
 
         # Guard against runaway debates
         if state.get("turn_count", 0) >= 24:

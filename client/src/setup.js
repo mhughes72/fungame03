@@ -91,6 +91,7 @@ export function mount(container, characters, onStart, { isLocal = false } = {}) 
           <div class="length-group">
             <span class="length-label">Moderator</span>
             <div class="length-options">
+              <label class="length-opt"><input type="radio" name="mod-length" value="off" /> Off</label>
               <label class="length-opt"><input type="radio" name="mod-length" value="brief" /> Brief</label>
               <label class="length-opt"><input type="radio" name="mod-length" value="normal" checked /> Normal</label>
               <label class="length-opt"><input type="radio" name="mod-length" value="elaborate" /> Elaborate</label>

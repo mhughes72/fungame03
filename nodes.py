@@ -730,7 +730,10 @@ _STYLE_CONFIGS: dict[str, tuple[str, str]] = {
 
 
 def generate_moderator_steer(state: RoomState) -> tuple[str, str]:
-    """Generate a moderator steer question; returns (steer_text, target_name)."""
+    """Generate a moderator steer question; returns (steer_text, target_name). Empty strings if off."""
+    if (state.get("moderator_length") or "normal") == "off":
+        return "", ""
+
     topic                   = state["topic"]
     participants            = state["participants"]
     partial_agreements      = state.get("partial_agreements") or []
