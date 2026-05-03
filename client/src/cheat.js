@@ -13,7 +13,7 @@ function escHtml(str) {
 
 const _HEAT_LABELS = ['arctic', 'cool', 'cool', 'warm', 'warm', 'charged', 'charged', 'heated', 'heated', 'flashpoint', 'flashpoint']
 
-export function open(sessionId, currentHeat, participants, cheatFn, onNewspaper = null, onPodcast = null) {
+export function open(sessionId, currentHeat, participants, cheatFn, onNewspaper = null, onPodcast = null, onEndGame = null, onForceConsensus = null) {
   return new Promise((resolve) => {
     const drinkCounts = {}
     participants.forEach(p => { drinkCounts[p] = 0 })
@@ -48,9 +48,20 @@ export function open(sessionId, currentHeat, participants, cheatFn, onNewspaper 
           `).join('')}
         </div>
 
-        <div class="cheat-footer">
+        ${(onNewspaper || onPodcast) ? `
+        <div class="cheat-utils-row">
           ${onNewspaper ? `<button class="cheat-paper-btn" id="cheat-paper">See Newspaper 📰</button>` : ''}
           ${onPodcast ? `<button class="cheat-paper-btn" id="cheat-podcast">Export Podcast 🎙</button>` : ''}
+        </div>` : ''}
+
+        ${(onForceConsensus || onEndGame) ? `
+        <div class="cheat-section-label">── END THE EVENING ──</div>
+        <div class="cheat-end-row">
+          ${onForceConsensus ? `<button class="cheat-consensus-btn" id="cheat-consensus">Force Consensus ✓</button>` : ''}
+          ${onEndGame ? `<button class="cheat-end-btn" id="cheat-end">End Game ✕</button>` : ''}
+        </div>` : ''}
+
+        <div class="cheat-footer">
           <button class="cheat-apply-btn" id="cheat-apply">Apply ▶</button>
         </div>
       </div>
@@ -100,6 +111,8 @@ export function open(sessionId, currentHeat, participants, cheatFn, onNewspaper 
     overlay.querySelector('#cheat-close').addEventListener('click', close)
     overlay.querySelector('#cheat-paper')?.addEventListener('click', () => { close(); onNewspaper() })
     overlay.querySelector('#cheat-podcast')?.addEventListener('click', () => { close(); onPodcast() })
+    overlay.querySelector('#cheat-consensus')?.addEventListener('click', () => { close(); onForceConsensus() })
+    overlay.querySelector('#cheat-end')?.addEventListener('click', () => { close(); onEndGame() })
     overlay.addEventListener('click', e => { if (e.target === overlay) close() })
   })
 }

@@ -255,6 +255,9 @@ def _generate_candidate(name: str, state: RoomState) -> dict:
         try:
             response = _chat_llm().invoke(messages)
             content = response.content.strip()
+            # Strip spurious outer brackets the LLM occasionally wraps the whole response in
+            if content.startswith('[') and content.endswith(']') and content.count('[') == 1:
+                content = content[1:-1].strip()
             # Reject degenerate outputs: too short or just echoing the character's name
             if len(content) < 8 or content.replace(" ", "_") == safe_name:
                 dbg.dlog("PHILOSOPHER", f"{name} — degenerate output, retrying (attempt {attempt + 1}): {content!r}")
@@ -725,8 +728,8 @@ _STYLE_CONFIGS: dict[str, tuple[str, str]] = {
 }
 
 
-def generate_moderator_steer(state: RoomState) -> str:
-    """Generate a Socratic steering question to nudge the debate toward consensus."""
+def generate_moderator_steer(state: RoomState) -> tuple[str, str]:
+    """Generate a moderator steer question; returns (steer_text, target_name)."""
     topic                   = state["topic"]
     participants            = state["participants"]
     partial_agreements      = state.get("partial_agreements") or []
@@ -759,25 +762,28 @@ def generate_moderator_steer(state: RoomState) -> str:
 
     agreement_context = "\n\n".join(agreement_lines) + "\n\n" if agreement_lines else ""
 
-    # Pick a single target to address — priority order:
-    #   1. Most challenged without resolving (highest challenge_counts)
-    #   2. Most entrenched (fewest concessions, past threshold)
-    #   3. The most recent speaker (press immediately on what was just said)
+    # Pick the NPC who is most "winning" — highest dominance score.
+    # Dominance = challenges received (others feel threatened by them)
+    #           - concessions made (they haven't given ground).
+    # This surfaces the participant who is pulling ahead and needs to be pressed.
     challenge_counts = state.get("challenge_counts") or {}
     recent_speakers  = state.get("recent_speakers") or []
+
+    def _dominance(name: str) -> int:
+        return challenge_counts.get(name, 0) - concession_counts.get(name, 0)
 
     target = None
     reason = ""
 
-    if challenge_counts:
-        top = max(challenge_counts, key=lambda p: challenge_counts.get(p, 0))
-        if challenge_counts.get(top, 0) >= 2:
-            target = top
-            reason = f"has been challenged {challenge_counts[top]} times without resolving the pressure"
-
-    if not target and turn_count >= _CONCESSION_THRESHOLD:
-        target = min(participants, key=lambda p: concession_counts.get(p, 0))
-        reason = f"has made {concession_counts.get(target, 0)} concessions — the most entrenched voice in the room"
+    if participants:
+        by_dominance = sorted(participants, key=_dominance, reverse=True)
+        candidate = by_dominance[0]
+        score = _dominance(candidate)
+        if score > 0:
+            target = candidate
+            c = challenge_counts.get(candidate, 0)
+            cc = concession_counts.get(candidate, 0)
+            reason = f"most dominant — challenged {c}x, conceded {cc}x"
 
     if not target:
         # Fall back to whoever spoke most recently
@@ -843,7 +849,7 @@ def generate_moderator_steer(state: RoomState) -> str:
     ])
 
     dbg.dlog("MODERATOR", "Steer generated", response.content[:200])
-    return response.content.strip()
+    return response.content.strip(), target
 
 
 # --------------------------------------------------------------------------- #

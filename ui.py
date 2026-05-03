@@ -625,10 +625,11 @@ class PhilosopherBar(App):
         self.run_batch()
 
     def _inject_moderator_steer(self) -> None:
-        steer = generate_moderator_steer(self.state)
+        steer, steer_target = generate_moderator_steer(self.state)
         self._log_moderator(steer)
         self.state = {
             **self.state,
+            "forced_speaker": steer_target or "",
             "messages": list(self.state["messages"]) + [
                 HumanMessage(content=steer, name="Moderator")
             ],

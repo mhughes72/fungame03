@@ -254,7 +254,8 @@ def _philosopher_system_prompt(
         "- Updating your view when shown compelling logic or evidence is intellectual strength — do not defend a position you have already been forced to abandon.\n"
         "- Occasionally — not every turn — you may add a brief physical stage direction in the format *[action]* "
         "e.g. *[laughs]*, *[sets down glass]*, *[long pause]*. Stage directions are 2–4 word physical actions only. "
-        "Never wrap your entire response in brackets. Your speech is plain text — brackets are for asides only."
+        "IMPORTANT: Never begin or end your response with a bracket. Never wrap your entire speech in [brackets]. "
+        "Your spoken words are plain text. Brackets with asterisks like *[laughs]* are only for brief physical asides embedded mid-speech."
         f"{jab_line}"
         f"{evidence_line}"
         + (

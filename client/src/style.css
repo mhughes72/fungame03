@@ -855,51 +855,125 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 .sb-style { color: var(--amber); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.8rem; }
 
 
-/* ── consensus panel ────────────────────────────────────────────────── */
-.consensus-panel {
+/* ── end-of-game panel (consensus + last call) ───────────────────────── */
+.end-panel {
   margin-top: 1.5rem;
   border: 1px solid var(--border-hi);
-  padding: 1.25rem 1.5rem;
+  padding: 1.5rem 1.75rem 1.25rem;
   background: var(--bg-mid);
+  display: flex;
+  flex-direction: column;
 }
 
-.consensus-title {
-  color: var(--green);
-  font-weight: 700;
+.end-title {
   text-align: center;
-  margin-bottom: 0.75rem;
-  letter-spacing: 0.04em;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: 0.9rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--border);
 }
+.end-title-consensus { color: var(--green); }
+.end-title-gameover  { color: var(--amber); }
 
-.consensus-summary {
-  color: var(--text);
+.end-summary {
   font-family: var(--serif);
-  font-size: 0.95rem;
-  line-height: 1.6;
-  margin-bottom: 0.75rem;
+  font-style: italic;
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--text);
+  text-align: center;
+  margin: 0.9rem 0.5rem 0;
+  padding: 0;
+}
+.end-summary-dim { color: var(--text-dim); font-size: 0.92rem; }
+
+/* scoreboard */
+.end-scoreboard {
+  display: flex;
+  border: 1px solid var(--border);
+  margin: 1rem 0 0.25rem;
+}
+.end-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.75rem 0.5rem 0.6rem;
+  gap: 0.3rem;
+}
+.end-stat + .end-stat { border-left: 1px solid var(--border); }
+.end-stat-num {
+  font-size: 1.75rem;
+  font-weight: 700;
+  font-family: var(--mono);
+  line-height: 1;
+}
+.end-stat-denom { font-size: 0.85rem; opacity: 0.45; }
+.end-stat-lbl {
+  font-size: 0.67rem;
+  color: var(--text-dim);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
 }
 
-.consensus-points {
-  list-style: none;
-  margin-bottom: 1rem;
+/* sections */
+.end-section {
+  border-left: 3px solid;
+  padding: 0.3rem 0 0.3rem 0.85rem;
+  margin-top: 0.75rem;
 }
-.consensus-points li {
-  color: var(--green);
-  padding: 0.15rem 0;
-  font-size: 0.88rem;
-}
-.consensus-points li::before { content: '✓ '; }
+.end-section-agree   { border-color: var(--green); }
+.end-section-partial { border-color: var(--amber); }
+.end-section-tension { border-color: var(--red); }
 
-.consensus-new-topic {
+.end-section-label {
+  font-size: 0.67rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  margin-bottom: 0.35rem;
+}
+.end-section-agree   .end-section-label { color: var(--green); }
+.end-section-partial .end-section-label { color: var(--amber); }
+.end-section-tension .end-section-label { color: var(--red); }
+
+.end-item-agree { color: var(--green); font-size: 0.87rem; padding: 0.1rem 0; }
+
+.end-partial {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  align-items: baseline;
+  padding: 0.1rem 0;
+}
+.end-partial-names { color: var(--amber); font-weight: 700; font-size: 0.87rem; }
+.end-partial-on    { color: var(--text-dim); font-style: italic; font-size: 0.83rem; }
+
+.end-tension { display: flex; flex-direction: column; gap: 0.15rem; padding: 0.15rem 0; }
+.end-tension-topic   { color: var(--red); font-weight: 700; font-size: 0.85rem; }
+.end-tension-stances { color: #8a5040; font-size: 0.78rem; }
+
+/* actions */
+.end-actions {
+  margin-top: 1.1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+.end-new-topic-row {
   display: flex;
   gap: 0.5rem;
-  flex-wrap: wrap;
-  margin-top: 1rem;
 }
-
-.consensus-topic-input {
+.end-btn-row {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+.end-topic-input {
   flex: 1;
-  min-width: 160px;
+  min-width: 0;
   background: var(--bg-dark);
   border: 1px solid var(--border);
   color: var(--text);
@@ -908,9 +982,8 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   padding: 0.4rem 0.75rem;
   outline: none;
 }
-.consensus-topic-input:focus { border-color: var(--border-hi); }
-
-.consensus-continue-btn {
+.end-topic-input:focus { border-color: var(--border-hi); }
+.end-continue-btn {
   background: var(--border);
   border: 1px solid var(--border-hi);
   color: var(--gold);
@@ -919,89 +992,29 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   font-weight: 700;
   padding: 0.4rem 1rem;
   cursor: pointer;
+  white-space: nowrap;
 }
-.consensus-continue-btn:hover { background: var(--border-hi); }
-
-.consensus-end-btn {
+.end-continue-btn:hover { background: var(--border-hi); }
+.end-paper-btn {
   background: none;
   border: 1px solid var(--border);
   color: var(--text-dim);
   font-family: var(--mono);
-  font-size: 0.88rem;
-  padding: 0.4rem 1rem;
+  font-size: 0.82rem;
+  padding: 0.35rem 0.9rem;
   cursor: pointer;
 }
-.consensus-end-btn:hover { border-color: var(--red); color: var(--red); }
-
-
-/* ── shared debate report stats (consensus + game-over) ─────────────── */
-.report-stats {
-  margin: 0.75rem 0;
-  border-top: 1px solid var(--border);
-  padding-top: 0.65rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-
-.report-stat-row {
-  display: flex;
-  gap: 1rem;
-  align-items: baseline;
+.end-paper-btn:hover { border-color: var(--amber); color: var(--amber); }
+.end-leave-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-family: var(--mono);
   font-size: 0.82rem;
+  padding: 0.35rem 0.9rem;
+  cursor: pointer;
 }
-.report-stat-label { color: var(--text-dim); min-width: 110px; }
-.report-stat-value { font-family: var(--mono); }
-
-.report-section-label {
-  color: var(--text-dim);
-  font-size: 0.75rem;
-  letter-spacing: 0.04em;
-  margin-top: 0.5rem;
-  margin-bottom: 0.1rem;
-}
-
-.report-agree-item { color: var(--green); font-size: 0.88rem; padding: 0.1rem 0; }
-
-.report-partial { font-size: 0.85rem; padding: 0.1rem 0; }
-.report-partial-names { color: var(--amber); font-weight: 700; }
-.report-partial-on { color: var(--text-dim); font-style: italic; }
-
-.report-tension { display: flex; flex-direction: column; gap: 0.1rem; padding: 0.2rem 0; }
-.report-tension-topic { color: var(--red); font-weight: 700; font-size: 0.85rem; }
-.report-tension-stance { color: #8a5040; font-size: 0.8rem; padding-left: 0.75rem; }
-
-
-/* ── game-over panel (no consensus) ─────────────────────────────────── */
-.game-over-panel {
-  margin-top: 1.5rem;
-  border: 1px solid var(--border-hi);
-  padding: 1.25rem 1.5rem;
-  background: var(--bg-mid);
-}
-
-.game-over-title {
-  color: var(--amber);
-  font-weight: 700;
-  text-align: center;
-  margin-bottom: 0.4rem;
-  letter-spacing: 0.04em;
-}
-
-.game-over-subtitle {
-  color: var(--text-dim);
-  font-family: var(--serif);
-  font-style: italic;
-  font-size: 0.9rem;
-  text-align: center;
-  margin-bottom: 0.25rem;
-}
-
-.game-over-actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 1rem;
-}
+.end-leave-btn:hover { border-color: var(--red); color: var(--red); }
 
 
 /* ══════════════════════════════════════════════════════════════════════ */
@@ -1656,11 +1669,11 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   white-space: nowrap;
 }
 
-.cheat-footer {
+.cheat-utils-row {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 0.3rem;
+  gap: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
 }
 
 .cheat-paper-btn {
@@ -1675,13 +1688,51 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 }
 .cheat-paper-btn:hover { color: var(--amber); }
 
+.cheat-end-row {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.cheat-consensus-btn {
+  flex: 1;
+  background: none;
+  border: 1px solid #4a9b6f;
+  color: #4a9b6f;
+  font-size: 0.78rem;
+  font-family: var(--mono);
+  padding: 0.35rem 0;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+}
+.cheat-consensus-btn:hover { background: #4a9b6f; color: var(--bg); }
+
+.cheat-end-btn {
+  flex: 1;
+  background: none;
+  border: 1px solid #c83030;
+  color: #c83030;
+  font-size: 0.78rem;
+  font-family: var(--mono);
+  padding: 0.35rem 0;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+}
+.cheat-end-btn:hover { background: #c83030; color: var(--bg); }
+
+.cheat-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 0.1rem;
+}
+
 .cheat-apply-btn {
   background: none;
   border: 1px solid var(--amber);
   color: var(--amber);
   font-family: var(--mono);
   font-size: 0.82rem;
-  padding: 0.3rem 0.9rem;
+  padding: 0.3rem 1.2rem;
   cursor: pointer;
   letter-spacing: 0.04em;
 }

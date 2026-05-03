@@ -57,3 +57,11 @@ room_graph.png
 # LangGraph / LangChain cache
 .langchain.db
 langchain_cache/
+
+# Generated podcast audio
+podcasts/
+*.mp3
+*.wav
+
+# Claude Code internals
+.claude/worktrees/

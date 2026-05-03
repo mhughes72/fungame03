@@ -162,7 +162,7 @@ export function mount(container, sessionId, participants, topic, styles, api) {
         if (closeStream) { closeStream(); closeStream = null }
         clearTyping(convoPane)
         seating.clearAll()
-        appendGameOver(convoPane, data, participants, quit, sessionId, api)
+        appendGameOver(convoPane, { ...lastState, ...data }, participants, quit, sessionId, api)
         break
 
       case 'bar_beat':
@@ -213,9 +213,41 @@ export function mount(container, sessionId, participants, topic, styles, api) {
     container.querySelector('#sidebar-toggle').textContent = open ? 'Stats ▲' : 'Stats'
   })
   container.querySelector('#cheat-btn').addEventListener('click', () => {
+    if (gameEnded) return
     openCheatModal(sessionId, currentHeat, participants, api.cheat,
       () => openNewspaper(sessionId, api, participants),
-      () => exportPodcast(sessionId, api))
+      () => exportPodcast(sessionId, api),
+      () => {
+        gameEnded = true
+        if (closeStream) { closeStream(); closeStream = null }
+        clearTyping(convoPane)
+        seating.clearAll()
+        appendGameOver(convoPane, lastState, participants, quit, sessionId, api)
+      },
+      () => {
+        gameEnded = true
+        if (closeStream) { closeStream(); closeStream = null }
+        clearTyping(convoPane)
+        seating.clearAll()
+        appendConsensus(convoPane,
+          { summary: 'The bar has called it — the evening ends in agreement.', points: lastState.points_of_agreement || [] },
+          {
+            onNewTopic(newTopic) {
+              api.newTopic(sessionId, newTopic)
+                .then(() => {
+                  gameEnded = false
+                  lastState = { turn: 0, heat: 0, concession_total: 0, partial_agreements: [], remaining_disagreements: [], drift_topic: '' }
+                  container.querySelector('.debate-topic').textContent = newTopic
+                  renderSidebar(sidebar, { topic: newTopic, ...lastState, moderator_style: currentStyle, points_of_agreement: [] })
+                  seating.clearAll()
+                  closeStream = api.openStream(sessionId, onEvent)
+                })
+                .catch(err => appendSystem(convoPane, `Error: ${err.message}`))
+            },
+            onQuit: quit,
+          },
+          lastState, sessionId, api, participants)
+      })
   })
 
   container.querySelector('#quit-btn').addEventListener('click', () => {
@@ -328,29 +360,27 @@ function appendDiagram(el, { speaker, title, thumb_url, url, page_url }) {
 
 function appendConsensus(el, { summary, points }, { onNewTopic, onQuit }, state = {}, sessionId, api, participants = []) {
   const div = document.createElement('div')
-  div.className = 'consensus-panel'
+  div.className = 'end-panel'
   div.innerHTML = `
-    <div class="consensus-title">━━━ CONSENSUS REACHED ━━━</div>
-    <div class="consensus-summary">${escHtml(summary)}</div>
-    ${points.length ? `
-      <ul class="consensus-points">
-        ${points.map(p => `<li>${escHtml(p)}</li>`).join('')}
-      </ul>
-    ` : ''}
-    ${_debateStats(state)}
-    <div class="consensus-new-topic">
-      <input class="consensus-topic-input" id="consensus-topic-input"
-             type="text" placeholder="New topic…" autocomplete="off" />
-      <button class="consensus-continue-btn" id="consensus-continue">Continue ▶</button>
-      <button class="newspaper-btn" id="consensus-paper">Read the morning paper 📰</button>
-      <button class="consensus-end-btn" id="consensus-end">End the evening</button>
+    <div class="end-title end-title-consensus">━━━ CONSENSUS REACHED ━━━</div>
+    <blockquote class="end-summary">${escHtml(summary)}</blockquote>
+    ${_debateScoreboard(state)}
+    ${_endSections(points, state)}
+    <div class="end-actions">
+      <div class="end-new-topic-row">
+        <input class="end-topic-input" id="consensus-topic-input" type="text" placeholder="New topic…" autocomplete="off" />
+        <button class="end-continue-btn" id="consensus-continue">Continue ▶</button>
+      </div>
+      <div class="end-btn-row">
+        ${sessionId ? `<button class="end-paper-btn" id="consensus-paper">Read the morning paper 📰</button>` : ''}
+        <button class="end-leave-btn" id="consensus-end">End the evening</button>
+      </div>
     </div>
   `
   scrollAppend(el, div)
 
   const input = div.querySelector('#consensus-topic-input')
   input.focus()
-
   div.querySelector('#consensus-continue').addEventListener('click', () => {
     const t = input.value.trim()
     if (t) onNewTopic(t)
@@ -362,29 +392,32 @@ function appendConsensus(el, { summary, points }, { onNewTopic, onQuit }, state 
     }
   })
   div.querySelector('#consensus-end').addEventListener('click', onQuit)
-  div.querySelector('#consensus-paper').addEventListener('click', () => openNewspaper(sessionId, api, participants))
+  div.querySelector('#consensus-paper')?.addEventListener('click', () => openNewspaper(sessionId, api, participants))
 }
 
 function appendGameOver(el, state, participants, onQuit, sessionId, api) {
   clearTyping(el)
   const div = document.createElement('div')
-  div.className = 'game-over-panel'
+  div.className = 'end-panel'
   const turn = state.turn || 0
   const subtitle = turn
     ? `${turn} turn${turn !== 1 ? 's' : ''} — no consensus reached`
     : 'The evening ends before it really began.'
   div.innerHTML = `
-    <div class="game-over-title">━━━ LAST CALL ━━━</div>
-    <div class="game-over-subtitle">${escHtml(subtitle)}</div>
-    ${_debateStats(state)}
-    <div class="game-over-actions">
-      ${sessionId ? `<button class="newspaper-btn" id="game-over-paper">Read the morning paper 📰</button>` : ''}
-      <button class="consensus-end-btn" id="game-over-leave">Leave the bar</button>
+    <div class="end-title end-title-gameover">━━━ LAST CALL ━━━</div>
+    <blockquote class="end-summary end-summary-dim">${escHtml(subtitle)}</blockquote>
+    ${_debateScoreboard(state)}
+    ${_endSections([], state)}
+    <div class="end-actions">
+      <div class="end-btn-row">
+        ${sessionId ? `<button class="end-paper-btn" id="game-over-paper">Read the morning paper 📰</button>` : ''}
+        <button class="end-leave-btn" id="game-over-leave">Leave the bar</button>
+      </div>
     </div>
   `
   scrollAppend(el, div)
   div.querySelector('#game-over-leave').addEventListener('click', onQuit)
-  if (sessionId) div.querySelector('#game-over-paper')?.addEventListener('click', () => openNewspaper(sessionId, api, participants))
+  div.querySelector('#game-over-paper')?.addEventListener('click', () => openNewspaper(sessionId, api, participants))
 }
 
 // ── podcast export ───────────────────────────────────────────────────── //
@@ -595,61 +628,68 @@ async function openNewspaper(sessionId, api, participants = []) {
   })
 }
 
-function _debateStats(state) {
-  const {
-    turn = 0,
-    heat = 0,
-    partial_agreements = [],
-    points_of_agreement = [],
-    remaining_disagreements = [],
-  } = state
-
+function _debateScoreboard(state) {
+  const { turn = 0, heat = 0, concession_total = 0 } = state
   if (!turn) return ''
-
-  const heatLabel = heatLabel_(heat)
   const heatColor = heatColor_(heat)
-  const filled = '█'.repeat(heat)
-  const empty  = '░'.repeat(10 - heat)
+  const heatLabel = heatLabel_(heat)
+  return `
+    <div class="end-scoreboard">
+      <div class="end-stat">
+        <span class="end-stat-num">${turn}</span>
+        <span class="end-stat-lbl">turns</span>
+      </div>
+      <div class="end-stat">
+        <span class="end-stat-num" style="color:${heatColor}">${heat}<span class="end-stat-denom">/10</span></span>
+        <span class="end-stat-lbl">${heatLabel}</span>
+      </div>
+      <div class="end-stat">
+        <span class="end-stat-num">${concession_total}</span>
+        <span class="end-stat-lbl">concessions</span>
+      </div>
+    </div>
+  `
+}
 
-  let html = `<div class="report-stats">`
-  html += `<div class="report-stat-row">
-    <span class="report-stat-label">turns</span>
-    <span class="report-stat-value">${turn}</span>
-  </div>`
-  html += `<div class="report-stat-row">
-    <span class="report-stat-label">heat at close</span>
-    <span class="report-stat-value" style="color:${heatColor}">${filled}<span style="color:var(--text-dim)">${empty}</span> ${heatLabel}</span>
-  </div>`
+function _endSections(points, state) {
+  const { partial_agreements = [], points_of_agreement = [], remaining_disagreements = [] } = state
+  const allPoints = [...new Set([...points, ...points_of_agreement])]
+  let html = ''
 
-  if (points_of_agreement.length) {
-    html += `<div class="report-section-label">agreements reached</div>`
-    html += points_of_agreement.map(p =>
-      `<div class="report-agree-item">✓ ${escHtml(p)}</div>`
-    ).join('')
+  if (allPoints.length) {
+    html += `<div class="end-section end-section-agree">
+      <div class="end-section-label">agreements reached</div>
+      ${allPoints.map(p => `<div class="end-item-agree">✓ ${escHtml(p)}</div>`).join('')}
+    </div>`
   }
 
   if (partial_agreements.length) {
-    html += `<div class="report-section-label">alignments that formed</div>`
-    html += partial_agreements.map(a =>
-      `<div class="report-partial"><span class="report-partial-names">${escHtml(a.participants.join(' + '))}</span> — <span class="report-partial-on">${escHtml(a.on)}</span></div>`
-    ).join('')
+    html += `<div class="end-section end-section-partial">
+      <div class="end-section-label">alignments that formed</div>
+      ${partial_agreements.map(a =>
+        `<div class="end-partial">
+          <span class="end-partial-names">${escHtml(a.participants.join(' + '))}</span>
+          <span class="end-partial-on">${escHtml(a.on)}</span>
+        </div>`
+      ).join('')}
+    </div>`
   }
 
   if (remaining_disagreements.length) {
-    html += `<div class="report-section-label">still unresolved</div>`
-    html += remaining_disagreements.map(t => {
-      if (typeof t === 'object' && t !== null) {
-        return `<div class="report-tension">
-          <span class="report-tension-topic">${escHtml(t.topic)}</span>
-          <span class="report-tension-stance">${escHtml(t.participant_a)}: ${escHtml(t.stance_a)}</span>
-          <span class="report-tension-stance">${escHtml(t.participant_b)}: ${escHtml(t.stance_b)}</span>
-        </div>`
-      }
-      return `<div class="report-tension">${escHtml(String(t))}</div>`
-    }).join('')
+    html += `<div class="end-section end-section-tension">
+      <div class="end-section-label">still unresolved</div>
+      ${remaining_disagreements.map(t => {
+        if (typeof t === 'object' && t !== null) {
+          return `<div class="end-tension">
+            <span class="end-tension-topic">${escHtml(t.topic)}</span>
+            <span class="end-tension-stances">${escHtml(t.participant_a)}: ${escHtml(t.stance_a)} · ${escHtml(t.participant_b)}: ${escHtml(t.stance_b)}</span>
+          </div>`
+        }
+        return `<div class="end-tension">${escHtml(String(t))}</div>`
+      }).join('')}
+    </div>`
   }
 
-  html += `</div>`
   return html
 }
 
