@@ -9,8 +9,11 @@
  *   speaking  — solid gold ring (just spoke), auto-clears after 3s
  */
 
-export function create(container, participants) {
+export function create(container, participants, skin = {}) {
   container.innerHTML = participants.map(name => {
+    if (skin.renderSeat) {
+      return skin.renderSeat(name, portraitUrl(name), slug(name), lastName(name), initials(name))
+    }
     const img  = portraitUrl(name)
     const init = initials(name)
     return `

@@ -39,6 +39,8 @@ from nodes import (
     generate_character_summaries,
     generate_commentator_recap,
     generate_moderator_steer,
+    generate_oxford_opening_vote,
+    generate_oxford_verdict,
     summarize_history,
     detect_forced_speaker,
     analyze_sidebar,
@@ -154,6 +156,18 @@ class Session:
             self._put(evt.phase_update(self.state["debate_phase"], self.state.get("format_roles") or {}))
 
         last_phase = self.state.get("debate_phase") or ""
+
+        # Oxford opening vote — fires once, before the first argument is made
+        if (self.state.get("debate_format") == "oxford"
+                and not self.state.get("oxford_opening_vote")):
+            vote = generate_oxford_opening_vote(self.state)
+            if vote:
+                self.state = {**self.state, "oxford_opening_vote": vote}
+                self._put(evt.oxford_opening_vote(
+                    vote["proposition_pct"],
+                    vote["persona_leanings"],
+                    vote["rationale"],
+                ))
 
         try:
             for snapshot in self.graph.stream(self.state, stream_mode="values"):
@@ -301,6 +315,19 @@ class Session:
             ))
             self._put_sentinel()
         elif self.state.get("current_speaker") == "__max_turns__":
+            # Oxford verdict — fires before game_over for Oxford debates
+            if self.state.get("debate_format") == "oxford":
+                verdict = generate_oxford_verdict(self.state)
+                if verdict:
+                    self.state = {**self.state, "oxford_verdict": verdict}
+                    self._put(evt.oxford_verdict(
+                        winner=verdict["winner"],
+                        proposition_open=verdict["proposition_open"],
+                        proposition_final=verdict["proposition_final"],
+                        margin=verdict["margin"],
+                        persona_verdicts=verdict["persona_verdicts"],
+                        verdict=verdict["verdict"],
+                    ))
             # Max turns reached — show end-of-game report
             self._put(evt.game_over(
                 turn=self.state.get("turn_count", 0),

@@ -9,18 +9,27 @@
 import { openAbout, openHelp } from './info.js'
 import { fetchTopics } from './api.js'
 
-export function mount(container, characters, onStart, { isLocal = false } = {}) {
+export function mount(container, characters, onStart, { isLocal = false, skin = {} } = {}) {
+  const s_appName    = skin.appName             ?? "THE PHILOSOPHER'S BAR"
+  const s_sub        = skin.setupSub            ?? "Select 2–4 thinkers for tonight's debate"
+  const s_filter     = skin.charFilterPlaceholder ?? "Filter thinkers…"
+  const s_topicLabel = skin.topicLabel          ?? "What should they discuss?"
+  const s_topicPh    = skin.topicPlaceholder    ?? "What is the nature of justice?"
+  const s_start      = skin.startLabel          ?? "Open the bar ▶"
+  const s_or         = skin.orLabel             ?? "── or ──"
+  const s_dotdLoad   = skin.dotdLoadingText     ?? "generating tonight's debate…"
+
   container.innerHTML = `
     <div class="setup-overlay">
       <div class="setup-box">
-        <h1 class="setup-title">THE PHILOSOPHER'S BAR</h1>
-        <p class="setup-sub">Select 2–4 thinkers for tonight's debate</p>
+        <h1 class="setup-title">${s_appName}</h1>
+        <p class="setup-sub">${s_sub}</p>
 
         <input
           id="char-filter"
           class="char-filter-input"
           type="text"
-          placeholder="Filter thinkers…"
+          placeholder="${escHtml(s_filter)}"
           autocomplete="off"
           spellcheck="false"
         />
@@ -42,12 +51,12 @@ export function mount(container, characters, onStart, { isLocal = false } = {}) 
 
         <p class="selection-hint" id="selection-hint">Select 2–4 thinkers</p>
 
-        <label class="topic-label" for="topic-input">What should they discuss?</label>
+        <label class="topic-label" for="topic-input">${s_topicLabel}</label>
         <input
           id="topic-input"
           class="topic-input"
           type="text"
-          placeholder="What is the nature of justice?"
+          placeholder="${escHtml(s_topicPh)}"
           maxlength="500"
           autocomplete="off"
         />
@@ -107,13 +116,13 @@ export function mount(container, characters, onStart, { isLocal = false } = {}) 
           </div>
         </div>
 
-        <button class="start-btn" id="start-btn" disabled>Open the bar ▶</button>
+        <button class="start-btn" id="start-btn" disabled>${escHtml(s_start)}</button>
         <p class="setup-error" id="setup-error"></p>
 
-        <div class="setup-or">── or ──</div>
+        <div class="setup-or">${s_or}</div>
 
         <div class="dotd-card" id="dotd-card">
-          <div class="dotd-loading">generating tonight's debate…</div>
+          <div class="dotd-loading">${escHtml(s_dotdLoad)}</div>
         </div>
 
         <div class="setup-footer">
@@ -229,7 +238,7 @@ export function mount(container, characters, onStart, { isLocal = false } = {}) 
     checkboxes.forEach(cb => { cb.disabled = isOxford })
     if (isOxford) {
       startBtn.disabled = true
-      hint.textContent = 'Select a suggested Oxford debate below'
+      hint.textContent = skin.oxfordHint ?? 'Select a suggested Oxford debate below'
       hint.classList.remove('hint-ok', 'hint-warn')
     } else {
       updateHint()

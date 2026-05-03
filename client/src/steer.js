@@ -11,14 +11,23 @@ function escHtml(str) {
     .replace(/"/g, '&quot;')
 }
 
-export function open(currentStyle, styles, summary = '', drawerContainer, searchFn = null, participants = []) {
+export function open(currentStyle, styles, summary = '', drawerContainer, searchFn = null, participants = [], skin = {}) {
+  const styleNames = skin.moderatorStyleNames ?? {}
+  const s_title    = skin.steerTitle            ?? "── STEER THE DEBATE ──"
+  const s_quit     = skin.steerQuitLabel        ?? "Quit game"
+  const s_ph       = skin.steerInputPlaceholder ?? "Speak into the debate — or leave blank for the moderator…"
+  const s_submit   = skin.steerSubmitLabel      ?? "Steer ▶"
+  const s_evidence = skin.evidenceLabel         ?? "── inject evidence ──"
+  const s_evPh     = skin.evidencePlaceholder   ?? "Search term — result will be injected as empirical fact…"
+  const s_approach = skin.moderatorStyleLabel   ?? "── choose a moderator approach ──"
+
   return new Promise((resolve) => {
     const drawer = document.createElement('div')
     drawer.className = 'steer-drawer'
     drawer.innerHTML = `
       <div class="steer-drawer-header">
-        <div class="steer-title">── STEER THE DEBATE ──</div>
-        <button class="steer-quit-btn" id="steer-quit">Quit game</button>
+        <div class="steer-title">${s_title}</div>
+        <button class="steer-quit-btn" id="steer-quit">${escHtml(s_quit)}</button>
       </div>
 
       ${summary ? `<div class="steer-summary">${escHtml(summary)}</div>` : ''}
@@ -28,20 +37,20 @@ export function open(currentStyle, styles, summary = '', drawerContainer, search
           class="steer-text-input"
           id="steer-text-input"
           type="text"
-          placeholder="Speak into the debate — or leave blank for the moderator…"
+          placeholder="${escHtml(s_ph)}"
           autocomplete="off"
         />
-        <button class="steer-submit-btn" id="steer-submit">Steer ▶</button>
+        <button class="steer-submit-btn" id="steer-submit">${escHtml(s_submit)}</button>
       </div>
 
-      <div class="steer-or">── inject evidence ──</div>
+      <div class="steer-or">${s_evidence}</div>
 
       <div class="evidence-search-row">
         <input
           class="steer-text-input"
           id="evidence-query"
           type="text"
-          placeholder="Search term — result will be injected as empirical fact…"
+          placeholder="${escHtml(s_evPh)}"
           autocomplete="off"
         />
         <button class="steer-search-btn" id="evidence-search">Search</button>
@@ -49,7 +58,7 @@ export function open(currentStyle, styles, summary = '', drawerContainer, search
 
       <div id="evidence-preview" class="evidence-preview" style="display:none"></div>
 
-      <div class="steer-or">── choose a moderator approach ──</div>
+      <div class="steer-or">${s_approach}</div>
 
       <div class="style-list" id="style-list">
         ${styles.map(s => `
@@ -57,7 +66,7 @@ export function open(currentStyle, styles, summary = '', drawerContainer, search
             class="style-item${s.style === currentStyle ? ' style-selected' : ''}"
             data-style="${escHtml(s.style)}"
           >
-            <span class="style-name">${escHtml(s.style)}</span>
+            <span class="style-name">${escHtml(styleNames[s.style] ?? s.style)}</span>
             <span class="style-desc">${escHtml(s.description)}</span>
           </button>
         `).join('')}

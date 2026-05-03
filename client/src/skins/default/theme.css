@@ -1,0 +1,20 @@
+/* Default skin — The Philosopher's Bar
+   All CSS variables. Override any subset in a custom skin's theme.css. */
+:root {
+  --bg:          #1a0f00;
+  --bg-dark:     #0d0700;
+  --bg-mid:      #2d1a00;
+  --border:      #3a2400;
+  --border-hi:   #5c3a00;
+  --gold:        #f5c842;
+  --gold-dim:    #8a7040;
+  --text:        #f5e6c0;
+  --text-dim:    #6b5030;
+  --amber:       #c8a86b;
+  --blue:        #7ab8f5;
+  --green:       #a8d8a8;
+  --red:         #c06040;
+  --beat:        #3a2000;
+  --mono:        'JetBrains Mono', 'Consolas', monospace;
+  --serif:       'IM Fell English', Georgia, serif;
+}

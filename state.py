@@ -43,6 +43,8 @@ class RoomState(TypedDict):
     format_seq_idx:   int      # current position in format_seq
     debate_phase:     str      # current phase name, e.g. "opening" | "floor" | "rebuttal"
     phase_instruction: str     # injected into philosopher prompt for structured phases
+    oxford_opening_vote: dict  # {proposition_pct, persona_leanings, rationale} or {}
+    oxford_verdict: dict       # {winner, proposition_open, proposition_final, margin, persona_verdicts, verdict} or {}
 
 
 def _assign_oxford_roles(participants: list[str]) -> dict:
@@ -132,6 +134,8 @@ def new_room_state(
         "format_seq_idx":   0,
         "debate_phase":     "",
         "phase_instruction": "",
+        "oxford_opening_vote": {},
+        "oxford_verdict":      {},
     }
 
 
@@ -165,8 +169,10 @@ def reset_for_new_topic(state: RoomState, topic: str) -> RoomState:
         "commentator_log": [],
         "diagram_this_turn": {},
         "shown_diagram_urls": [],
-        "format_seq":       format_seq,
-        "format_seq_idx":   0,
-        "debate_phase":     "",
+        "format_seq":        format_seq,
+        "format_seq_idx":    0,
+        "debate_phase":      "",
         "phase_instruction": "",
+        "oxford_opening_vote": {},
+        "oxford_verdict":      {},
     }

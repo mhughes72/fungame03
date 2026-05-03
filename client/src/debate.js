@@ -12,10 +12,13 @@ import * as Seating from './seating.js'
 import { openAbout, openHelp } from './info.js'
 
 export function mount(container, sessionId, participants, topic, styles, api) {
+  const skin     = api.skin ?? {}
+  const appTitle = skin.appName ?? "THE PHILOSOPHER'S BAR"
+
   container.innerHTML = `
     <div class="debate-shell">
       <header class="debate-header">
-        <span class="debate-title">THE PHILOSOPHER'S BAR</span>
+        <span class="debate-title">${appTitle}</span>
         <div class="header-avatars" id="seats-bar"></div>
         <span class="debate-topic">${escHtml(topic)}</span>
         <button class="info-btn" id="about-btn">About</button>
@@ -47,8 +50,9 @@ export function mount(container, sessionId, participants, topic, styles, api) {
   let currentPhase      = ''
   let currentFormatRoles = {}
   let lastState    = { turn: 0, heat: 0, concession_total: 0, partial_agreements: [], remaining_disagreements: [], drift_topic: '' }
+  let oxfordOpeningVote = null
 
-  const seating = Seating.create(seatsBar, participants)
+  const seating = Seating.create(seatsBar, participants, skin)
   renderSidebar(sidebar, {
     topic,
     turn: 0,
@@ -66,7 +70,7 @@ export function mount(container, sessionId, participants, topic, styles, api) {
     startDiv.id = 'debate-starting'
     startDiv.className = 'debate-starting'
     startDiv.innerHTML =
-      `<span class="debate-starting-text">Opening the bar</span>` +
+      `<span class="debate-starting-text">${skin.debateStartingText ?? 'Opening the bar'}</span>` +
       `<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span>`
     convoPane.appendChild(startDiv)
   }
@@ -106,6 +110,16 @@ export function mount(container, sessionId, participants, topic, styles, api) {
         break
       }
 
+      case 'oxford_opening_vote':
+        oxfordOpeningVote = data
+        lastState = { ...lastState, oxford_opening_vote: data }
+        renderSidebar(sidebar, { topic, ...lastState, debate_phase: currentPhase, format_roles: currentFormatRoles })
+        break
+
+      case 'oxford_verdict':
+        appendOxfordVerdict(convoPane, data)
+        break
+
       case 'phase_update':
         currentPhase       = data.debate_phase
         currentFormatRoles = data.format_roles || {}
@@ -130,7 +144,7 @@ export function mount(container, sessionId, participants, topic, styles, api) {
           appendDrift(convoPane, data.drift_topic, topic)
         }
         convoPane.scrollTop = convoPane.scrollHeight
-        openSteerModal(currentStyle, styles, debateSummary(lastState, participants), leftCol, api.searchEvidence, participants).then(result => {
+        openSteerModal(currentStyle, styles, debateSummary(lastState, participants), leftCol, api.searchEvidence, participants, skin).then(result => {
           steerModalPending = false
           if (result === null) {
             appendGameOver(convoPane, lastState, participants, quit, sessionId, api)
@@ -368,6 +382,56 @@ function appendDiagram(el, { speaker, title, thumb_url, url, page_url }) {
       `<img class="diagram-img" src="${escHtml(thumb_url)}" alt="${escHtml(title)}" />` +
       `<div class="diagram-caption">${escHtml(title)}</div>` +
     `</a>`
+  scrollAppend(el, div)
+}
+
+function appendOxfordVerdict(el, { winner, proposition_open, proposition_final, margin, persona_verdicts, verdict }) {
+  const winnerLabel = winner === 'proposition' ? 'PROPOSITION WINS' : 'OPPOSITION WINS'
+  const winnerClass = winner === 'proposition' ? 'oxford-verdict-prop' : 'oxford-verdict-opp'
+  const isTie       = proposition_final === 50
+
+  // Shift bar
+  const pctLeft  = Math.min(proposition_open, proposition_final)
+  const pctRight = Math.max(proposition_open, proposition_final)
+  const fillWidth = pctRight - pctLeft
+  const propGained = proposition_final > proposition_open
+  const fillColor = propGained ? 'var(--green)' : 'var(--amber)'
+  const marginLabel = (margin >= 0 ? '+' : '') + margin + ' pts'
+
+  const shiftBar = `
+    <div class="oxford-shift-wrap">
+      <div class="oxford-shift-ends"><span>Opp 0%</span><span>Prop 100%</span></div>
+      <div class="oxford-shift-track">
+        <div class="oxford-shift-fill" style="left:${pctLeft}%;width:${fillWidth}%;background:${fillColor}"></div>
+        <div class="oxford-shift-mark oxford-shift-mark-open" style="left:${proposition_open}%">
+          <div class="oxford-shift-pip"></div>
+          <div class="oxford-shift-pip-label">${proposition_open}%</div>
+        </div>
+        <div class="oxford-shift-mark oxford-shift-mark-close" style="left:${proposition_final}%">
+          <div class="oxford-shift-pip oxford-shift-pip-close"></div>
+          <div class="oxford-shift-pip-label oxford-shift-pip-label-close">${proposition_final}%</div>
+        </div>
+      </div>
+      <div class="oxford-shift-margin" style="color:${fillColor}">${propGained ? '→' : '←'} ${marginLabel}</div>
+    </div>
+  `
+
+  const tieNote = isTie
+    ? `<div class="oxford-verdict-tie">The motion falls — a tie goes to the opposition.</div>`
+    : ''
+
+  const div = document.createElement('div')
+  div.className = 'oxford-verdict-card'
+  div.innerHTML = `
+    <div class="oxford-verdict-title">── THE VERDICT ──</div>
+    ${shiftBar}
+    <div class="oxford-verdict-winner ${winnerClass}">${winnerLabel}</div>
+    ${tieNote}
+    <div class="oxford-verdict-text">${escHtml(verdict)}</div>
+    <ul class="oxford-verdict-personas">
+      ${(persona_verdicts || []).map(v => `<li>${escHtml(v)}</li>`).join('')}
+    </ul>
+  `
   scrollAppend(el, div)
 }
 
@@ -736,6 +800,7 @@ function renderSidebar(el, state) {
     remaining_disagreements = [],
     debate_phase = '',
     format_roles = {},
+    oxford_opening_vote = null,
   } = state
 
   const heatColor = heatColor_(heat)
@@ -755,9 +820,24 @@ function renderSidebar(el, state) {
       `</div>`
     : ''
 
+  const openingVoteBanner = oxford_opening_vote
+    ? `<details class="oxford-opening-banner">
+        <summary class="oxford-opening-summary">
+          Opening position: <strong>${oxford_opening_vote.proposition_pct}%</strong> for proposition
+        </summary>
+        <div class="oxford-opening-detail">
+          <div class="oxford-opening-rationale">${escHtml(oxford_opening_vote.rationale || '')}</div>
+          <ul class="oxford-opening-leanings">
+            ${(oxford_opening_vote.persona_leanings || []).map(l => `<li>${escHtml(l)}</li>`).join('')}
+          </ul>
+        </div>
+      </details>`
+    : ''
+
   let html = `
     ${phaseBanner}
     ${rolesHtml}
+    ${openingVoteBanner}
     <div class="sb-section">
       <div class="sb-label">TONIGHT'S QUESTION</div>
       <div class="sb-topic">${escHtml(topic)}</div>

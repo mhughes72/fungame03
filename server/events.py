@@ -128,6 +128,34 @@ def bars(heat: int, concession_total: int) -> dict:
     return _evt("bars", {"heat": heat, "concession_total": concession_total})
 
 
+def oxford_opening_vote(proposition_pct: int, persona_leanings: list, rationale: str) -> dict:
+    """Pre-debate audience split — fires once at the start of the first Oxford batch."""
+    return _evt("oxford_opening_vote", {
+        "proposition_pct":  proposition_pct,
+        "persona_leanings": persona_leanings,
+        "rationale":        rationale,
+    })
+
+
+def oxford_verdict(
+    winner: str,
+    proposition_open: int,
+    proposition_final: int,
+    margin: int,
+    persona_verdicts: list,
+    verdict: str,
+) -> dict:
+    """Post-debate verdict card — fires after Oxford rebuttals complete."""
+    return _evt("oxford_verdict", {
+        "winner":            winner,
+        "proposition_open":  proposition_open,
+        "proposition_final": proposition_final,
+        "margin":            margin,
+        "persona_verdicts":  persona_verdicts,
+        "verdict":           verdict,
+    })
+
+
 def debug(channel: str, label: str, data=None) -> dict:
     """Debug log line — forwarded to the browser console."""
     return _evt("debug", {"channel": channel, "label": label, "data": data})

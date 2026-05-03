@@ -6,6 +6,16 @@ import * as debate from './debate.js'
 const app = document.querySelector('#app')
 
 let _features = {}
+let _skin     = {}
+
+async function loadSkin() {
+  const skinName = import.meta.env.VITE_SKIN || 'default'
+  const [skinModule] = await Promise.all([
+    import(`./skins/${skinName}/skin.js`),
+    import(`./skins/${skinName}/theme.css`),
+  ])
+  return skinModule
+}
 
 async function showSetup() {
   let characters, styles
@@ -37,11 +47,12 @@ async function showSetup() {
     } catch (err) {
       screen.showError(`Could not start session: ${err.message}`)
     }
-  }, { isLocal })
+  }, { isLocal, skin: _skin })
 }
 
 function showDebate(sessionId, participants, topic, styles) {
   debate.mount(app, sessionId, participants, topic, styles, {
+    skin:           _skin,
     steer:          api.steer,
     cheat:          api.cheat,
     deleteSession:  api.deleteSession,
@@ -56,4 +67,7 @@ function showDebate(sessionId, participants, topic, styles) {
   app.addEventListener('debate:quit', () => showSetup(), { once: true })
 }
 
-showSetup()
+loadSkin()
+  .then(skinModule => { _skin = skinModule })
+  .catch(() => { /* skin load failure is non-fatal — defaults apply */ })
+  .finally(() => showSetup())

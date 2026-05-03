@@ -1502,5 +1502,61 @@
     "audience_level": "university",
     "rationale": "Rand built a moral philosophy around rational self-interest; Reagan made it policy. Marx called it exploitation dressed as opportunity; Chomsky has spent fifty years documenting who the market actually rewards.",
     "source": "curated"
+  },
+  {
+    "id": "3f2e487b",
+    "topic": "The pursuit of happiness should be prioritized over material success",
+    "tagline": "Choose joy and meaning over wealth and status",
+    "characters": [
+      "John Lennon",
+      "Oscar Wilde",
+      "Friedrich Nietzsche",
+      "Elon Musk"
+    ],
+    "roles": {
+      "proposition": [
+        "John Lennon",
+        "Oscar Wilde"
+      ],
+      "opposition": [
+        "Friedrich Nietzsche",
+        "Elon Musk"
+      ]
+    },
+    "category": "philosophical",
+    "theme": "happiness_vs_success",
+    "audience_level": "university",
+    "rationale": "The Proposition advocates for internal fulfillment and artistic expression, while the Opposition emphasizes the drive for success and personal achievement as vital to human potential.",
+    "format": "oxford",
+    "source": "generated",
+    "generated_at": "2026-05-03"
+  },
+  {
+    "id": "143bdc98",
+    "topic": "The pursuit of beauty enriches life more than the pursuit of truth",
+    "tagline": "Is beauty or truth the ultimate goal in life?",
+    "characters": [
+      "Ludwig van Beethoven",
+      "Wolfgang Amadeus Mozart",
+      "Friedrich Nietzsche",
+      "Sigmund Freud"
+    ],
+    "roles": {
+      "proposition": [
+        "Ludwig van Beethoven",
+        "Wolfgang Amadeus Mozart"
+      ],
+      "opposition": [
+        "Friedrich Nietzsche",
+        "Sigmund Freud"
+      ]
+    },
+    "category": "cultural",
+    "theme": "beauty_vs_truth",
+    "audience_level": "university",
+    "rationale": "The Proposition champions the enrichment of human experience through beauty in art and music, while the Opposition argues that truth, including psychological truths, is essential for human growth and understanding.",
+    "format": "oxford",
+    "source": "generated",
+    "generated_at": "2026-05-03"
   }
 ]

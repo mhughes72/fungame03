@@ -1,22 +1,5 @@
-/* ── palette ────────────────────────────────────────────────────────── */
-:root {
-  --bg:          #1a0f00;
-  --bg-dark:     #0d0700;
-  --bg-mid:      #2d1a00;
-  --border:      #3a2400;
-  --border-hi:   #5c3a00;
-  --gold:        #f5c842;
-  --gold-dim:    #8a7040;
-  --text:        #f5e6c0;
-  --text-dim:    #6b5030;
-  --amber:       #c8a86b;
-  --blue:        #7ab8f5;
-  --green:       #a8d8a8;
-  --red:         #c06040;
-  --beat:        #3a2000;
-  --mono:        'JetBrains Mono', 'Consolas', monospace;
-  --serif:       'IM Fell English', Georgia, serif;
-}
+/* ── palette — defined by the active skin's theme.css ───────────────── */
+@import './skins/default/theme.css';
 
 /* ── reset ──────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -466,6 +449,13 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   padding: 0.5rem 1.25rem;
   background: var(--bg-mid);
   border-bottom: 1px solid var(--border-hi);
+  flex-shrink: 0;
+}
+
+.header-avatars {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   flex-shrink: 0;
 }
 
@@ -1857,6 +1847,193 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   flex-shrink: 0;
 }
 .sidebar-toggle-btn:hover { border-color: var(--amber); color: var(--amber); }
+
+
+/* ══════════════════════════════════════════════════════════════════════ */
+/* OXFORD DEBATE — opening vote banner + verdict card                     */
+/* ══════════════════════════════════════════════════════════════════════ */
+
+/* ── sidebar opening vote banner (collapsible) ───────────────────────── */
+.oxford-opening-banner {
+  margin-bottom: 0.6rem;
+  border: 1px solid var(--border);
+  background: rgba(90, 58, 0, 0.12);
+  font-size: 0.72rem;
+}
+
+.oxford-opening-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.5rem;
+  cursor: pointer;
+  color: var(--amber);
+  list-style: none;
+  user-select: none;
+  line-height: 1.4;
+}
+.oxford-opening-summary::-webkit-details-marker { display: none; }
+.oxford-opening-summary::after {
+  content: '▾';
+  margin-left: auto;
+  font-size: 0.65rem;
+  color: var(--gold-dim);
+  transition: transform 0.15s;
+}
+.oxford-opening-banner[open] .oxford-opening-summary::after { transform: rotate(-180deg); }
+.oxford-opening-summary strong { color: var(--gold); font-weight: 700; }
+
+.oxford-opening-detail {
+  padding: 0.35rem 0.5rem 0.4rem;
+  border-top: 1px solid var(--border);
+}
+
+.oxford-opening-rationale {
+  color: var(--text-dim);
+  font-style: italic;
+  margin-bottom: 0.3rem;
+  font-size: 0.68rem;
+  line-height: 1.5;
+}
+
+.oxford-opening-leanings {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 0.68rem;
+  line-height: 1.5;
+}
+.oxford-opening-leanings li::before { content: '· '; color: var(--gold-dim); }
+
+/* ── verdict card (conversation pane) ────────────────────────────────── */
+.oxford-verdict-card {
+  margin: 1.5rem 0 1rem;
+  padding: 1.1rem 1.25rem 1rem;
+  border: 1px solid var(--border-hi);
+  background: rgba(60, 38, 0, 0.5);
+}
+
+.oxford-verdict-title {
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--gold-dim);
+  margin-bottom: 0.9rem;
+}
+
+/* ── shift bar ── */
+.oxford-shift-wrap { margin-bottom: 0.8rem; }
+
+.oxford-shift-ends {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.62rem;
+  color: var(--text-dim);
+  margin-bottom: 0.2rem;
+}
+
+.oxford-shift-track {
+  position: relative;
+  height: 8px;
+  background: var(--bg-mid);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  margin-bottom: 0.55rem;
+}
+
+.oxford-shift-fill {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  border-radius: 2px;
+  opacity: 0.55;
+}
+
+.oxford-shift-mark {
+  position: absolute;
+  top: -4px;
+  transform: translateX(-50%);
+}
+
+.oxford-shift-pip {
+  width: 6px;
+  height: 16px;
+  background: var(--text-dim);
+  border-radius: 1px;
+  margin: 0 auto;
+}
+
+.oxford-shift-pip-close {
+  background: var(--gold);
+}
+
+.oxford-shift-pip-label {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.62rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.oxford-shift-pip-label-close { color: var(--gold); }
+
+.oxford-shift-margin {
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding-top: 0.85rem;
+}
+
+/* ── winner declaration ── */
+.oxford-verdict-winner {
+  text-align: center;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin: 0.6rem 0 0.25rem;
+}
+
+.oxford-verdict-prop { color: var(--green); }
+.oxford-verdict-opp  { color: var(--amber); }
+
+.oxford-verdict-tie {
+  text-align: center;
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  font-style: italic;
+  margin-bottom: 0.4rem;
+}
+
+/* ── written verdict ── */
+.oxford-verdict-text {
+  margin: 0.65rem 0 0.75rem;
+  font-size: 0.82rem;
+  line-height: 1.65;
+  color: var(--text);
+  border-left: 2px solid var(--border-hi);
+  padding-left: 0.75rem;
+}
+
+/* ── persona verdicts ── */
+.oxford-verdict-personas {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  border-top: 1px solid var(--border);
+  padding-top: 0.5rem;
+}
+.oxford-verdict-personas li {
+  padding: 0.15rem 0;
+  line-height: 1.5;
+}
+.oxford-verdict-personas li::before { content: '· '; color: var(--gold-dim); }
 
 
 /* ══════════════════════════════════════════════════════════════════════ */

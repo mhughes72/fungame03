@@ -1152,3 +1152,145 @@ INSTRUCTIONS
         HumanMessage(content=prompt),
     ])
     return result
+
+
+# --------------------------------------------------------------------------- #
+# Oxford debate verdict (opening vote + closing verdict)                        #
+# --------------------------------------------------------------------------- #
+
+_OXFORD_PERSONAS = [
+    ("The Sceptic",      "rewards specificity and evidence, unmoved by rhetoric alone"),
+    ("The Idealist",     "moves on moral clarity and vision, unmoved by pragmatism"),
+    ("The Pragmatist",   "only cares what works in practice — the swing voter"),
+    ("The Traditionalist",
+     "leans against whichever side makes the more unconventional or idealistic claim; "
+     "if the motion has an obvious status-quo side, starts on the opposition by default"),
+    ("The Contrarian",   "drawn to the underdog, punishes overconfidence"),
+]
+
+
+class _OxfordOpeningVote(BaseModel):
+    proposition_pct:  int        # 0–100: audience % supporting the proposition before debate
+    persona_leanings: list[str]  # one line per persona, e.g. "The Sceptic is uncommitted…"
+    rationale:        str        # one sentence explaining the opening split
+
+
+class _OxfordVerdict(BaseModel):
+    proposition_final_pct: int   # 0–100
+    winner:                str   # "proposition" or "opposition"
+    margin:                int   # proposition_final_pct - opening_pct (signed)
+    persona_verdicts:      list[str]  # one line per persona on how they shifted
+    verdict:               str   # 2–3 sentences: what won it, what failed, whether rebuttal decisive
+
+
+def generate_oxford_opening_vote(state: RoomState) -> dict:
+    """Simulate the pre-debate audience split across five fixed personas."""
+    topic      = state["topic"]
+    roles      = state.get("format_roles") or {}
+    prop_names = [n.replace("_", " ") for n in (roles.get("proposition") or [])]
+    opp_names  = [n.replace("_", " ") for n in (roles.get("opposition") or [])]
+
+    persona_lines = "\n".join(f"  - {name}: {desc}" for name, desc in _OXFORD_PERSONAS)
+
+    prompt = (
+        f'Motion: "{topic}"\n'
+        f"Proposition: {', '.join(prop_names)}\n"
+        f"Opposition: {', '.join(opp_names)}\n\n"
+        f"Five audience personas:\n{persona_lines}\n\n"
+        "Before hearing any arguments, simulate each persona's prior disposition based purely on "
+        "the motion as stated and their own character. Reason through each persona explicitly.\n\n"
+        "Return:\n"
+        "- proposition_pct: the percentage (0–100) that would currently back the proposition\n"
+        "- persona_leanings: one short line per persona, "
+        "e.g. 'The Sceptic is uncommitted — needs evidence from both sides'\n"
+        "- rationale: one sentence explaining why this opening split makes sense\n\n"
+        "IMPORTANT: if the motion doesn't have an obvious status-quo side, "
+        "the Traditionalist leans against whichever position is more unconventional or idealistic."
+    )
+
+    try:
+        result: _OxfordOpeningVote = ChatOpenAI(model="gpt-4o-mini", temperature=0.3).with_structured_output(
+            _OxfordOpeningVote
+        ).invoke([
+            SystemMessage(content=(
+                "You are simulating a five-person audience panel for an Oxford-style debate. "
+                "Give each persona's prior disposition before any arguments are heard."
+            )),
+            HumanMessage(content=prompt),
+        ])
+        return {
+            "proposition_pct":  result.proposition_pct,
+            "persona_leanings": result.persona_leanings,
+            "rationale":        result.rationale,
+        }
+    except Exception:
+        return {}
+
+
+def generate_oxford_verdict(state: RoomState) -> dict:
+    """Score the full debate transcript and return the audience verdict."""
+    topic      = state["topic"]
+    roles      = state.get("format_roles") or {}
+    prop_names = [n.replace("_", " ") for n in (roles.get("proposition") or [])]
+    opp_names  = [n.replace("_", " ") for n in (roles.get("opposition") or [])]
+    opening    = state.get("oxford_opening_vote") or {}
+    messages   = state.get("messages") or []
+
+    opening_pct     = opening.get("proposition_pct", 50)
+    opening_leanings = opening.get("persona_leanings") or []
+    leanings_text = ("\n".join(f"  - {l}" for l in opening_leanings)
+                     if opening_leanings else "  (no prior data)")
+
+    persona_lines = "\n".join(f"  - {name}: {desc}" for name, desc in _OXFORD_PERSONAS)
+
+    transcript_parts = []
+    for m in messages:
+        if isinstance(m, SystemMessage):
+            continue
+        name = getattr(m, "name", None) or ""
+        if name.endswith("_bc"):
+            continue
+        display = name.replace("_", " ") if name else ("You" if isinstance(m, HumanMessage) else "?")
+        transcript_parts.append(f"{display}: {m.content[:300]}")
+    transcript = "\n\n".join(transcript_parts[-30:])
+
+    prompt = (
+        f'Motion: "{topic}"\n'
+        f"Proposition: {', '.join(prop_names)}\n"
+        f"Opposition: {', '.join(opp_names)}\n\n"
+        f"Opening audience split: {opening_pct}% for the proposition\n"
+        f"Opening persona leanings:\n{leanings_text}\n\n"
+        f"Five audience personas:\n{persona_lines}\n\n"
+        f"Full debate transcript:\n{transcript}\n\n"
+        "Simulate how each persona's position shifted based on the actual debate. "
+        "Reason through which arguments landed and which fell flat for each persona.\n\n"
+        "Return:\n"
+        "- proposition_final_pct: closing percentage (0–100) supporting the proposition\n"
+        "- winner: 'proposition' if proposition_final_pct > 50, 'opposition' if ≤ 50 "
+        "(a tie of 50 goes to opposition — the motion falls, Oxford convention)\n"
+        "- margin: proposition_final_pct minus the opening pct (signed; negative = proposition lost ground)\n"
+        "- persona_verdicts: one line per persona on how they shifted and why\n"
+        "- verdict: 2–3 sentences — what won it, what failed, whether the rebuttal was decisive"
+    )
+
+    try:
+        result: _OxfordVerdict = ChatOpenAI(model="gpt-4o-mini", temperature=0.3).with_structured_output(
+            _OxfordVerdict
+        ).invoke([
+            SystemMessage(content=(
+                "You are scoring an Oxford-style debate as an impartial audience panel. "
+                "Determine which side was more persuasive based on the actual arguments made."
+            )),
+            HumanMessage(content=prompt),
+        ])
+        winner = "opposition" if result.proposition_final_pct <= 50 else result.winner
+        return {
+            "proposition_open":  opening_pct,
+            "proposition_final": result.proposition_final_pct,
+            "winner":            winner,
+            "margin":            result.proposition_final_pct - opening_pct,
+            "persona_verdicts":  result.persona_verdicts,
+            "verdict":           result.verdict,
+        }
+    except Exception:
+        return {}

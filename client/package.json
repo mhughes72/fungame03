@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:love-boat": "vite build --mode love-boat",
     "preview": "vite preview"
   },
   "devDependencies": {
