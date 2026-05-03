@@ -122,6 +122,46 @@ Both scripts require `OPENAI_API_KEY` in `.env` for DALL-E generation. Wikipedia
 
 ---
 
+## Debate topics
+
+The setup screen shows a **Suggested Debate** card that picks a topic from a pre-generated pool in `debate_topics.json`. Topics are filtered by the audience level selected on the setup screen (Grade 5 / High School / University / Expert) and picked with weighted random selection — curated entries appear roughly 3× more often than AI-generated ones.
+
+The pool is managed with a standalone CLI that calls OpenAI to generate new entries:
+
+```bash
+# Generate 10 topics spread evenly across all audience levels (default)
+python generate_debate_topics.py --count 10
+
+# Generate 5 topics for a specific audience level
+python generate_debate_topics.py --count 5 --level grade5
+python generate_debate_topics.py --count 5 --level highschool
+python generate_debate_topics.py --count 5 --level university
+python generate_debate_topics.py --count 5 --level expert
+
+# List all topics currently in the file
+python generate_debate_topics.py --list
+
+# List topics for one level
+python generate_debate_topics.py --list --level university
+
+# Show all valid audience level keys
+python generate_debate_topics.py --levels
+
+# Delete all AI-generated topics (curated entries are preserved)
+python generate_debate_topics.py --clear
+
+# Verbose output — shows the full generated entry as JSON
+python generate_debate_topics.py --count 5 --verbose
+```
+
+Each generated entry includes the suggested characters, a one-line tagline, a category (heated / historic / philosophical / scientific / cultural / political), a semantic theme label (used to avoid repetition across runs), and an audience level. The generator automatically avoids topics, casts, and themes already present in the file for that level.
+
+**Adding curated entries manually:** open `debate_topics.json` and add an entry with `"source": "curated"`. Set a unique `"id"` (any string), fill in `topic`, `tagline`, `characters`, `category`, `theme`, and `audience_level`. The `--clear` command will never touch curated entries.
+
+Requires `OPENAI_API_KEY` in `.env`.
+
+---
+
 ## Bar UI controls
 
 | Key | Effect |
