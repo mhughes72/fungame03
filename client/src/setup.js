@@ -54,16 +54,6 @@ export function mount(container, characters, onStart, { isLocal = false } = {}) 
 
         <div class="setup-toggles">
           <label class="setup-toggle">
-            <input type="checkbox" id="toggle-commentator" checked />
-            <span class="toggle-label">Commentator</span>
-            <span class="toggle-desc">play-by-play after each round</span>
-          </label>
-          <label class="setup-toggle">
-            <input type="checkbox" id="toggle-moderator" checked />
-            <span class="toggle-label">Moderator</span>
-            <span class="toggle-desc">AI steers debate at each break</span>
-          </label>
-          <label class="setup-toggle">
             <input type="checkbox" id="toggle-diagrams" />
             <span class="toggle-label">Diagrams</span>
             <span class="toggle-desc">characters produce supporting images <span class="toggle-wip">· work in progress</span></span>
@@ -225,8 +215,8 @@ export function mount(container, characters, onStart, { isLocal = false } = {}) 
     const commEl      = container.querySelector('input[name="comm-length"]:checked')
     const modEl       = container.querySelector('input[name="mod-length"]:checked')
     return {
-      commentator:       container.querySelector('#toggle-commentator').checked,
-      moderator:         container.querySelector('#toggle-moderator').checked,
+      commentator:       true,
+      moderator:         true,
       diagrams:          container.querySelector('#toggle-diagrams').checked,
       audienceLevel:     audienceEl ? audienceEl.value : 'university',
       philosopherLength: philEl    ? philEl.value     : 'normal',
