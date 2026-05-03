@@ -129,34 +129,49 @@ The setup screen shows a **Suggested Debate** card that picks a topic from a pre
 The pool is managed with a standalone CLI that calls OpenAI to generate new entries:
 
 ```bash
-# Generate 10 topics spread evenly across all audience levels (default)
+# Generate 10 topics — mixed freeform and oxford (default: 1 oxford per 4 freeform)
 python generate_debate_topics.py --count 10
 
-# Generate 5 topics for a specific audience level
-python generate_debate_topics.py --count 5 --level grade5
-python generate_debate_topics.py --count 5 --level highschool
-python generate_debate_topics.py --count 5 --level university
-python generate_debate_topics.py --count 5 --level expert
+# Generate freeform topics only, spread across all audience levels
+python generate_debate_topics.py --count 10 --format freeform
+
+# Generate freeform topics for a specific audience level
+python generate_debate_topics.py --count 5 --format freeform --level grade5
+python generate_debate_topics.py --count 5 --format freeform --level highschool
+python generate_debate_topics.py --count 5 --format freeform --level university
+python generate_debate_topics.py --count 5 --format freeform --level expert
+
+# Generate Oxford-style topics only (always university level, always 4 characters, 2v2)
+python generate_debate_topics.py --count 5 --format oxford
 
 # List all topics currently in the file
 python generate_debate_topics.py --list
 
-# List topics for one level
+# List topics filtered by format or level
+python generate_debate_topics.py --list --format oxford
+python generate_debate_topics.py --list --format freeform
 python generate_debate_topics.py --list --level university
 
 # Show all valid audience level keys
 python generate_debate_topics.py --levels
 
-# Delete all AI-generated topics (curated entries are preserved)
+# Delete all AI-generated topics (curated entries are always preserved)
 python generate_debate_topics.py --clear
 
-# Verbose output — shows the full generated entry as JSON
+# Delete only generated topics of a specific format
+python generate_debate_topics.py --clear --format oxford
+python generate_debate_topics.py --clear --format freeform
+
+# Verbose output — shows cast, tagline, rationale, and roles for each entry
 python generate_debate_topics.py --count 5 --verbose
+python generate_debate_topics.py --count 5 --format oxford --verbose
 ```
 
-Each generated entry includes the suggested characters, a one-line tagline, a category (heated / historic / philosophical / scientific / cultural / political), a semantic theme label (used to avoid repetition across runs), and an audience level. The generator automatically avoids topics, casts, and themes already present in the file for that level.
+**Freeform topics** include 2–4 characters with roughly equal distribution across cast sizes. Each entry includes a tagline, category, theme, and audience level. The generator avoids repeating casts, themes, and categories already present in the file for that level.
 
-**Adding curated entries manually:** open `debate_topics.json` and add an entry with `"source": "curated"`. Set a unique `"id"` (any string), fill in `topic`, `tagline`, `characters`, `category`, `theme`, and `audience_level`. The `--clear` command will never touch curated entries.
+**Oxford topics** always have exactly 4 characters split 2v2. The generator assigns characters to Proposition and Opposition based on their actual historical views — characters are never assigned to a side that contradicts their real beliefs. Oxford entries include a `roles` field (`proposition` and `opposition` arrays) and `format: "oxford"`.
+
+**Adding curated entries manually:** open `debate_topics.json` and add an entry with `"source": "curated"`. For freeform: set `id`, `topic`, `tagline`, `characters`, `category`, `theme`, `audience_level`. For Oxford: also add `format: "oxford"` and `roles: {"proposition": [...], "opposition": [...]}`. The `--clear` command never touches curated entries.
 
 Requires `OPENAI_API_KEY` in `.env`.
 
