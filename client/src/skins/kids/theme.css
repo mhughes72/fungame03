@@ -1,0 +1,92 @@
+/* Kids skin — The Big Brain Club */
+:root {
+  --bg:          #fff9f0;
+  --bg-dark:     #ffefd6;
+  --bg-mid:      #fff3e0;
+  --border:      #f9c74f;
+  --border-hi:   #f8961e;
+  --gold:        #f8961e;
+  --gold-dim:    #f9c74f;
+  --text:        #3a2a00;
+  --text-dim:    #a07840;
+  --amber:       #f3722c;
+  --blue:        #4361ee;
+  --green:       #43aa8b;
+  --red:         #e63946;
+  --beat:        #ffefd6;
+  --mono:        'Comic Sans MS', 'Chalkboard SE', 'Marker Felt', cursive;
+  --serif:       'Comic Sans MS', 'Chalkboard SE', 'Marker Felt', cursive;
+}
+
+/* Rounded, bubbly borders everywhere */
+.debate-header,
+.setup-card,
+.steer-panel,
+.sidebar,
+.convo-pane,
+.seat {
+  border-radius: 18px !important;
+}
+
+/* Bright chunky header */
+.debate-header {
+  background: linear-gradient(135deg, #f9c74f 0%, #f8961e 100%);
+  border-bottom: 4px solid #f3722c !important;
+  color: #fff !important;
+}
+
+.debate-header h1,
+.debate-header .header-title {
+  color: #fff !important;
+  text-shadow: 2px 2px 0 #e63946;
+  letter-spacing: 1px;
+}
+
+/* Colourful seat cards */
+.seat {
+  border: 3px solid #f9c74f !important;
+  background: #fffbe8 !important;
+  box-shadow: 3px 3px 0 #f8961e !important;
+}
+
+.seat.seat-speaking {
+  border-color: #f3722c !important;
+  box-shadow: 0 0 0 4px #f9c74f, 3px 3px 0 #f3722c !important;
+  background: #fff3cd !important;
+}
+
+.seat.seat-thinking {
+  border-color: #4361ee !important;
+  box-shadow: 0 0 0 4px #b8c0ff, 3px 3px 0 #4361ee !important;
+}
+
+.seat.seat-consensus {
+  border-color: #43aa8b !important;
+  box-shadow: 0 0 0 4px #a8e6cf, 3px 3px 0 #43aa8b !important;
+}
+
+/* Message bubbles */
+.message {
+  border-radius: 16px !important;
+  border: 2px solid #f9c74f !important;
+  background: #fffbe8 !important;
+}
+
+/* Buttons — big and friendly */
+button, .btn {
+  border-radius: 999px !important;
+  font-weight: bold !important;
+  letter-spacing: 0.5px;
+}
+
+/* Steer panel */
+.steer-panel {
+  background: #fff9f0 !important;
+  border: 3px solid #f9c74f !important;
+}
+
+/* Sidebar */
+.sidebar {
+  background: #fffbe8 !important;
+  border-left: 3px solid #f9c74f !important;
+}

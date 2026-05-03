@@ -6,6 +6,7 @@
     "dev": "vite",
     "build": "vite build",
     "build:love-boat": "vite build --mode love-boat",
+    "build:kids": "vite build --mode kids",
     "preview": "vite preview"
   },
   "devDependencies": {

@@ -65,12 +65,55 @@ Opens at `http://localhost:8000`. The frontend is pre-built and served as static
 
 **To rebuild the frontend after editing `client/src/`:**
 
-```bash
+```powershell
 cd client
 npm install   # first time only
 npm run build
 cd ..
 ```
+
+### Skins
+
+The web UI supports build-time skins. Each skin lives in `client/src/skins/<name>/` and can override colours, fonts, all UI strings, bar beats, moderator style names, and optionally seat HTML. One skin is baked into the build — there is no runtime switching.
+
+**Build with a skin:**
+
+```powershell
+cd client
+npm run build           # default (The Philosopher's Bar)
+npm run build:kids      # The Big Brain Club — bright classroom theme
+npm run build:love-boat # The Lido Deck — nautical theme
+cd ..
+python run_server.py    # serve as normal
+```
+
+**Create a new skin:**
+
+1. Create `client/src/skins/<name>/theme.css` — redefine any CSS variables:
+   ```css
+   :root {
+     --bg:    #fff9f0;
+     --gold:  #f8961e;
+     --serif: 'Comic Sans MS', cursive;
+   }
+   ```
+
+2. Create `client/src/skins/<name>/skin.js` — all exports are optional; anything omitted falls back to the default:
+   ```js
+   export const appName    = "MY CUSTOM SKIN"
+   export const startLabel = "Let's go ▶"
+   export const barBeats   = ["*something atmospheric happens*"]
+   export const moderatorStyleNames = { socratic: "The Peacemaker" }
+   ```
+
+3. Add a build script to `client/package.json`:
+   ```json
+   "build:my-skin": "vite build --mode my-skin"
+   ```
+
+4. Run `cd client; npm run build:my-skin`
+
+Skin assets (textures, images) go in `client/src/skins/<name>/assets/` and are bundled by Vite. Custom seat HTML can be exported as `renderSeat(name, portraitUrl, slug, lastName, initials)` from `skin.js` — if not exported, the default oval-table seat layout is used.
 
 ## Generating portraits
 

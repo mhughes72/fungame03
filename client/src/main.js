@@ -8,8 +8,10 @@ const app = document.querySelector('#app')
 let _features = {}
 let _skin     = {}
 
+const _BUILTIN_MODES = new Set(['production', 'development', 'staging'])
+
 async function loadSkin() {
-  const skinName = import.meta.env.VITE_SKIN || 'default'
+  const skinName = _BUILTIN_MODES.has(import.meta.env.MODE) ? 'default' : (import.meta.env.MODE || 'default')
   const [skinModule] = await Promise.all([
     import(`./skins/${skinName}/skin.js`),
     import(`./skins/${skinName}/theme.css`),
