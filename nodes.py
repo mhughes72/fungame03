@@ -72,7 +72,7 @@ def turns_per_batch(participant_count: int) -> int:
     return participant_count * 2
 
 def turns_per_consensus(participant_count: int) -> int:
-    return participant_count * 2
+    return participant_count * 6
 
 
 # --------------------------------------------------------------------------- #
