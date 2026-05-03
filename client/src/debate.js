@@ -44,6 +44,8 @@ export function mount(container, sessionId, participants, topic, styles, api) {
   let closeStream       = null
   let gameEnded         = false
   let steerModalPending = false
+  let currentPhase      = ''
+  let currentFormatRoles = {}
   let lastState    = { turn: 0, heat: 0, concession_total: 0, partial_agreements: [], remaining_disagreements: [], drift_topic: '' }
 
   const seating = Seating.create(seatsBar, participants)
@@ -104,12 +106,20 @@ export function mount(container, sessionId, participants, topic, styles, api) {
         break
       }
 
+      case 'phase_update':
+        currentPhase       = data.debate_phase
+        currentFormatRoles = data.format_roles || {}
+        renderSidebar(sidebar, { topic, ...lastState, debate_phase: currentPhase, format_roles: currentFormatRoles })
+        break
+
       case 'state':
         clearTyping(convoPane)
         currentStyle = data.moderator_style
         currentHeat  = data.heat ?? currentHeat
-        lastState = data
-        renderSidebar(sidebar, { topic, ...data })
+        if (data.debate_phase) currentPhase = data.debate_phase
+        if (data.format_roles && Object.keys(data.format_roles).length) currentFormatRoles = data.format_roles
+        lastState = { ...data, debate_phase: currentPhase, format_roles: currentFormatRoles }
+        renderSidebar(sidebar, { topic, ...lastState })
         break
 
       case 'steer_needed':
@@ -269,7 +279,7 @@ export function mount(container, sessionId, participants, topic, styles, api) {
 
 // ── message rendering ────────────────────────────────────────────────── //
 
-function appendMessage(el, { role, name, content, backchannel }) {
+function appendMessage(el, { role, name, content, backchannel, debate_label = '' }) {
   const div = document.createElement('div')
 
   if (backchannel) {
@@ -290,6 +300,8 @@ function appendMessage(el, { role, name, content, backchannel }) {
   } else {
     const imgSrc  = `/portraits/${name.replace(/ /g, '_')}.png`
     const initials = name.split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase()
+    const isProposition = debate_label.includes('Proposition')
+    const labelClass = isProposition ? 'debate-label-prop' : 'debate-label-opp'
     div.className = 'msg msg-philosopher'
     div.innerHTML =
       `<div class="msg-avatar">` +
@@ -298,6 +310,7 @@ function appendMessage(el, { role, name, content, backchannel }) {
         `<div class="msg-avatar-initials" style="display:none">${escHtml(initials)}</div>` +
       `</div>` +
       `<div class="msg-body">` +
+        (debate_label ? `<div class="msg-debate-label ${labelClass}">${escHtml(debate_label)}</div>` : '') +
         `<div class="msg-name">${escHtml(name)}</div>` +
         `<div class="msg-content">${renderContent(content)}</div>` +
       `</div>`
@@ -721,6 +734,8 @@ function renderSidebar(el, state) {
     partial_agreements = [],
     points_of_agreement = [],
     remaining_disagreements = [],
+    debate_phase = '',
+    format_roles = {},
   } = state
 
   const heatColor = heatColor_(heat)
@@ -728,7 +743,21 @@ function renderSidebar(el, state) {
   const filled = '█'.repeat(heat)
   const empty  = '░'.repeat(10 - heat)
 
+  const phaseNames = { opening: 'Opening Statements', floor: 'Floor Debate', rebuttal: 'Rebuttals' }
+  const phaseBanner = debate_phase && phaseNames[debate_phase]
+    ? `<div class="sb-phase-banner">${phaseNames[debate_phase].toUpperCase()}</div>`
+    : ''
+
+  const rolesHtml = debate_phase && (format_roles.proposition || format_roles.opposition)
+    ? `<div class="sb-roles">` +
+        (format_roles.proposition?.length ? `<div class="sb-role sb-role-prop"><span class="sb-role-label">Proposition</span> ${format_roles.proposition.map(n => escHtml(n)).join(', ')}</div>` : '') +
+        (format_roles.opposition?.length  ? `<div class="sb-role sb-role-opp"><span class="sb-role-label">Opposition</span> ${format_roles.opposition.map(n => escHtml(n)).join(', ')}</div>` : '') +
+      `</div>`
+    : ''
+
   let html = `
+    ${phaseBanner}
+    ${rolesHtml}
     <div class="sb-section">
       <div class="sb-label">TONIGHT'S QUESTION</div>
       <div class="sb-topic">${escHtml(topic)}</div>

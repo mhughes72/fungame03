@@ -28,9 +28,11 @@ async function showSetup() {
     philosopherLength = 'normal',
     commentatorLength = 'normal',
     moderatorLength = 'normal',
+    debateFormat = '',
+    formatRoles = null,
   }) => {
     try {
-      const session = await api.createSession(chosen, topic, commentator, moderator, diagrams, audienceLevel, philosopherLength, commentatorLength, moderatorLength)
+      const session = await api.createSession(chosen, topic, commentator, moderator, diagrams, audienceLevel, philosopherLength, commentatorLength, moderatorLength, debateFormat, formatRoles)
       showDebate(session.session_id, chosen, topic, styles)
     } catch (err) {
       screen.showError(`Could not start session: ${err.message}`)

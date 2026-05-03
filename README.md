@@ -162,6 +162,45 @@ Requires `OPENAI_API_KEY` in `.env`.
 
 ---
 
+## Debate formats
+
+### Freeform (default)
+
+The default mode. Speaker order is determined each turn by keyword scoring — whoever's `hot_topics` overlap most with the last message speaks next. No fixed structure, no sides. The moderator steers every `N × 2` turns and the consensus checker fires every `N × 6` turns.
+
+### Oxford-style
+
+A structured format modelled on the Oxford Union debate. A **Debate format** radio appears on the setup screen — select Oxford-style before starting.
+
+**Roles are auto-assigned by pick order:** the first half of your selected characters become the Proposition; the second half become the Opposition. Curated Oxford topics in the Suggested Debate card pre-assign roles so characters always argue positions that match their real-world views.
+
+**Sequence for 4 characters (2v2):**
+
+| Phase | Who speaks | What they're asked to do |
+|---|---|---|
+| Opening statements | Prop 1, Prop 2 | Present 2–3 strongest arguments *for* the motion |
+| Opening statements | Opp 1, Opp 2 | Present 2–3 strongest arguments *against* the motion |
+| *(steer break)* | Player | Redirect, change style, or let the moderator intervene |
+| Floor debate | Anyone (keyword-scored) | Free debate — 8 turns for 4 characters |
+| *(auto-transition)* | Moderator | Announces rebuttals and names the order — no player input needed |
+| Rebuttals | Opp 2, Opp 1 | Dismantle the proposition's single strongest argument (opening statement quoted verbatim in prompt) |
+| Rebuttals | Prop 2, Prop 1 | Dismantle the opposition's single strongest argument (opening statement quoted verbatim in prompt) |
+
+For 2 characters (1v1): one opening each, 4 floor turns, one rebuttal each — 8 turns total.
+For 3 characters (1v2 or 2v1): openings in proportion, 6 floor turns, rebuttals reversed.
+
+**Key differences from freeform:**
+- Opening statements are independent — each character presents their own case without responding to the previous speaker
+- Rebuttals are grounded in the opposing side's verbatim opening statements, which are quoted directly in the prompt — characters rebut a specific argument, not whatever the floor was discussing
+- The transition from floor to rebuttals is automatic — the moderator announces the order and rebuttals begin immediately without a player steer break
+- Consensus checking is suppressed during structured phases
+- Steer breaks happen at phase boundaries only: one after openings (player can redirect before the floor), none before rebuttals
+- The right pane shows a phase banner (`OPENING STATEMENTS` / `FLOOR DEBATE` / `REBUTTALS`) and a roles block listing who is Proposition and Opposition
+- Each message is tagged with a small coloured label: blue for Proposition, amber for Opposition — during opening and rebuttal phases only, not during the floor
+- When Oxford is selected on the setup screen, the character list and topic input are locked — use the Suggested Debate card to pick a debate
+
+---
+
 ## Bar UI controls
 
 | Key | Effect |
@@ -641,3 +680,25 @@ Use 2 participants (faster, cheaper) unless a feature specifically requires more
 7. **New topic then quit:** reach consensus, start a new topic, then quit — no crash.
 
 **Pass:** all paths exit without Python tracebacks or LangSmith thread errors; web quit paths show the end-of-debate report.
+
+---
+
+### 20. Oxford-style debate format
+
+**What to verify:** structured sequence fires correctly, phase labels appear, opening statements are independent, rebuttals target the verbatim opening, auto-transition to rebuttals works.
+
+1. Open the web UI setup screen — confirm a **Debate format** radio appears with Freeform and Oxford-style options (visible to all users, no local flag needed).
+2. Select Oxford-style — confirm the character list and topic input grey out and become unclickable.
+3. Select a curated Oxford debate from the Suggested Debate card and click **Start this debate**.
+4. Confirm the right pane immediately shows `OPENING STATEMENTS` and a roles block with Proposition and Opposition names.
+5. Confirm each opening statement message has a small coloured tag — blue for Proposition, amber for Opposition.
+6. Confirm opening statements do not respond to each other — each character presents their own case independently.
+7. After all opening speeches, confirm a steer break fires — submit it (or leave it to the moderator).
+8. Confirm the phase banner updates to `FLOOR DEBATE` and the colour tags disappear.
+9. After the floor turns, confirm **no steer break appears** — the moderator automatically announces rebuttals and the rebuttal phase begins immediately.
+10. Confirm rebuttal speakers fire in reverse order (Opposition first, then Proposition) and their messages are tagged correctly.
+11. Confirm rebuttal prompts reference specific arguments from the opposing side's opening statement (visible in responses — characters should name and dismantle a specific claim, not a general position).
+12. After all rebuttals complete, confirm the debate ends with the end-of-debate report.
+13. Repeat with 2 characters — confirm the shorter sequence (1 opening each, 4 floor turns, 1 rebuttal each).
+
+**Pass:** all phases fire in order; steer breaks occur at phase boundaries; opening statements are independent (no "X just said…" framing); phase labels appear at the start of each phase, not at the end.

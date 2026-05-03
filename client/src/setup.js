@@ -70,6 +70,14 @@ export function mount(container, characters, onStart, { isLocal = false } = {}) 
           </div>
         </div>
 
+        <div class="setup-format" id="setup-format" style="display:none">
+          <span class="length-label">Debate format</span>
+          <div class="length-options">
+            <label class="length-opt"><input type="radio" name="debate-format" value="" checked /> Freeform</label>
+            <label class="length-opt"><input type="radio" name="debate-format" value="oxford" /> Oxford-style</label>
+          </div>
+        </div>
+
         <div class="setup-lengths" id="setup-lengths" style="display:none">
           <div class="length-group">
             <span class="length-label">Philosopher length</span>
@@ -184,7 +192,10 @@ export function mount(container, characters, onStart, { isLocal = false } = {}) 
   })
   observer.observe(document.body, { childList: true, subtree: true })
 
-  if (isLocal) container.querySelector('#setup-lengths').style.display = ''
+  container.querySelector('#setup-format').style.display = ''
+  if (isLocal) {
+    container.querySelector('#setup-lengths').style.display = ''
+  }
 
   const hint    = container.querySelector('#selection-hint')
   const startBtn = container.querySelector('#start-btn')
@@ -207,6 +218,24 @@ export function mount(container, characters, onStart, { isLocal = false } = {}) 
     startBtn.disabled = count < 2 || count > 4
   }
 
+  const charList   = container.querySelector('#char-list')
+  const charFilter = container.querySelector('#char-filter')
+  const topicInput = container.querySelector('#topic-input')
+
+  function setOxfordMode(isOxford) {
+    charList.classList.toggle('oxford-locked', isOxford)
+    charFilter.disabled = isOxford
+    topicInput.disabled = isOxford
+    checkboxes.forEach(cb => { cb.disabled = isOxford })
+    if (isOxford) {
+      startBtn.disabled = true
+      hint.textContent = 'Select a suggested Oxford debate below'
+      hint.classList.remove('hint-ok', 'hint-warn')
+    } else {
+      updateHint()
+    }
+  }
+
   updateHint()
   checkboxes.forEach(cb => cb.addEventListener('change', updateHint))
 
@@ -215,6 +244,7 @@ export function mount(container, characters, onStart, { isLocal = false } = {}) 
     const philEl      = container.querySelector('input[name="phil-length"]:checked')
     const commEl      = container.querySelector('input[name="comm-length"]:checked')
     const modEl       = container.querySelector('input[name="mod-length"]:checked')
+    const formatEl    = container.querySelector('input[name="debate-format"]:checked')
     return {
       commentator:       true,
       moderator:         true,
@@ -223,6 +253,7 @@ export function mount(container, characters, onStart, { isLocal = false } = {}) 
       philosopherLength: philEl    ? philEl.value     : 'normal',
       commentatorLength: commEl    ? commEl.value     : 'normal',
       moderatorLength:   modEl     ? modEl.value      : 'normal',
+      debateFormat:      formatEl  ? formatEl.value   : '',
     }
   }
 
@@ -261,8 +292,17 @@ export function mount(container, characters, onStart, { isLocal = false } = {}) 
     return el ? el.value : 'university'
   }
 
+  function getSelectedFormat() {
+    const el = container.querySelector('input[name="debate-format"]:checked')
+    return el ? el.value : ''
+  }
+
   function topicsForLevel(level) {
-    return allTopics.filter(t => t.audience_level === level)
+    const fmt = getSelectedFormat()
+    return allTopics.filter(t =>
+      t.audience_level === level &&
+      (fmt === 'oxford' ? t.format === 'oxford' : t.format !== 'oxford')
+    )
   }
 
   function weightedPick(pool, exclude = null) {
@@ -283,15 +323,25 @@ export function mount(container, characters, onStart, { isLocal = false } = {}) 
     const sourceBadge = topic.source === 'curated'
       ? '<span class="dotd-curated">★ curated</span>'
       : '<span class="dotd-generated">AI</span>'
+    const oxfordBadge = topic.format === 'oxford'
+      ? '<span class="dotd-oxford">Oxford</span>'
+      : ''
+    const rolesHtml = topic.roles
+      ? `<div class="dotd-roles">
+           <span class="dotd-role-prop">For: ${topic.roles.proposition.join(', ')}</span>
+           <span class="dotd-role-opp">Against: ${topic.roles.opposition.join(', ')}</span>
+         </div>`
+      : `<div class="dotd-cast">${topic.characters.join(' · ')}</div>`
     dotdCard.innerHTML = `
       <div class="dotd-header">
         <span class="dotd-label">── SUGGESTED DEBATE ──</span>
         <span class="dotd-badges">
           <span class="dotd-category" style="color:${color}">${topic.category.toUpperCase()}</span>
+          ${oxfordBadge}
           ${sourceBadge}
         </span>
       </div>
-      <div class="dotd-cast">${topic.characters.join(' · ')}</div>
+      ${rolesHtml}
       <div class="dotd-topic">${escHtml(topic.topic)}</div>
       <div class="dotd-tagline">${escHtml(topic.tagline)}</div>
       <div class="dotd-actions">
@@ -300,7 +350,8 @@ export function mount(container, characters, onStart, { isLocal = false } = {}) 
       </div>
     `
     dotdCard.querySelector('#dotd-start').addEventListener('click', () => {
-      onStart({ characters: topic.characters, topic: topic.topic, ...getToggles() })
+      const fmt = topic.format === 'oxford' ? 'oxford' : ''
+      onStart({ characters: topic.characters, topic: topic.topic, ...getToggles(), debateFormat: fmt, formatRoles: topic.roles || null })
     })
     dotdCard.querySelector('#dotd-new').addEventListener('click', () => {
       const next = weightedPick(topicsForLevel(getLevel()), currentTopic)
@@ -321,9 +372,15 @@ export function mount(container, characters, onStart, { isLocal = false } = {}) 
     dotdCard.style.display = 'none'
   })
 
-  // Re-pick when audience level changes
+  // Re-pick when audience level or format changes
   container.querySelectorAll('input[name="audience"]').forEach(radio => {
     radio.addEventListener('change', loadSuggestion)
+  })
+  container.querySelectorAll('input[name="debate-format"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      setOxfordMode(radio.value === 'oxford' && radio.checked)
+      loadSuggestion()
+    })
   })
 
   // Expose a way to show errors without tearing down the screen

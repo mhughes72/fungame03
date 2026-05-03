@@ -51,6 +51,53 @@ from state import RoomState, new_room_state, reset_for_new_topic
 _SENTINEL = object()  # signals the SSE generator that the stream is done
 
 
+def _is_pre_rebuttal_steer(state: dict) -> bool:
+    """True when the next format sequence entry is a rebuttal turn."""
+    seq = state.get("format_seq") or []
+    idx = state.get("format_seq_idx") or 0
+    return bool(seq) and idx < len(seq) and seq[idx].get("phase") == "rebuttal"
+
+
+def _oxford_rebuttal_announcement(state: dict) -> str:
+    """Build a short moderator announcement that calls the room to rebuttals."""
+    seq   = state.get("format_seq") or []
+    idx   = state.get("format_seq_idx") or 0
+    roles = state.get("format_roles") or {}
+    prop  = set(roles.get("proposition") or [])
+    opp   = set(roles.get("opposition") or [])
+
+    opp_speakers  = [e["speaker"].replace("_", " ") for e in seq[idx:] if e.get("phase") == "rebuttal" and e["speaker"] in opp]
+    prop_speakers = [e["speaker"].replace("_", " ") for e in seq[idx:] if e.get("phase") == "rebuttal" and e["speaker"] in prop]
+
+    def _join(names): return " and ".join(names) if names else "the opposition"
+
+    return (
+        f"The floor debate is now closed. We move to closing rebuttals. "
+        f"{_join(opp_speakers)} will respond for the opposition, "
+        f"followed by {_join(prop_speakers)} for the proposition. "
+        f"Each speaker should address the strongest argument made by the other side."
+    )
+
+
+def _debate_label(snapshot: dict) -> str:
+    """Return a human-readable debate role label for the current turn, or empty string."""
+    phase = snapshot.get("debate_phase") or ""
+    if not phase or phase == "floor":
+        return ""
+    roles   = snapshot.get("format_roles") or {}
+    speaker = snapshot.get("current_speaker") or ""
+    prop    = roles.get("proposition") or []
+    opp     = roles.get("opposition") or []
+    side    = "Proposition" if speaker in prop else "Opposition" if speaker in opp else ""
+    if not side:
+        return ""
+    if phase == "opening":
+        return f"Opening Statement · {side}"
+    if phase == "rebuttal":
+        return f"Rebuttal · {side}"
+    return ""
+
+
 @dataclass
 class Session:
     id: str
@@ -102,14 +149,26 @@ class Session:
         displayed_count = len(self.state.get("messages") or [])
         final_state = self.state
 
+        # Emit phase banner immediately so the sidebar updates before any messages arrive
+        if self.state.get("debate_format") and self.state.get("debate_phase"):
+            self._put(evt.phase_update(self.state["debate_phase"], self.state.get("format_roles") or {}))
+
+        last_phase = self.state.get("debate_phase") or ""
+
         try:
             for snapshot in self.graph.stream(self.state, stream_mode="values"):
                 if self.stop_event.is_set():
                     break
 
+                new_phase = snapshot.get("debate_phase") or ""
+                if new_phase and new_phase != last_phase:
+                    last_phase = new_phase
+                    self._put(evt.phase_update(new_phase, snapshot.get("format_roles") or {}))
+
                 new_msgs = snapshot["messages"][displayed_count:]
+                label = _debate_label(snapshot) if new_msgs else ""
                 for msg in new_msgs:
-                    self._emit_message(msg)
+                    self._emit_message(msg, debate_label=label)
                 displayed_count = len(snapshot["messages"])
 
                 speaker = snapshot.get("current_speaker", "")
@@ -166,7 +225,7 @@ class Session:
         self.state = final_state
         self._after_batch()
 
-    def _emit_message(self, msg) -> None:
+    def _emit_message(self, msg, debate_label: str = "") -> None:
         if isinstance(msg, AIMessage) and msg.name:
             if msg.name.endswith("_bc"):
                 name = msg.name[:-3].replace("_", " ")
@@ -174,7 +233,7 @@ class Session:
             else:
                 name = msg.name.replace("_", " ")
                 role = "moderator" if msg.name == "Moderator" else "philosopher"
-                self._put(evt.message(name, msg.content.strip(), role=role))
+                self._put(evt.message(name, msg.content.strip(), role=role, debate_label=debate_label))
         elif isinstance(msg, HumanMessage):
             name = getattr(msg, "name", None) or "You"
             role = "moderator" if name == "Moderator" else "user"
@@ -206,6 +265,8 @@ class Session:
             points_of_agreement=self.state.get("points_of_agreement") or [],
             remaining_disagreements=self.state.get("remaining_disagreements") or [],
             drift_topic=self.state.get("drift_topic", ""),
+            debate_phase=self.state.get("debate_phase") or "",
+            format_roles=self.state.get("format_roles") or {},
         ))
 
         # Atmosphere beat (every completed batch after the first)
@@ -248,6 +309,17 @@ class Session:
                 remaining_disagreements=self.state.get("remaining_disagreements") or [],
             ))
             self._put_sentinel()
+        elif _is_pre_rebuttal_steer(self.state):
+            # Oxford format: auto-transition to rebuttals without a user-facing steer break
+            announcement = _oxford_rebuttal_announcement(self.state)
+            self.state = {
+                **self.state,
+                "messages": list(self.state["messages"]) + [
+                    HumanMessage(content=announcement, name="Moderator")
+                ],
+            }
+            self._put(evt.message("Moderator", announcement, role="moderator"))
+            self._run_batch_inner()
         else:
             self._put(evt.steer_needed(
                 current_style=self.state.get("moderator_style", "socratic"),
@@ -286,7 +358,10 @@ class Session:
             }
             self._put(evt.message("User", text, role="user"))
         elif self.moderator_enabled:
-            steer, steer_target = generate_moderator_steer(self.state)
+            steer = _oxford_rebuttal_announcement(self.state) if _is_pre_rebuttal_steer(self.state) else None
+            steer_target = ""
+            if steer is None:
+                steer, steer_target = generate_moderator_steer(self.state)
             if steer:
                 self.state = {
                     **self.state,
@@ -356,10 +431,10 @@ class SessionStore:
         self._sessions: dict[str, Session] = {}
         self._lock = threading.Lock()
 
-    def create(self, participants: list[str], topic: str, commentator_enabled: bool = True, moderator_enabled: bool = True, diagrams_enabled: bool = False, audience_level: str = "university", philosopher_length: str = "normal", commentator_length: str = "normal", moderator_length: str = "normal") -> Session:
+    def create(self, participants: list[str], topic: str, commentator_enabled: bool = True, moderator_enabled: bool = True, diagrams_enabled: bool = False, audience_level: str = "university", philosopher_length: str = "normal", commentator_length: str = "normal", moderator_length: str = "normal", debate_format: str = "", format_roles: dict | None = None) -> Session:
         session_id = uuid.uuid4().hex
         graph = build_graph(participants)
-        state = new_room_state(participants, topic, max_turns=len(participants) * 6, diagrams_enabled=diagrams_enabled, audience_level=audience_level, philosopher_length=philosopher_length, commentator_length=commentator_length, moderator_length=moderator_length)
+        state = new_room_state(participants, topic, max_turns=len(participants) * 6, diagrams_enabled=diagrams_enabled, audience_level=audience_level, philosopher_length=philosopher_length, commentator_length=commentator_length, moderator_length=moderator_length, debate_format=debate_format, format_roles=format_roles)
         session = Session(
             id=session_id,
             state=state,

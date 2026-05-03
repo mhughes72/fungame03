@@ -1294,5 +1294,213 @@
     "rationale": "This cast contrasts views on fairness and success, sparking rich debate.",
     "source": "generated",
     "generated_at": "2026-05-02"
+  },
+  {
+    "id": "oxford_001",
+    "format": "oxford",
+    "topic": "The state should own the means of production",
+    "tagline": "The architects of collectivism face its fiercest critics in the debate that defined the 20th century.",
+    "characters": [
+      "Karl Marx",
+      "Vladimir Lenin",
+      "Ayn Rand",
+      "Margaret Thatcher"
+    ],
+    "roles": {
+      "proposition": [
+        "Karl Marx",
+        "Vladimir Lenin"
+      ],
+      "opposition": [
+        "Ayn Rand",
+        "Margaret Thatcher"
+      ]
+    },
+    "category": "political",
+    "audience_level": "university",
+    "rationale": "Perfect natural alignment — Marx and Lenin built the case for collective ownership; Rand and Thatcher spent their careers dismantling it.",
+    "source": "curated"
+  },
+  {
+    "id": "oxford_002",
+    "format": "oxford",
+    "topic": "God exists",
+    "tagline": "Faith and reason collide — Newton and Christ defend the divine against Nietzsche and Hitchens.",
+    "characters": [
+      "Isaac Newton",
+      "Jesus Christ",
+      "Friedrich Nietzsche",
+      "Christopher Hitchens"
+    ],
+    "roles": {
+      "proposition": [
+        "Isaac Newton",
+        "Jesus Christ"
+      ],
+      "opposition": [
+        "Friedrich Nietzsche",
+        "Christopher Hitchens"
+      ]
+    },
+    "category": "philosophical",
+    "audience_level": "expert",
+    "rationale": "Newton wrote more theology than physics; Christ is the ultimate advocate. Nietzsche declared God dead; Hitchens made a career of the prosecution.",
+    "source": "curated"
+  },
+  {
+    "id": "oxford_003",
+    "format": "oxford",
+    "topic": "Technology will liberate humanity",
+    "tagline": "The inventors face the critics — can progress be trusted, or does every tool become a cage?",
+    "characters": [
+      "Nikola Tesla",
+      "Elon Musk",
+      "George Orwell",
+      "Noam Chomsky"
+    ],
+    "roles": {
+      "proposition": [
+        "Nikola Tesla",
+        "Elon Musk"
+      ],
+      "opposition": [
+        "George Orwell",
+        "Noam Chomsky"
+      ]
+    },
+    "category": "scientific",
+    "audience_level": "highschool",
+    "rationale": "Tesla and Musk are true believers in technology as salvation; Orwell and Chomsky have spent their careers documenting how tools of progress become tools of control.",
+    "source": "curated"
+  },
+  {
+    "id": "oxford_004",
+    "format": "oxford",
+    "topic": "Democracy is the best form of government",
+    "tagline": "The founders of American democracy defend it against two men who believed power belongs to the exceptional.",
+    "characters": [
+      "Thomas Jefferson",
+      "Abraham Lincoln",
+      "Niccolò Machiavelli",
+      "Napoleon Bonaparte"
+    ],
+    "roles": {
+      "proposition": [
+        "Thomas Jefferson",
+        "Abraham Lincoln"
+      ],
+      "opposition": [
+        "Niccolò Machiavelli",
+        "Napoleon Bonaparte"
+      ]
+    },
+    "category": "political",
+    "audience_level": "highschool",
+    "rationale": "Jefferson and Lincoln staked their lives on democratic ideals; Machiavelli and Napoleon saw democracy as noble fiction masking the will of the strong.",
+    "source": "curated"
+  },
+  {
+    "id": "oxford_005",
+    "format": "oxford",
+    "topic": "Art must serve society, not the artist",
+    "tagline": "Two ideological enforcers of state aesthetics face two champions of art as pure self-expression.",
+    "characters": [
+      "Mao Zedong",
+      "Joseph Stalin",
+      "Oscar Wilde",
+      "Andy Warhol"
+    ],
+    "roles": {
+      "proposition": [
+        "Mao Zedong",
+        "Joseph Stalin"
+      ],
+      "opposition": [
+        "Oscar Wilde",
+        "Andy Warhol"
+      ]
+    },
+    "category": "cultural",
+    "audience_level": "university",
+    "rationale": "Mao and Stalin enforced socialist realism by decree; Wilde built a philosophy of art for art’s sake and Warhol demolished the boundary between commerce, culture, and self.",
+    "source": "curated"
+  },
+  {
+    "id": "oxford_006",
+    "format": "oxford",
+    "topic": "Consciousness cannot be explained by physics alone",
+    "tagline": "A mathematician and a novelist argue the mind transcends matter — two physicists say otherwise.",
+    "characters": [
+      "Roger Penrose",
+      "Fyodor Dostoevsky",
+      "Richard Feynman",
+      "Stephen Hawking"
+    ],
+    "roles": {
+      "proposition": [
+        "Roger Penrose",
+        "Fyodor Dostoevsky"
+      ],
+      "opposition": [
+        "Richard Feynman",
+        "Stephen Hawking"
+      ]
+    },
+    "category": "philosophical",
+    "audience_level": "expert",
+    "rationale": "Penrose argues quantum effects in microtubules make consciousness irreducible; Dostoevsky insists the soul exceeds any equation. Feynman and Hawking hold that physics, given time, explains everything.",
+    "source": "curated"
+  },
+  {
+    "id": "oxford_007",
+    "format": "oxford",
+    "topic": "Free speech must never be restricted",
+    "tagline": "Two of history’s most uncompromising voices for liberty face two leaders who rewrote what could be said.",
+    "characters": [
+      "Christopher Hitchens",
+      "Thomas Jefferson",
+      "Mao Zedong",
+      "Joseph Stalin"
+    ],
+    "roles": {
+      "proposition": [
+        "Christopher Hitchens",
+        "Thomas Jefferson"
+      ],
+      "opposition": [
+        "Mao Zedong",
+        "Joseph Stalin"
+      ]
+    },
+    "category": "political",
+    "audience_level": "university",
+    "rationale": "Hitchens and Jefferson treated free expression as the foundation of all other rights; Mao and Stalin demonstrated that controlling speech is the first act of political control.",
+    "source": "curated"
+  },
+  {
+    "id": "oxford_008",
+    "format": "oxford",
+    "topic": "The free market rewards merit and punishes failure",
+    "tagline": "The patron saints of capitalism defend the invisible hand against two thinkers who called it a con.",
+    "characters": [
+      "Ayn Rand",
+      "Ronald Reagan",
+      "Karl Marx",
+      "Noam Chomsky"
+    ],
+    "roles": {
+      "proposition": [
+        "Ayn Rand",
+        "Ronald Reagan"
+      ],
+      "opposition": [
+        "Karl Marx",
+        "Noam Chomsky"
+      ]
+    },
+    "category": "political",
+    "audience_level": "university",
+    "rationale": "Rand built a moral philosophy around rational self-interest; Reagan made it policy. Marx called it exploitation dressed as opportunity; Chomsky has spent fifty years documenting who the market actually rewards.",
+    "source": "curated"
   }
 ]

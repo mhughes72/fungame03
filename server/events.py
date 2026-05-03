@@ -16,13 +16,14 @@ def _evt(type_: str, data: dict[str, Any]) -> dict:
 
 # ── outbound events ────────────────────────────────────────────────────────── #
 
-def message(name: str, content: str, role: str = "philosopher", backchannel: bool = False) -> dict:
+def message(name: str, content: str, role: str = "philosopher", backchannel: bool = False, debate_label: str = "") -> dict:
     """A philosopher or moderator line."""
     return _evt("message", {
         "role": role,
         "name": name,
         "content": content,
         "backchannel": backchannel,
+        "debate_label": debate_label,
     })
 
 
@@ -40,6 +41,8 @@ def state_update(
     points_of_agreement: list[str],
     remaining_disagreements: list,
     drift_topic: str,
+    debate_phase: str = "",
+    format_roles: dict | None = None,
 ) -> dict:
     """Right-pane stats — sent after every batch."""
     return _evt("state", {
@@ -51,6 +54,8 @@ def state_update(
         "points_of_agreement": points_of_agreement,
         "remaining_disagreements": remaining_disagreements,
         "drift_topic": drift_topic,
+        "debate_phase": debate_phase,
+        "format_roles": format_roles or {},
     })
 
 
@@ -106,6 +111,11 @@ def diagram(speaker: str, article: str, url: str, thumb_url: str, title: str, pa
         "title":     title,
         "page_url":  page_url,
     })
+
+
+def phase_update(phase: str, format_roles: dict | None = None) -> dict:
+    """Debate phase changed — update the sidebar banner immediately."""
+    return _evt("phase_update", {"debate_phase": phase, "format_roles": format_roles or {}})
 
 
 def commentator(text: str) -> dict:

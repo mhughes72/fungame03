@@ -303,9 +303,12 @@ _LENGTH_INSTRUCTIONS: dict[tuple[str, str], str] = {
     ("normal",   "terse"):     "LENGTH: 1 to 2 sentences. Stay sharp.",
     ("normal",   "normal"):    "LENGTH: 2 to 3 sentences.",
     ("normal",   "expansive"): "LENGTH: 3 to 4 sentences. Build the argument properly.",
-    ("opening",  "terse"):     "LENGTH: Open with a clear position — 1 to 2 sentences.",
-    ("opening",  "normal"):    "LENGTH: Open with a clear position — 2 to 3 sentences.",
-    ("opening",  "expansive"): "LENGTH: Open with a clear position — 3 to 4 sentences.",
+    ("opening",   "terse"):     "LENGTH: Open with a clear position — 1 to 2 sentences.",
+    ("opening",   "normal"):    "LENGTH: Open with a clear position — 2 to 3 sentences.",
+    ("opening",   "expansive"): "LENGTH: Open with a clear position — 3 to 4 sentences.",
+    ("rebuttal",  "terse"):     "LENGTH: A sharp, focused rebuttal — 2 to 3 sentences. Name the claim, then kill it.",
+    ("rebuttal",  "normal"):    "LENGTH: A focused rebuttal — 3 to 4 sentences. Name the claim, explain the flaw, land the counter.",
+    ("rebuttal",  "expansive"): "LENGTH: A thorough rebuttal — 4 to 5 sentences. Name the claim, dissect the flaw in detail, and close with your alternative.",
 }
 
 
@@ -347,6 +350,7 @@ def _philosopher_user_prompt(
     drunk_level: int = 0,
     drunk_levels: dict | None = None,
     philosopher_length: str = "normal",
+    phase_instruction: str = "",
 ) -> str:
     safe_name = name.replace(" ", "_")
 
@@ -368,7 +372,14 @@ def _philosopher_user_prompt(
         and verbosity != "terse"
     )
 
-    if last_msg and hasattr(last_msg, "content") and last_msg.name != safe_name:
+    # Opening statements in structured formats must be independent — don't anchor to the last speaker
+    if phase_instruction and phase_instruction.startswith("This is your opening statement"):
+        respond_to = "Address the room directly. Do not respond to any prior speaker — present your own case."
+        situation  = "opening"
+    elif phase_instruction and phase_instruction.startswith("This is your rebuttal"):
+        respond_to = "Target the specific opening argument quoted above. Ignore what the floor has said since — your job is to dismantle that original claim."
+        situation  = "rebuttal"
+    elif last_msg and hasattr(last_msg, "content") and last_msg.name != safe_name:
         last_speaker = (last_msg.name or "Someone").replace("_", " ")
         last_said = last_msg.content[:300]
         was_cut_off = last_said.rstrip().endswith("—")
@@ -471,8 +482,11 @@ def _philosopher_user_prompt(
 
     opponents_drunk = _drunk_opponents_line(name, drunk_levels or {})
 
+    phase_block = f"DEBATE FORMAT — YOUR ROLE THIS TURN: {phase_instruction}\n\n" if phase_instruction else ""
+
     return (
         f'Central question being debated: "{topic}"\n\n'
+        f"{phase_block}"
         f"{no_repeat}"
         f"{callbacks}"
         f"{concession_memory}"

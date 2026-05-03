@@ -118,12 +118,31 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   font-weight: 700;
 }
 
+.dotd-oxford {
+  font-size: 0.62rem;
+  color: #5a9fd4;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
 .dotd-cast {
   color: var(--gold);
   font-weight: 700;
   font-size: 0.88rem;
   letter-spacing: 0.02em;
 }
+
+.dotd-roles {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin: 0.2rem 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+.dotd-role-prop { color: #5a9fd4; }
+.dotd-role-opp  { color: #c87a40; }
 
 .dotd-topic {
   color: var(--text);
@@ -204,6 +223,17 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   border: 1px solid var(--border);
   padding: 0.25rem 0;
   scrollbar-color: var(--border-hi) var(--bg-dark);
+}
+
+.char-list.oxford-locked {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.char-filter-input:disabled,
+#topic-input:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 .char-no-results {
@@ -643,6 +673,17 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   min-width: 0;
 }
 
+.msg-debate-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 0.15rem;
+  opacity: 0.85;
+}
+.debate-label-prop { color: #5a9fd4; }
+.debate-label-opp  { color: #c87a40; }
+
 .msg-name {
   color: var(--gold);
   font-weight: 700;
@@ -849,6 +890,35 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   gap: 0.1rem;
 }
 
+
+.sb-phase-banner {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-align: center;
+  padding: 0.4rem 0.5rem;
+  margin-bottom: 0.5rem;
+  background: #1a1200;
+  border: 1px solid #3a2800;
+  color: var(--gold-dim);
+}
+
+.sb-roles {
+  margin-bottom: 0.5rem;
+  font-size: 0.78rem;
+}
+.sb-role { margin-bottom: 0.2rem; line-height: 1.4; }
+.sb-role-label {
+  font-weight: 700;
+  font-size: 0.68rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-right: 0.4rem;
+}
+.sb-role-prop .sb-role-label { color: #5a9fd4; }
+.sb-role-opp  .sb-role-label { color: #c87a40; }
+.sb-role-prop { color: #4a7fa8; }
+.sb-role-opp  { color: #a86840; }
 
 .sb-section {
   padding: 0.6rem 0;

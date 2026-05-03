@@ -238,9 +238,11 @@ def _generate_candidate(name: str, state: RoomState) -> dict:
     audience_level   = state.get("audience_level") or "university"
     system_prompt = _philosopher_system_prompt(name, participants, partial_agreements, own_summary, heat, evidence_this_turn, diagrams_enabled, audience_level)
     philosopher_length = state.get("philosopher_length") or "normal"
+    phase_instruction  = state.get("phase_instruction") or ""
     user_prompt   = _philosopher_user_prompt(
         name, state["messages"], topic, argument_log, turn_count, concession_counts,
         concession_log, challenge_counts, drunk_level, drunk_levels, philosopher_length,
+        phase_instruction,
     )
 
     messages = (
@@ -305,8 +307,74 @@ def detect_forced_speaker(text: str, participants: list[str]) -> str | None:
 # Graph nodes                                                                   #
 # --------------------------------------------------------------------------- #
 
+def _extract_opening_statements(messages: list, speakers: list[str]) -> list[tuple[str, str]]:
+    """Return [(display_name, content)] for the first AIMessage from each speaker, in order."""
+    safe_to_display = {s.replace(" ", "_"): s for s in speakers}
+    found: dict[str, str] = {}
+    for msg in messages:
+        if not isinstance(msg, AIMessage):
+            continue
+        name = getattr(msg, "name", "") or ""
+        if name in safe_to_display and name not in found:
+            found[name] = msg.content.strip()
+        if len(found) == len(speakers):
+            break
+    return [(safe_to_display[k], v) for k, v in found.items()]
+
+
+def _structured_moderator(state: RoomState) -> dict:
+    """Route the next turn according to the compiled format sequence."""
+    seq        = state.get("format_seq") or []
+    idx        = state.get("format_seq_idx") or 0
+    turn_count = state.get("turn_count") or 0
+
+    if idx >= len(seq):
+        return {"current_speaker": "__max_turns__", "turn_count": turn_count + 1, "phase_instruction": ""}
+
+    entry   = seq[idx]
+    speaker = entry["speaker"]
+    new_idx = idx + 1
+
+    if speaker == "__steer__":
+        return {"current_speaker": "__steer__", "format_seq_idx": new_idx,
+                "turn_count": turn_count + 1, "phase_instruction": ""}
+    if speaker == "__end__":
+        return {"current_speaker": "__max_turns__", "turn_count": turn_count + 1, "phase_instruction": ""}
+    if speaker == "__floor__":
+        return {"current_speaker": "__turn__", "debate_phase": "floor",
+                "phase_instruction": "", "format_seq_idx": new_idx}
+
+    # For rebuttals, inject the opposing side's verbatim opening statements
+    instruction = entry.get("instruction") or ""
+    if entry.get("phase") == "rebuttal":
+        roles = state.get("format_roles") or {}
+        prop  = roles.get("proposition") or []
+        opp   = roles.get("opposition") or []
+        opposing = opp if speaker in prop else prop
+        openings = _extract_opening_statements(state.get("messages") or [], opposing)
+        if openings:
+            quotes = "\n\n".join(f'{name}: "{text[:400]}"' for name, text in openings)
+            instruction = (
+                "This is your rebuttal. The opposing side made these opening arguments:\n\n"
+                f"{quotes}\n\n"
+                "Identify the single strongest of these claims and dismantle it. "
+                "Be specific — name the claim and show exactly why it fails."
+            )
+
+    return {
+        "current_speaker":   "__turn__",
+        "forced_speaker":    speaker,
+        "debate_phase":      entry.get("phase") or "",
+        "phase_instruction": instruction,
+        "format_seq_idx":    new_idx,
+    }
+
+
 def moderator_node(state: RoomState) -> dict:
     """Decide whether to continue, steer-exit, or trigger a consensus check."""
+    if state.get("debate_format"):
+        return _structured_moderator(state)
+
     participants = state["participants"]
     turn_count   = state.get("turn_count") or 0
     max_turns    = state.get("max_turns") or 20

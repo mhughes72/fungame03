@@ -1,8 +1,11 @@
 """Textual bar UI for The Philosopher's Room."""
 from __future__ import annotations
 
+import os
 import re
 from langchain_core.messages import AIMessage, HumanMessage
+
+_IS_LOCAL = os.environ.get("ENVIRONMENT", "").lower() == "local"
 
 from textual.app import App, ComposeResult, on
 from textual.containers import Horizontal, Vertical, ScrollableContainer
@@ -194,6 +197,14 @@ SelectionList {
     color: #f5e6c0;
     margin-bottom: 1;
 }
+#format-label { color: #8a7040; margin-top: 1; }
+#format-radio {
+    height: auto;
+    border: solid #3a2400;
+    background: #0d0700;
+    padding: 0 1;
+    margin-bottom: 1;
+}
 #start-btn {
     width: 100%;
     background: #3a2400;
@@ -328,6 +339,11 @@ class SetupScreen(Screen):
                 placeholder="20",
                 id="max-turns-input",
             )
+            if _IS_LOCAL:
+                yield Label("Debate format", id="format-label")
+                with RadioSet(id="format-radio"):
+                    yield RadioButton("Freeform  —  open, organic debate", value=True)
+                    yield RadioButton("Oxford-style  —  opening statements · floor · rebuttals")
             yield Button("Open the bar  ▶", id="start-btn", variant="default")
             yield Static("", id="setup-error")
 
@@ -353,7 +369,12 @@ class SetupScreen(Screen):
                 max_turns = 20
         except ValueError:
             max_turns = 20
-        self.dismiss((chosen, topic, max_turns))
+        if _IS_LOCAL:
+            radio = self.query_one("#format-radio", RadioSet)
+            debate_format = "oxford" if radio.pressed_index == 1 else ""
+        else:
+            debate_format = ""
+        self.dismiss((chosen, topic, max_turns, debate_format))
 
     def on_key(self, event) -> None:
         if event.key == "enter":
@@ -492,11 +513,11 @@ class PhilosopherBar(App):
         if not result:
             self.exit()
             return
-        participants, topic, max_turns = result
+        participants, topic, max_turns, debate_format = result
         self.participants = participants
         self.topic = topic
         self.graph = build_graph(self.participants)
-        self.state = new_room_state(self.participants, self.topic, max_turns)
+        self.state = new_room_state(self.participants, self.topic, max_turns, debate_format=debate_format)
         self.query_one("#header-title", Static).update(
             f"[bold yellow]THE PHILOSOPHER'S BAR[/]   [#5c3a00]{self.topic}[/]"
         )
