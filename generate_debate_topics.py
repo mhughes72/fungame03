@@ -161,17 +161,32 @@ def _generate_one_freeform(level: str, existing: list[dict]) -> _TopicSchema:
     return result
 
 
+def _normalize_name(name: str, valid: set[str]) -> str | None:
+    """Return the canonical CHARACTERS key for a name the LLM may have slightly mangled."""
+    if name in valid:
+        return name
+    # Try case-insensitive and underscore/space normalization
+    normalised = name.replace("_", " ").strip()
+    for v in valid:
+        if v.lower() == normalised.lower():
+            return v
+    return None
+
+
 def _generate_one_oxford(existing: list[dict]) -> _OxfordTopicSchema:
     existing_ox = [t for t in existing if t.get("format") == "oxford"]
     # Build avoid block using combined characters list for oxford entries
+    existing_ox_with_chars = []
     for t in existing_ox:
         if "characters" not in t and "roles" in t:
             r = t["roles"]
             t = {**t, "characters": r.get("proposition", []) + r.get("opposition", [])}
-    avoid = _avoid_block(existing_ox)
+        existing_ox_with_chars.append(t)
+    avoid = _avoid_block(existing_ox_with_chars)
 
+    valid = set(CHARACTERS.keys())
     llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.95)
-    result: _OxfordTopicSchema = llm.with_structured_output(_OxfordTopicSchema).invoke([
+    messages = [
         SystemMessage(content=(
             "You are curating an Oxford-style structured debate.\n\n"
             "Rules:\n"
@@ -184,6 +199,7 @@ def _generate_one_oxford(existing: list[dict]) -> _OxfordTopicSchema:
             "- The two sides must be in genuine, deep opposition — not just surface disagreement\n"
             "- Avoid casts where one side is obviously correct or where the debate would be one-sided\n"
             "- Draw from across the full roster — not just the famous scientists or philosophers\n"
+            "- Character names MUST be copied EXACTLY from the roster list provided\n"
             "- tagline: ≤15 words, punchy\n"
             "- rationale: explain in one sentence why each side genuinely holds their position "
             "(curator only)\n"
@@ -191,14 +207,20 @@ def _generate_one_oxford(existing: list[dict]) -> _OxfordTopicSchema:
             "- theme: short snake_case label for the core theme"
         )),
         HumanMessage(content=f"Available participants:\n{_roster_text()}{avoid}"),
-    ])
+    ]
 
-    valid = set(CHARACTERS.keys())
-    result.proposition = [c for c in result.proposition if c in valid]
-    result.opposition  = [c for c in result.opposition  if c in valid]
-    if len(result.proposition) != 2 or len(result.opposition) != 2:
-        raise ValueError(f"Oxford requires exactly 2v2. Got prop={result.proposition} opp={result.opposition}")
-    return result
+    last_err: Exception | None = None
+    for attempt in range(3):
+        result: _OxfordTopicSchema = llm.with_structured_output(_OxfordTopicSchema).invoke(messages)
+        result.proposition = [r for c in result.proposition if (r := _normalize_name(c, valid))]
+        result.opposition  = [r for c in result.opposition  if (r := _normalize_name(c, valid))]
+        if len(result.proposition) == 2 and len(result.opposition) == 2:
+            return result
+        last_err = ValueError(
+            f"Oxford requires exactly 2v2. Got prop={result.proposition} opp={result.opposition}"
+        )
+
+    raise last_err  # type: ignore[misc]
 
 
 # --------------------------------------------------------------------------- #

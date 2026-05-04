@@ -853,6 +853,166 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   40%           { opacity: 1; }
 }
 
+/* ── cable news messages ───────────────────────────────────────────── */
+
+.msg-chyron {
+  background: #1a0808;
+  color: #ff4040;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  padding: 0.2rem 0.75rem;
+  margin: 0.05rem 0 0.4rem 0;
+  border-left: 3px solid #c83030;
+}
+
+.msg-breaking-news {
+  background: #220000;
+  border: 1px solid #c83030;
+  border-left: 4px solid #ff3030;
+  padding: 0.45rem 0.75rem;
+  margin: 0.5rem 0;
+}
+.breaking-label {
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  color: #ff3030;
+  margin-bottom: 0.15rem;
+}
+.breaking-headline {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  color: #ffbbbb;
+  font-weight: 700;
+}
+
+.msg-producer-whisper {
+  color: var(--text-dim);
+  font-style: italic;
+  font-size: 0.8rem;
+  padding: 0.12rem 0.75rem;
+  border-left: 2px solid #5a3a10;
+  margin: 0.1rem 0 0.25rem;
+}
+.producer-tag {
+  font-weight: 700;
+  font-style: normal;
+  color: var(--amber);
+  margin-right: 0.35rem;
+}
+.producer-tag-high { color: #ff6030; }
+
+/* commercial break drawer */
+.commercial-ratings-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0 0.4rem;
+  flex-wrap: wrap;
+}
+.commercial-ratings-num {
+  font-family: var(--mono);
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--gold);
+}
+.commercial-ratings-peak {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+.ratings-bar-track {
+  flex: 1;
+  min-width: 80px;
+  height: 5px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.ratings-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+.commercial-producer-note {
+  font-family: var(--mono);
+  font-size: 0.83rem;
+  padding: 0.35rem 0.65rem;
+  background: rgba(180, 90, 10, 0.1);
+  border-left: 2px solid var(--amber);
+  color: var(--amber);
+  margin-bottom: 0.5rem;
+}
+.commercial-producer-high {
+  background: rgba(200, 50, 10, 0.15);
+  border-left-color: #ff5030;
+  color: #ff7040;
+}
+.commercial-producer-note .producer-tag {
+  color: inherit;
+}
+
+/* sidebar cable ratings */
+.sb-ratings-num {
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin: 0.15rem 0 0.3rem;
+}
+.sb-trend { font-size: 0.75rem; margin-left: 0.2rem; }
+.sb-ratings-scale {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  margin-top: 0.2rem;
+}
+
+/* cable news end panel */
+.cable-end-viral    { color: #4a9b6f; }
+.cable-end-cancelled { color: var(--red); }
+
+.cable-end-offers { border-color: var(--amber); }
+.cable-end-offers .end-section-label { color: var(--amber); }
+
+.cable-offer-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.15rem 0;
+  font-size: 0.85rem;
+}
+.cable-offer-name {
+  font-weight: 700;
+  color: var(--text);
+  min-width: 100px;
+}
+.cable-offer-text {
+  color: var(--amber);
+  font-style: italic;
+  font-size: 0.82rem;
+}
+
+.cable-catchphrase-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.1rem 0;
+  font-size: 0.83rem;
+}
+.cable-cp-name  { font-weight: 700; color: var(--text-dim); min-width: 80px; }
+.cable-cp-phrase { color: var(--blue); font-style: italic; }
+.cable-cp-count  { color: var(--text-dim); font-size: 0.75rem; margin-left: auto; }
+
+.catchphrase-hl {
+  background: none;
+  color: var(--gold, #f0b429);
+  font-weight: 700;
+  font-style: italic;
+}
+
 /* debate starting indicator */
 .debate-starting {
   display: flex;

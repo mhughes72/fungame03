@@ -84,6 +84,7 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
           <div class="length-options">
             <label class="length-opt"><input type="radio" name="debate-format" value="" checked /> Freeform</label>
             <label class="length-opt"><input type="radio" name="debate-format" value="oxford" /> Oxford-style</label>
+            <label class="length-opt"><input type="radio" name="debate-format" value="cable_news" /> 📺 Cable News</label>
           </div>
         </div>
 

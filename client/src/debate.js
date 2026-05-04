@@ -6,7 +6,7 @@
  *   api    : { steer, deleteSession, newTopic, openStream }
  */
 
-import { open as openSteerModal } from './steer.js'
+import { open as openSteerModal, openCommercialBreak } from './steer.js'
 import { open as openCheatModal } from './cheat.js'
 import * as Seating from './seating.js'
 import { openAbout, openHelp } from './info.js'
@@ -51,6 +51,8 @@ export function mount(container, sessionId, participants, topic, styles, api) {
   let currentFormatRoles = {}
   let lastState    = { turn: 0, heat: 0, concession_total: 0, partial_agreements: [], remaining_disagreements: [], drift_topic: '' }
   let oxfordOpeningVote = null
+  let cableRatings = 0.8
+  let cableRatingsHistory = []
 
   const seating = Seating.create(seatsBar, participants, skin)
   renderSidebar(sidebar, {
@@ -134,6 +136,49 @@ export function mount(container, sessionId, participants, topic, styles, api) {
         if (data.format_roles && Object.keys(data.format_roles).length) currentFormatRoles = data.format_roles
         lastState = { ...data, debate_phase: currentPhase, format_roles: currentFormatRoles }
         renderSidebar(sidebar, { topic, ...lastState })
+        break
+
+      case 'cable_ratings':
+        cableRatings = data.ratings ?? cableRatings
+        cableRatingsHistory = data.history ?? cableRatingsHistory
+        updateCableRatings(sidebar, cableRatings, cableRatingsHistory)
+        break
+
+      case 'chyron':
+        if (data.text) appendChyron(convoPane, data.text)
+        break
+
+      case 'breaking_news':
+        if (data.headline) appendBreakingNews(convoPane, data.headline)
+        break
+
+      case 'producer_whisper':
+        appendProducerWhisper(convoPane, data.note, data.stress)
+        break
+
+      case 'commercial_break':
+        if (steerModalPending) break
+        steerModalPending = true
+        cableRatings = data.ratings ?? cableRatings
+        convoPane.scrollTop = convoPane.scrollHeight
+        openCommercialBreak(data, leftCol, skin).then(result => {
+          steerModalPending = false
+          if (result === null) {
+            appendCableNewsEnd(convoPane, { reason: 'quit', report: {} }, participants, quit, sessionId, api)
+          } else {
+            api.steer(sessionId, result.text, 'socratic', '', {}, result.producer_directive)
+              .catch(err => appendSystem(convoPane, `Error: ${err.message}`))
+          }
+        })
+        break
+
+      case 'cable_news_end':
+        if (gameEnded) break
+        gameEnded = true
+        if (closeStream) { closeStream(); closeStream = null }
+        clearTyping(convoPane)
+        seating.clearAll()
+        appendCableNewsEnd(convoPane, data, participants, quit, sessionId, api)
         break
 
       case 'steer_needed':
@@ -293,7 +338,7 @@ export function mount(container, sessionId, participants, topic, styles, api) {
 
 // ── message rendering ────────────────────────────────────────────────── //
 
-function appendMessage(el, { role, name, content, backchannel, debate_label = '' }) {
+function appendMessage(el, { role, name, content, backchannel, debate_label = '', catchphrase = '' }) {
   const div = document.createElement('div')
 
   if (backchannel) {
@@ -326,7 +371,7 @@ function appendMessage(el, { role, name, content, backchannel, debate_label = ''
       `<div class="msg-body">` +
         (debate_label ? `<div class="msg-debate-label ${labelClass}">${escHtml(debate_label)}</div>` : '') +
         `<div class="msg-name">${escHtml(name)}</div>` +
-        `<div class="msg-content">${renderContent(content)}</div>` +
+        `<div class="msg-content">${renderContent(content, catchphrase)}</div>` +
       `</div>`
   }
 
@@ -343,7 +388,13 @@ function appendBarBeat(el, text) {
 function appendSystem(el, text) {
   const div = document.createElement('div')
   div.className = 'msg msg-system'
-  div.textContent = text
+  if (text.endsWith('…')) {
+    div.innerHTML =
+      escHtml(text.slice(0, -1)) +
+      `<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span>`
+  } else {
+    div.textContent = text
+  }
   scrollAppend(el, div)
 }
 
@@ -383,6 +434,113 @@ function appendDiagram(el, { speaker, title, thumb_url, url, page_url }) {
       `<div class="diagram-caption">${escHtml(title)}</div>` +
     `</a>`
   scrollAppend(el, div)
+}
+
+function appendChyron(el, text) {
+  const div = document.createElement('div')
+  div.className = 'msg msg-chyron'
+  div.textContent = text
+  scrollAppend(el, div)
+}
+
+function appendBreakingNews(el, headline) {
+  const div = document.createElement('div')
+  div.className = 'msg msg-breaking-news'
+  div.innerHTML =
+    `<div class="breaking-label">🔴 BREAKING NEWS</div>` +
+    `<div class="breaking-headline">${escHtml(headline)}</div>`
+  scrollAppend(el, div)
+}
+
+function appendProducerWhisper(el, note, stress) {
+  if (!note) return
+  const div = document.createElement('div')
+  div.className = 'msg msg-producer-whisper'
+  const tag = stress >= 3 ? '[PRODUCER!!!]' : '[PRODUCER]'
+  div.innerHTML = `<span class="producer-tag${stress >= 3 ? ' producer-tag-high' : ''}">${tag}</span> ${escHtml(note)}`
+  scrollAppend(el, div)
+}
+
+function appendCableNewsEnd(el, { reason, report = {} }, participants, onQuit, sessionId, api) {
+  clearTyping(el)
+  const isViral     = reason === 'viral'
+  const isCancelled = reason === 'cancelled'
+  const reasonTitle = isViral ? '📺 SHOW WENT VIRAL' : isCancelled ? '📺 SHOW CANCELLED' : '📺 LAST CALL'
+  const reasonClass = isViral ? 'cable-end-viral' : 'cable-end-cancelled'
+
+  const {
+    final_ratings = 0,
+    peak_ratings  = 0,
+    turn_count    = 0,
+    breaking_news_count = 0,
+    network_offers = {},
+    catchphrases   = {},
+    guest_stats    = {},
+  } = report
+
+  const offersHtml = Object.entries(network_offers).length
+    ? `<div class="end-section cable-end-offers">
+        <div class="end-section-label" style="color:var(--amber)">network offers</div>
+        ${Object.entries(network_offers).map(([name, offer]) =>
+          `<div class="cable-offer-row">
+            <span class="cable-offer-name">${escHtml(name)}</span>
+            <span class="cable-offer-text">${escHtml(offer)}</span>
+          </div>`
+        ).join('')}
+      </div>`
+    : ''
+
+  const catchphraseHtml = Object.keys(catchphrases).length
+    ? `<div class="end-section">
+        <div class="end-section-label" style="color:var(--blue)">guest catchphrases</div>
+        ${Object.entries(catchphrases).map(([name, phrase]) => {
+          const stats = guest_stats[name] || {}
+          const count = stats.catchphrase_count || 0
+          return `<div class="cable-catchphrase-row">
+            <span class="cable-cp-name">${escHtml(name)}:</span>
+            <span class="cable-cp-phrase">"${escHtml(phrase)}"</span>
+            <span class="cable-cp-count">${count}×</span>
+          </div>`
+        }).join('')}
+      </div>`
+    : ''
+
+  const scoreHtml = turn_count
+    ? `<div class="end-scoreboard">
+        <div class="end-stat">
+          <span class="end-stat-num">${turn_count}</span>
+          <span class="end-stat-lbl">turns</span>
+        </div>
+        <div class="end-stat">
+          <span class="end-stat-num" style="color:var(--amber)">${final_ratings.toFixed(1)}M</span>
+          <span class="end-stat-lbl">final ratings</span>
+        </div>
+        <div class="end-stat">
+          <span class="end-stat-num" style="color:var(--green)">${peak_ratings.toFixed(1)}M</span>
+          <span class="end-stat-lbl">peak</span>
+        </div>
+        <div class="end-stat">
+          <span class="end-stat-num">${breaking_news_count}</span>
+          <span class="end-stat-lbl">breaking news</span>
+        </div>
+      </div>`
+    : ''
+
+  const div = document.createElement('div')
+  div.className = 'end-panel'
+  div.innerHTML = `
+    <div class="end-title ${reasonClass}">━━━ ${reasonTitle} ━━━</div>
+    ${scoreHtml}
+    ${offersHtml}
+    ${catchphraseHtml}
+    <div class="end-actions">
+      <div class="end-btn-row">
+        <button class="end-leave-btn" id="cable-end-leave">Leave the studio</button>
+      </div>
+    </div>
+  `
+  scrollAppend(el, div)
+  div.querySelector('#cable-end-leave').addEventListener('click', onQuit)
 }
 
 function appendOxfordVerdict(el, { winner, proposition_open, proposition_final, margin, persona_verdicts, verdict }) {
@@ -896,6 +1054,10 @@ function renderSidebar(el, state) {
       ${barsHtml_(heat, concession_total)}
     </div>
 
+    <div class="sb-section" id="sb-cable-ratings" style="${state.cable_ratings != null ? '' : 'display:none'}">
+      ${state.cable_ratings != null ? cableRatingsHtml_(state.cable_ratings, state.cable_ratings_history || []) : ''}
+    </div>
+
     <div class="sb-section">
       <div class="sb-label">── APPROACH ──</div>
       <div class="sb-style">${escHtml(moderator_style)}</div>
@@ -908,8 +1070,14 @@ function renderSidebar(el, state) {
 
 // ── helpers ───────────────────────────────────────────────────────────── //
 
-function renderContent(text) {
-  const escaped = escHtml(text)
+function renderContent(text, catchphrase = '') {
+  let escaped = escHtml(text)
+
+  if (catchphrase) {
+    const escapedPhrase = escHtml(catchphrase)
+    const re = new RegExp(escapedPhrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i')
+    escaped = escaped.replace(re, m => `<mark class="catchphrase-hl">${m}</mark>`)
+  }
 
   // *[action]* → stage direction (keep brackets)
   // *anything else* → stage direction (add brackets)
@@ -963,6 +1131,31 @@ function barsHtml_(heat, concessionTotal) {
 function updateBars(sidebar, heat, concessionTotal) {
   const el = sidebar.querySelector('#sb-bars')
   if (el) el.innerHTML = barsHtml_(heat, concessionTotal)
+}
+
+function updateCableRatings(sidebar, ratings, history) {
+  const el = sidebar.querySelector('#sb-cable-ratings')
+  if (el) {
+    el.style.display = ''
+    el.innerHTML = cableRatingsHtml_(ratings, history)
+  }
+}
+
+function cableRatingsHtml_(ratings, history) {
+  const pct   = ((ratings - 0.2) / (4.0 - 0.2)) * 100
+  const w     = Math.max(0, Math.min(100, pct)).toFixed(1)
+  const color = ratings >= 3 ? '#4a9b6f' : ratings >= 1.5 ? '#c8a030' : '#c83030'
+  const trend = history.length >= 2
+    ? (history[history.length - 1] > history[history.length - 2] ? '▲' : history[history.length - 1] < history[history.length - 2] ? '▼' : '─')
+    : ''
+  return `
+    <div class="sb-label">── RATINGS ──</div>
+    <div class="sb-ratings-num" style="color:${color}">${ratings.toFixed(1)}M viewers <span class="sb-trend">${trend}</span></div>
+    <div class="ratings-bar-track">
+      <div class="ratings-bar-fill" style="width:${w}%;background:${color}"></div>
+    </div>
+    <div class="sb-ratings-scale"><span>cancelled</span><span>viral</span></div>
+  `
 }
 
 function heatColor_(h) {

@@ -1,6 +1,9 @@
 /**
  * Steer drawer — slides up from the bottom of the left column.
  * Returns a Promise that resolves with { text, style } or null (quit).
+ *
+ * openCommercialBreak — cable news commercial break variant.
+ * Returns a Promise that resolves with { text, producer_directive } or null (quit).
  */
 
 function escHtml(str) {
@@ -9,6 +12,13 @@ function escHtml(str) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
+}
+
+function _ratingsBarHtml(ratings) {
+  const pct   = ((ratings - 0.2) / (4.0 - 0.2)) * 100
+  const w     = Math.max(0, Math.min(100, pct)).toFixed(1)
+  const color = ratings >= 3 ? '#4a9b6f' : ratings >= 1.5 ? '#c8a030' : '#c83030'
+  return `<div class="ratings-bar-track"><div class="ratings-bar-fill" style="width:${w}%;background:${color}"></div></div>`
 }
 
 export function open(currentStyle, styles, summary = '', drawerContainer, searchFn = null, participants = [], skin = {}) {
@@ -149,5 +159,96 @@ export function open(currentStyle, styles, summary = '', drawerContainer, search
     textInput.addEventListener('keydown', e => {
       if (e.key === 'Enter') submit()
     })
+  })
+}
+
+/**
+ * Cable news commercial break drawer.
+ * breakData: { ratings, peak_ratings, producer_note, producer_stress, catchphrases, directives }
+ * directives: [[key, description], ...]
+ * Returns Promise<{ text, producer_directive }> or null (quit).
+ */
+export function openCommercialBreak(breakData, drawerContainer, skin = {}) {
+  const {
+    ratings       = 0.8,
+    peak_ratings  = 0.8,
+    producer_note = '',
+    producer_stress = 0,
+    directives    = [],
+  } = breakData
+
+  const stressLabels = ['', 'nervous', 'stressed', 'PANICKING', 'MELTDOWN', 'FIRE FIRE FIRE']
+  const stressTag    = producer_stress > 0 ? ` (${stressLabels[Math.min(producer_stress, 5)]})` : ''
+  const stressHigh   = producer_stress >= 3
+
+  return new Promise((resolve) => {
+    const drawer = document.createElement('div')
+    drawer.className = 'steer-drawer'
+    drawer.innerHTML = `
+      <div class="steer-drawer-header">
+        <div class="steer-title">── COMMERCIAL BREAK ──</div>
+        <button class="steer-quit-btn" id="steer-quit">Quit game</button>
+      </div>
+
+      <div class="commercial-ratings-row">
+        <span class="commercial-ratings-num">📺 ${ratings.toFixed(1)}M</span>
+        <span class="commercial-ratings-peak">peak ${peak_ratings.toFixed(1)}M</span>
+        ${_ratingsBarHtml(ratings)}
+      </div>
+
+      ${producer_note ? `
+        <div class="commercial-producer-note${stressHigh ? ' commercial-producer-high' : ''}">
+          <span class="producer-tag">[PRODUCER${stressTag}]</span> ${escHtml(producer_note)}
+        </div>
+      ` : ''}
+
+      <div class="steer-input-row">
+        <input class="steer-text-input" id="steer-text-input" type="text"
+               placeholder="📞 Call-in question — or press Enter to let The Host decide…"
+               autocomplete="off" />
+        <button class="steer-submit-btn" id="steer-submit">On air ▶</button>
+      </div>
+
+      <div class="steer-or">── producer directive ──</div>
+
+      <div class="style-list" id="directive-list">
+        ${directives.map(([d, desc]) => `
+          <button class="style-item" data-directive="${escHtml(d)}">
+            <span class="style-name">${escHtml(d.replace(/_/g, ' '))}</span>
+            <span class="style-desc">${escHtml(desc)}</span>
+          </button>
+        `).join('')}
+      </div>
+    `
+
+    const target = drawerContainer || document.body
+    target.appendChild(drawer)
+
+    const textInput = drawer.querySelector('#steer-text-input')
+    textInput.focus()
+
+    let selectedDirective = ''
+
+    drawer.querySelectorAll('.style-item').forEach(item => {
+      item.addEventListener('click', () => {
+        drawer.querySelectorAll('.style-item').forEach(i => i.classList.remove('style-selected'))
+        item.classList.add('style-selected')
+        selectedDirective = item.dataset.directive
+        submit()
+      })
+    })
+
+    function submit() {
+      const text = textInput.value.trim()
+      drawer.remove()
+      resolve({ text, producer_directive: selectedDirective })
+    }
+
+    drawer.querySelector('#steer-submit').addEventListener('click', submit)
+    drawer.querySelector('#steer-quit').addEventListener('click', () => {
+      drawer.remove()
+      resolve(null)
+    })
+    textInput.addEventListener('keydown', e => { if (e.key === 'Enter') submit() })
   })
 }

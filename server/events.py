@@ -16,7 +16,7 @@ def _evt(type_: str, data: dict[str, Any]) -> dict:
 
 # ── outbound events ────────────────────────────────────────────────────────── #
 
-def message(name: str, content: str, role: str = "philosopher", backchannel: bool = False, debate_label: str = "") -> dict:
+def message(name: str, content: str, role: str = "philosopher", backchannel: bool = False, debate_label: str = "", catchphrase: str = "") -> dict:
     """A philosopher or moderator line."""
     return _evt("message", {
         "role": role,
@@ -24,6 +24,7 @@ def message(name: str, content: str, role: str = "philosopher", backchannel: boo
         "content": content,
         "backchannel": backchannel,
         "debate_label": debate_label,
+        "catchphrase": catchphrase,
     })
 
 
@@ -154,6 +155,50 @@ def oxford_verdict(
         "persona_verdicts":  persona_verdicts,
         "verdict":           verdict,
     })
+
+
+def chyron(text: str) -> dict:
+    """Sensationalist cable news chyron — misrepresents the last turn."""
+    return _evt("chyron", {"text": text})
+
+
+def producer_whisper(note: str, stress: int) -> dict:
+    """Producer's note to The Host — shown before the commercial break prompt."""
+    return _evt("producer_whisper", {"note": note, "stress": stress})
+
+
+def breaking_news(headline: str) -> dict:
+    """BREAKING NEWS interrupt — absurdist headline unrelated to the debate."""
+    return _evt("breaking_news", {"headline": headline})
+
+
+def cable_ratings(ratings: float, history: list) -> dict:
+    """Per-turn ratings bar update."""
+    return _evt("cable_ratings", {"ratings": ratings, "history": history})
+
+
+def commercial_break(
+    ratings: float,
+    peak_ratings: float,
+    producer_note: str,
+    producer_stress: int,
+    catchphrases: dict,
+    directives: list,
+) -> dict:
+    """Commercial break — replaces steer_needed for cable news sessions."""
+    return _evt("commercial_break", {
+        "ratings":        ratings,
+        "peak_ratings":   peak_ratings,
+        "producer_note":  producer_note,
+        "producer_stress": producer_stress,
+        "catchphrases":   catchphrases,
+        "directives":     directives,
+    })
+
+
+def cable_news_end(reason: str, report: dict) -> dict:
+    """Debate ended via ratings ceiling (viral) or floor (cancelled)."""
+    return _evt("cable_news_end", {"reason": reason, "report": report})
 
 
 def debug(channel: str, label: str, data=None) -> dict:

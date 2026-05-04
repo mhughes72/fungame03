@@ -45,6 +45,7 @@ import server.events as evt
 from server.session import SessionStore, _SENTINEL
 from personas import CHARACTERS
 from nodes import MODERATOR_STYLES as _MODERATOR_STYLES, generate_newspaper as _generate_newspaper
+from formats.cable_news import PRODUCER_DIRECTIVES as _PRODUCER_DIRECTIVES
 
 
 # --------------------------------------------------------------------------- #
@@ -120,7 +121,8 @@ class SteerRequest(BaseModel):
     text: str = ""
     style: str = "socratic"
     evidence: str = ""    # pre-summarised finding from /api/search; empty if not injecting
-    drinks: dict[str, int] = {}   # {name: count} — drinks to add this round per character
+    drinks: dict[str, int] = {}
+    producer_directive: str = ""   # cable news commercial break directive   # {name: count} — drinks to add this round per character
 
 
 class SearchRequest(BaseModel):
@@ -158,6 +160,12 @@ def list_characters():
 def list_styles():
     """Return all moderator styles."""
     return [{"style": s, "description": d} for s, d in _MODERATOR_STYLES]
+
+
+@app.get("/api/cable-news/directives")
+def list_directives():
+    """Return producer directive options for cable news commercial breaks."""
+    return [{"directive": d, "description": desc} for d, desc in _PRODUCER_DIRECTIVES]
 
 
 @app.get("/api/features")
@@ -215,7 +223,7 @@ async def stream_session(session_id: str):
         # OpenAI credits and stacking steer modals on return.
         if not session._started:
             session._started = True
-            loop.run_in_executor(None, session.run_batch)
+            loop.run_in_executor(None, session.start_first_batch)
 
         while True:
             item = await session.queue.get()
@@ -286,9 +294,11 @@ async def steer_session(session_id: str, req: SteerRequest):
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
 
-    valid_styles = {s for s, _ in _MODERATOR_STYLES}
-    if req.style not in valid_styles:
-        raise HTTPException(status_code=400, detail=f"Unknown style: {req.style!r}")
+    is_cable = session.state.get("debate_format") == "cable_news"
+    if not is_cable:
+        valid_styles = {s for s, _ in _MODERATOR_STYLES}
+        if req.style not in valid_styles:
+            raise HTTPException(status_code=400, detail=f"Unknown style: {req.style!r}")
 
     loop = asyncio.get_event_loop()
     session.apply_steer(
@@ -297,6 +307,7 @@ async def steer_session(session_id: str, req: SteerRequest):
         participants=session.state["participants"],
         evidence=req.evidence,
         drinks=req.drinks,
+        producer_directive=req.producer_directive,
     )
     loop.run_in_executor(None, session.run_batch)
     return {"ok": True}

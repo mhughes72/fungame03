@@ -37,7 +37,7 @@ class RoomState(TypedDict):
     commentator_length: str    # "off" | "normal" | "verbose"
     moderator_length: str      # "brief" | "normal" | "elaborate"
     # Structured debate format (local-only)
-    debate_format:    str      # "" = freeform; "oxford" = Oxford-style
+    debate_format:    str      # "" = freeform; "oxford" = Oxford-style; "cable_news" = cable news
     format_roles:     dict     # {"proposition": [...], "opposition": [...]}
     format_seq:       list     # compiled turn sequence: [{speaker, phase, instruction}]
     format_seq_idx:   int      # current position in format_seq
@@ -45,6 +45,19 @@ class RoomState(TypedDict):
     phase_instruction: str     # injected into philosopher prompt for structured phases
     oxford_opening_vote: dict  # {proposition_pct, persona_leanings, rationale} or {}
     oxford_verdict: dict       # {winner, proposition_open, proposition_final, margin, persona_verdicts, verdict} or {}
+    # Cable news format
+    ratings:              float      # current viewer count in millions
+    ratings_history:      list       # [float] — one data point per turn
+    catchphrases:         dict       # {name: catchphrase_str}
+    producer_note:        str        # current whisper to The Host
+    producer_stress:      int        # 0–5 manic scale
+    guest_stats:          dict       # {safe_name: {catchphrase_count, total_response_length, response_count, ratings_delta}}
+    peak_ratings:         float      # highest ratings reached this session
+    breaking_news_count:  int        # total BREAKING NEWS events fired
+    producer_directive:   str        # player choice at commercial break
+    cable_news_end:       str        # "viral" | "cancelled" | ""
+    chyron_this_turn:     str        # cleared after each batch
+    breaking_news_this_turn: str     # cleared after each batch
 
 
 def _assign_oxford_roles(participants: list[str]) -> dict:
@@ -136,6 +149,18 @@ def new_room_state(
         "phase_instruction": "",
         "oxford_opening_vote": {},
         "oxford_verdict":      {},
+        "ratings":               0.8,
+        "ratings_history":       [],
+        "catchphrases":          {},
+        "producer_note":         "",
+        "producer_stress":       0,
+        "guest_stats":           {},
+        "peak_ratings":          0.8,
+        "breaking_news_count":   0,
+        "producer_directive":    "",
+        "cable_news_end":        "",
+        "chyron_this_turn":      "",
+        "breaking_news_this_turn": "",
     }
 
 
@@ -175,4 +200,16 @@ def reset_for_new_topic(state: RoomState, topic: str) -> RoomState:
         "phase_instruction": "",
         "oxford_opening_vote": {},
         "oxford_verdict":      {},
+        "ratings":               0.8,
+        "ratings_history":       [],
+        "catchphrases":          {},
+        "producer_note":         "",
+        "producer_stress":       0,
+        "guest_stats":           {},
+        "peak_ratings":          0.8,
+        "breaking_news_count":   0,
+        "producer_directive":    "",
+        "cable_news_end":        "",
+        "chyron_this_turn":      "",
+        "breaking_news_this_turn": "",
     }

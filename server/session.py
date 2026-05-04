@@ -46,6 +46,12 @@ from nodes import (
     analyze_sidebar,
     BAR_BEATS as _BAR_BEATS,
 )
+from formats.cable_news import (
+    generate_catchphrases as _generate_catchphrases,
+    generate_host_message as _generate_host_message,
+    cable_news_end_report as _cable_news_end_report,
+    PRODUCER_DIRECTIVES as _PRODUCER_DIRECTIVES,
+)
 from state import RoomState, new_room_state, reset_for_new_topic
 
 
@@ -136,16 +142,47 @@ class Session:
     # ------------------------------------------------------------------ #
 
     def run_batch(self) -> None:
-        """Stream one graph batch, pushing SSE events into the queue.
-
-        Exits when the graph reaches ``__steer__`` or ``consensus_checker``.
-        The method is designed to be called via ``loop.run_in_executor``.
-        """
+        """Stream one graph batch, pushing SSE events into the queue."""
         dbg.set_sink(lambda ch, label, data: self._put(evt.debug(ch, label, data)))
         try:
             self._run_batch_inner()
         finally:
             dbg.clear_sink()
+
+    def start_first_batch(self) -> None:
+        """Like run_batch but generates catchphrases first for cable_news sessions."""
+        dbg.set_sink(lambda ch, label, data: self._put(evt.debug(ch, label, data)))
+        try:
+            if self.state.get("debate_format") == "cable_news" and not self.state.get("catchphrases"):
+                self._put(evt.system("*[producer checks the guest list]*"))
+                catchphrases = _generate_catchphrases(self.state)
+                self.state = {**self.state, "catchphrases": catchphrases}
+            self._run_batch_inner()
+        finally:
+            dbg.clear_sink()
+
+    def _emit_cable_news_turn(self, snapshot: dict) -> None:
+        """Emit per-turn cable news events after a philosopher has spoken."""
+        # Ratings bar
+        ratings = snapshot.get("ratings") or 0.8
+        history = snapshot.get("ratings_history") or []
+        self._put(evt.cable_ratings(ratings, history[-20:]))
+
+        # Chyron
+        chyron = snapshot.get("chyron_this_turn") or ""
+        if chyron:
+            self._put(evt.chyron(chyron))
+
+        # BREAKING NEWS
+        breaking = snapshot.get("breaking_news_this_turn") or ""
+        if breaking:
+            self._put(evt.breaking_news(breaking))
+
+        # Producer whisper changes
+        note   = snapshot.get("producer_note") or ""
+        stress = snapshot.get("producer_stress") or 0
+        if note:
+            self._put(evt.producer_whisper(note, stress))
 
     def _run_batch_inner(self) -> None:
         displayed_count = len(self.state.get("messages") or [])
@@ -209,6 +246,9 @@ class Session:
                             page_url  = diagram.get("page_url", ""),
                         ))
 
+                    if snapshot.get("debate_format") == "cable_news":
+                        self._emit_cable_news_turn(snapshot)
+
                 final_state = snapshot
 
         except Exception as exc:
@@ -247,7 +287,13 @@ class Session:
             else:
                 name = msg.name.replace("_", " ")
                 role = "moderator" if msg.name == "Moderator" else "philosopher"
-                self._put(evt.message(name, msg.content.strip(), role=role, debate_label=debate_label))
+                catchphrase = ""
+                if self.state.get("debate_format") == "cable_news":
+                    phrase = (self.state.get("catchphrases") or {}).get(name, "")
+                    content = msg.content.strip()
+                    if phrase and len(phrase) > 4 and phrase.lower() in content.lower():
+                        catchphrase = phrase
+                self._put(evt.message(name, msg.content.strip(), role=role, debate_label=debate_label, catchphrase=catchphrase))
         elif isinstance(msg, HumanMessage):
             name = getattr(msg, "name", None) or "You"
             role = "moderator" if name == "Moderator" else "user"
@@ -305,8 +351,22 @@ class Session:
             updates["evidence_this_turn"] = ""
         if self.state.get("diagram_this_turn"):
             updates["diagram_this_turn"] = {}
+        if self.state.get("debate_format") == "cable_news":
+            if self.state.get("chyron_this_turn"):
+                updates["chyron_this_turn"] = ""
+            if self.state.get("breaking_news_this_turn"):
+                updates["breaking_news_this_turn"] = ""
         if updates:
             self.state = {**self.state, **updates}
+
+        # Cable news: check for ratings-based end before checking consensus/max_turns
+        if self.state.get("debate_format") == "cable_news":
+            end_reason = self.state.get("cable_news_end") or ""
+            if end_reason in ("viral", "cancelled"):
+                report = _cable_news_end_report(self.state)
+                self._put(evt.cable_news_end(end_reason, report))
+                self._put_sentinel()
+                return
 
         if self.state.get("consensus"):
             self._put(evt.consensus(
@@ -328,13 +388,16 @@ class Session:
                         persona_verdicts=verdict["persona_verdicts"],
                         verdict=verdict["verdict"],
                     ))
-            # Max turns reached — show end-of-game report
-            self._put(evt.game_over(
-                turn=self.state.get("turn_count", 0),
-                heat=self.state.get("heat", 0),
-                partial_agreements=self.state.get("partial_agreements") or [],
-                remaining_disagreements=self.state.get("remaining_disagreements") or [],
-            ))
+            if self.state.get("debate_format") == "cable_news":
+                report = _cable_news_end_report(self.state)
+                self._put(evt.cable_news_end("max_turns", report))
+            else:
+                self._put(evt.game_over(
+                    turn=self.state.get("turn_count", 0),
+                    heat=self.state.get("heat", 0),
+                    partial_agreements=self.state.get("partial_agreements") or [],
+                    remaining_disagreements=self.state.get("remaining_disagreements") or [],
+                ))
             self._put_sentinel()
         elif _is_pre_rebuttal_steer(self.state):
             # Oxford format: auto-transition to rebuttals without a user-facing steer break
@@ -347,6 +410,15 @@ class Session:
             }
             self._put(evt.message("Moderator", announcement, role="moderator"))
             self._run_batch_inner()
+        elif self.state.get("debate_format") == "cable_news":
+            self._put(evt.commercial_break(
+                ratings=self.state.get("ratings") or 0.8,
+                peak_ratings=self.state.get("peak_ratings") or 0.8,
+                producer_note=self.state.get("producer_note") or "",
+                producer_stress=self.state.get("producer_stress") or 0,
+                catchphrases=self.state.get("catchphrases") or {},
+                directives=_PRODUCER_DIRECTIVES,
+            ))
         else:
             self._put(evt.steer_needed(
                 current_style=self.state.get("moderator_style", "socratic"),
@@ -366,61 +438,87 @@ class Session:
         participants: list[str],
         evidence: str = "",
         drinks: dict = None,
+        producer_directive: str = "",
     ) -> None:
         """Inject user input or a moderator steer into state, then start next batch."""
-        if new_style and new_style != self.state.get("moderator_style"):
-            self.state = {**self.state, "moderator_style": new_style}
-            self._put(evt.system(f"Moderator approach → {new_style}"))
+        is_cable = self.state.get("debate_format") == "cable_news"
 
-        if text:
-            forced = detect_forced_speaker(text, participants)
-            if forced:
-                self._put(evt.system(f"Calling out {forced}"))
-            self.state = {
-                **self.state,
-                "forced_speaker": forced or "",
-                "messages": list(self.state["messages"]) + [
-                    HumanMessage(content=text, name="User")
-                ],
-            }
-            self._put(evt.message("User", text, role="user"))
-        elif self.moderator_enabled:
-            steer = _oxford_rebuttal_announcement(self.state) if _is_pre_rebuttal_steer(self.state) else None
-            steer_target = ""
-            if steer is None:
-                steer, steer_target = generate_moderator_steer(self.state)
-            if steer:
+        if is_cable:
+            self._apply_cable_news_steer(text, producer_directive)
+        else:
+            if new_style and new_style != self.state.get("moderator_style"):
+                self.state = {**self.state, "moderator_style": new_style}
+                self._put(evt.system(f"Moderator approach → {new_style}"))
+
+            if text:
+                forced = detect_forced_speaker(text, participants)
+                if forced:
+                    self._put(evt.system(f"Calling out {forced}"))
                 self.state = {
                     **self.state,
-                    "forced_speaker": steer_target or "",
+                    "forced_speaker": forced or "",
                     "messages": list(self.state["messages"]) + [
-                        HumanMessage(content=steer, name="Moderator")
+                        HumanMessage(content=text, name="User")
                     ],
                 }
-                self._put(evt.message("Moderator", steer, role="moderator"))
+                self._put(evt.message("User", text, role="user"))
+            elif self.moderator_enabled:
+                steer = _oxford_rebuttal_announcement(self.state) if _is_pre_rebuttal_steer(self.state) else None
+                steer_target = ""
+                if steer is None:
+                    steer, steer_target = generate_moderator_steer(self.state)
+                if steer:
+                    self.state = {
+                        **self.state,
+                        "forced_speaker": steer_target or "",
+                        "messages": list(self.state["messages"]) + [
+                            HumanMessage(content=steer, name="Moderator")
+                        ],
+                    }
+                    self._put(evt.message("Moderator", steer, role="moderator"))
 
         if evidence:
-            from langchain_core.messages import SystemMessage as _SysMsg
+            self._apply_evidence(evidence)
+        if drinks:
+            self._apply_drinks(drinks)
+
+    def _apply_cable_news_steer(self, call_in: str, producer_directive: str) -> None:
+        """Handle a cable news commercial break: store directive, generate Host message."""
+        if producer_directive:
+            self.state = {**self.state, "producer_directive": producer_directive}
+
+        host_msg = _generate_host_message(self.state, call_in=call_in)
+        if host_msg:
             self.state = {
                 **self.state,
-                "evidence_this_turn": evidence,
                 "messages": list(self.state["messages"]) + [
-                    _SysMsg(content=f"[EVIDENCE] {evidence}")
+                    HumanMessage(content=host_msg, name="The_Host")
                 ],
             }
-            self._put(evt.evidence(evidence, ""))
+            self._put(evt.message("The Host", host_msg, role="moderator"))
 
-        if drinks:
-            participants = self.state.get("participants", [])
-            current = dict(self.state.get("drunk_levels") or {})
-            for name, count in drinks.items():
-                if count > 0 and name in participants:
-                    current[name] = current.get(name, 0) + count
-                    total = current[name]
-                    _labels = {1: "one drink", 2: "two drinks", 3: "three drinks"}
-                    label = _labels.get(total, f"{total} drinks")
-                    self._put(evt.system(f"{name} has had {label} tonight."))
-            self.state = {**self.state, "drunk_levels": current}
+    def _apply_evidence(self, evidence: str) -> None:
+        from langchain_core.messages import SystemMessage as _SysMsg
+        self.state = {
+            **self.state,
+            "evidence_this_turn": evidence,
+            "messages": list(self.state["messages"]) + [
+                _SysMsg(content=f"[EVIDENCE] {evidence}")
+            ],
+        }
+        self._put(evt.evidence(evidence, ""))
+
+    def _apply_drinks(self, drinks: dict) -> None:
+        participants = self.state.get("participants", [])
+        current = dict(self.state.get("drunk_levels") or {})
+        for name, count in drinks.items():
+            if count > 0 and name in participants:
+                current[name] = current.get(name, 0) + count
+                total = current[name]
+                _labels = {1: "one drink", 2: "two drinks", 3: "three drinks"}
+                label = _labels.get(total, f"{total} drinks")
+                self._put(evt.system(f"{name} has had {label} tonight."))
+        self.state = {**self.state, "drunk_levels": current}
 
     def apply_cheat(self, heat: int | None = None, drinks: dict = None) -> None:
         """Directly mutate heat and/or drunk_levels without starting a new batch."""
@@ -460,7 +558,7 @@ class SessionStore:
 
     def create(self, participants: list[str], topic: str, commentator_enabled: bool = True, moderator_enabled: bool = True, diagrams_enabled: bool = False, audience_level: str = "university", philosopher_length: str = "normal", commentator_length: str = "normal", moderator_length: str = "normal", debate_format: str = "", format_roles: dict | None = None) -> Session:
         session_id = uuid.uuid4().hex
-        graph = build_graph(participants)
+        graph = build_graph(participants, debate_format=debate_format)
         state = new_room_state(participants, topic, max_turns=len(participants) * 6, diagrams_enabled=diagrams_enabled, audience_level=audience_level, philosopher_length=philosopher_length, commentator_length=commentator_length, moderator_length=moderator_length, debate_format=debate_format, format_roles=format_roles)
         session = Session(
             id=session_id,

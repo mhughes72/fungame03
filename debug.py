@@ -25,6 +25,7 @@ CHANNELS: dict[str, bool] = {
     "PHILOSOPHER":  True,
     "CONSENSUS":    True,
     "ROUTING":      True,
+    "CABLE":        True,
     "STATE":        False,   # off by default — very verbose
 }
 

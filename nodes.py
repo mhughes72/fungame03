@@ -236,13 +236,17 @@ def _generate_candidate(name: str, state: RoomState) -> dict:
         dbg.dlog("PHILOSOPHER", f"{name} — drunk level {drunk_level}")
     diagrams_enabled = state.get("diagrams_enabled", False)
     audience_level   = state.get("audience_level") or "university"
-    system_prompt = _philosopher_system_prompt(name, participants, partial_agreements, own_summary, heat, evidence_this_turn, diagrams_enabled, audience_level)
+    cable_news       = state.get("debate_format") == "cable_news"
+    catchphrase      = (state.get("catchphrases") or {}).get(name, "") if cable_news else ""
+    producer_stress  = state.get("producer_stress") or 0
+    cable_news_persona = CHARACTERS.get(name, {}).get("cable_news") if cable_news else None
+    system_prompt = _philosopher_system_prompt(name, participants, partial_agreements, own_summary, heat, evidence_this_turn, diagrams_enabled, audience_level, cable_news, catchphrase, producer_stress, cable_news_persona)
     philosopher_length = state.get("philosopher_length") or "normal"
     phase_instruction  = state.get("phase_instruction") or ""
     user_prompt   = _philosopher_user_prompt(
         name, state["messages"], topic, argument_log, turn_count, concession_counts,
         concession_log, challenge_counts, drunk_level, drunk_levels, philosopher_length,
-        phase_instruction,
+        phase_instruction, catchphrase, cable_news,
     )
 
     messages = (
@@ -370,8 +374,27 @@ def _structured_moderator(state: RoomState) -> dict:
     }
 
 
+def _cable_news_moderator(state: RoomState) -> dict:
+    """Cable news moderator — same batch/steer timing as freeform, no consensus check."""
+    participants = state["participants"]
+    turn_count   = state.get("turn_count") or 0
+    max_turns    = state.get("max_turns") or 20
+    n            = len(participants)
+
+    if turn_count >= max_turns:
+        return {"current_speaker": "__max_turns__", "turn_count": turn_count + 1}
+
+    if turn_count > 0 and turn_count % turns_per_batch(n) == 0:
+        dbg.dlog("CABLE", f"Turn {turn_count} — commercial break")
+        return {"current_speaker": "__steer__", "turn_count": turn_count + 1}
+
+    return {"current_speaker": "__turn__"}
+
+
 def moderator_node(state: RoomState) -> dict:
     """Decide whether to continue, steer-exit, or trigger a consensus check."""
+    if state.get("debate_format") == "cable_news":
+        return _cable_news_moderator(state)
     if state.get("debate_format"):
         return _structured_moderator(state)
 

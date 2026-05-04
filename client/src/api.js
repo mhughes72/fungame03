@@ -62,8 +62,8 @@ export async function createSession(characters, topic, commentator = true, moder
   })
 }
 
-export async function steer(sessionId, text, style, evidence = '', drinks = {}) {
-  return post(`/sessions/${sessionId}/steer`, { text, style, evidence, drinks })
+export async function steer(sessionId, text, style, evidence = '', drinks = {}, producerDirective = '') {
+  return post(`/sessions/${sessionId}/steer`, { text, style, evidence, drinks, producer_directive: producerDirective })
 }
 
 export async function searchEvidence(query) {

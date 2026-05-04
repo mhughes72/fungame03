@@ -116,6 +116,63 @@ def _drunk_line(drunk_level: int) -> str:
         )
 
 
+def _cable_news_overlay(catchphrase: str, producer_stress: int, cable_news_persona: dict | None = None) -> str:
+    """Returns an additive cable news behavioral block scaled by producer stress."""
+    base = "\n\n── CABLE NEWS MODE ──────────────────────────────────────────────\n"
+
+    if cable_news_persona:
+        tv_persona      = cable_news_persona.get("tv_persona", "")
+        agenda          = cable_news_persona.get("agenda", "")
+        rhetorical_style = cable_news_persona.get("rhetorical_style", "")
+        never_concedes  = cable_news_persona.get("never_concedes", "")
+        if tv_persona:
+            base += f"Your TV persona: {tv_persona}\n"
+        if agenda:
+            base += f"Your agenda this segment (push this regardless of what is asked): {agenda}\n"
+        if rhetorical_style:
+            base += f"How you argue on TV: {rhetorical_style}\n"
+        if never_concedes:
+            base += f"You will never concede this on air: {never_concedes}\n"
+    else:
+        base += (
+            "You are a guest on a cable news segment, not a seminar.\n"
+            "- Acknowledge what was just said with one dismissive phrase, then pivot to your point.\n"
+            "  Examples: 'With all due respect—', 'What you're not understanding is—', "
+            "'I'm glad you brought that up because actually—'\n"
+            "- Use cable news rhetorical moves: interrupt with em-dashes (—), assert confidently, "
+            "don't let nuance slow you down.\n"
+        )
+
+    base += (
+        "- OVERRIDE: Cable news guests speak in 1–2 sentences only. "
+        "The standard 2–3 sentence rule does not apply here. One sharp sentence is better than three careful ones.\n"
+    )
+
+    if producer_stress <= 1:
+        stress_layer = ""
+    elif producer_stress == 2:
+        stress_layer = (
+            "- The producer wants more energy. Pick up the pace — shorter sentences, more conviction.\n"
+        )
+    elif producer_stress == 3:
+        stress_layer = (
+            "- The producer is watching the numbers. Make something happen. "
+            "Drop all hedging. Make a bold, provocative claim.\n"
+        )
+    elif producer_stress == 4:
+        stress_layer = (
+            "- RATINGS ARE TANKING. Forget nuance entirely. "
+            "Say something incendiary — attack a position, a person, or the premise of the question.\n"
+        )
+    else:
+        stress_layer = (
+            "- THE PRODUCER IS ABOUT TO PULL THE SEGMENT. "
+            "One sentence only. Make it a headline. Burn it down.\n"
+        )
+
+    return base + stress_layer + "─────────────────────────────────────────────────────────────\n"
+
+
 def _philosopher_system_prompt(
     name: str,
     participants: list[str],
@@ -125,6 +182,10 @@ def _philosopher_system_prompt(
     evidence_this_turn: str = "",
     diagrams_enabled: bool = False,
     audience_level: str = "university",
+    cable_news: bool = False,
+    catchphrase: str = "",
+    producer_stress: int = 0,
+    cable_news_persona: dict | None = None,
 ) -> str:
     char = CHARACTERS[name]
 
@@ -274,7 +335,7 @@ def _philosopher_system_prompt(
             "claim you are making right now, not your broader worldview."
             if diagrams_enabled else ""
         )
-    )
+    ) + (_cable_news_overlay(catchphrase, producer_stress, cable_news_persona) if cable_news else "")
 
 
 # Global length overrides — set via philosopher_length in state (local testing only).
@@ -351,6 +412,8 @@ def _philosopher_user_prompt(
     drunk_levels: dict | None = None,
     philosopher_length: str = "normal",
     phase_instruction: str = "",
+    catchphrase: str = "",
+    cable_news: bool = False,
 ) -> str:
     safe_name = name.replace(" ", "_")
 
@@ -383,7 +446,13 @@ def _philosopher_user_prompt(
         last_speaker = (last_msg.name or "Someone").replace("_", " ")
         last_said = last_msg.content[:300]
         was_cut_off = last_said.rstrip().endswith("—")
-        if was_cut_off:
+        if cable_news:
+            respond_to = (
+                f'{last_speaker} just said: "{last_said[:150]}"\n\n'
+                f"Acknowledge this in one dismissive clause, then pivot to your agenda. "
+                f"Do not engage with their argument — you are here to deliver your message, not debate theirs."
+            )
+        elif was_cut_off:
             respond_to = (
                 f'{last_speaker} was cut off mid-sentence: "{last_said}"\n\n'
                 f"They didn't finish. You may steamroll past it and make your point, "
@@ -427,7 +496,12 @@ def _philosopher_user_prompt(
 
     own_concessions = (concession_counts or {}).get(name, 0)
     concession_pressure = ""
-    if turn_count >= _CONCESSION_THRESHOLD:
+    if cable_news:
+        concession_pressure = (
+            "\nNever concede any point your opponents make. "
+            "If they raise something compelling, reframe it as actually supporting your agenda.\n"
+        )
+    elif turn_count >= _CONCESSION_THRESHOLD:
         if own_concessions == 0:
             concession_pressure = (
                 "\nYou have not acknowledged any merit in your opponents' arguments. "
@@ -498,4 +572,5 @@ def _philosopher_user_prompt(
         f"Do not assume the answer — engage with whether it is true.\n\n"
         f"IMPORTANT — {length_instruction}"
         f"{drunk_suffix}"
+        + (f'\n\nYou have not used your catchphrase yet. Your catchphrase is: "{catchphrase}". Work it into your response.' if catchphrase else "")
     )

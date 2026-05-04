@@ -257,6 +257,56 @@ For 3 characters (1v2 or 2v1): openings in proportion, 6 floor turns, rebuttals 
 - Each message is tagged with a small coloured label: blue for Proposition, amber for Opposition — during opening and rebuttal phases only, not during the floor
 - When Oxford is selected on the setup screen, the character list and topic input are locked — use the Suggested Debate card to pick a debate
 
+### Cable News
+
+A satirical format where nuance literally tanks the ratings. Select **📺 Cable News** on the setup screen.
+
+**The core joke:** short, combative, and loud raises viewership. Thoughtful, nuanced answers lose the audience. The mechanics are designed to reward bad epistemics and punish good ones.
+
+#### Turn cycle
+
+Each turn runs a fixed pipeline after the philosopher speaks:
+
+```
+parallel_turn → ratings_node → chyron_node → producer_node → moderator
+```
+
+- **`ratings_node`** — rule-based scoring after every turn. Short response (+0.1M), long response (−0.2M), exclamation marks (+0.05M), words like "however" or "furthermore" (−0.05M each), catchphrase deployed (+0.1M), concession detected (−0.1M), backchannel fired this turn (+0.05M).
+- **`chyron_node`** — 50% chance per turn. Sends the last message to an LLM with instructions to produce an ALL CAPS misrepresentation of what was said — the most alarming or absurd reading possible.
+- **`producer_node`** — tracks stress (0–5) based on three triggers firing simultaneously: ratings dropping three turns in a row, last response over 300 chars, ratings flat for 4 turns. Stress maps to escalating panic messages visible in the conversation as `[PRODUCER]` lines. At stress 4–5 the guest prompts are instructed to say one incendiary sentence and stop.
+
+#### Guest personas
+
+Each character has a `cable_news` block in `personas.py` defining their TV persona: who they are on screen (usually a distorted, combative version of their real self), the one talking point they push regardless of what is asked, their TV-specific rhetorical style, and the one thing they will never concede on air.
+
+Guests are prompted to acknowledge what was just said in a single dismissive clause and then pivot to their agenda — they are not here to debate, they are here to deliver their message. Concessions are replaced with the opposite pressure: reframe any compelling opponent argument as supporting your own position.
+
+#### Session start
+
+Before the first turn, catchphrases are generated for each guest in parallel — one `gpt-4o-mini` call per person, topic-aware and in character. Catchphrases are stored in state and guests are instructed to deploy them at least once, especially when cornered. Deployed catchphrases are highlighted gold in the conversation pane.
+
+#### Commercial breaks (steer breaks)
+
+At each steer break the normal steer modal is replaced with a commercial break drawer showing:
+- Current ratings and delta from this segment
+- The producer's current stress message
+- A call-in field: type a question for The Host to direct at a specific guest, or leave blank and The Host decides
+- A producer directive selector: get them fighting / force a soundbite / push the narrative / wrap it up / go soft
+
+The Host is a separate LLM call between segments. It reads the producer note, the current directive, any breaking news this turn, and all guest catchphrases, and generates a 1–3 sentence opener for the next segment. It is explicitly prompted to be combative, shallow, and to weaponise catchphrases against their owners.
+
+#### Breaking news
+
+Fires randomly (20% chance per turn) from a pre-generated pool of absurdist headlines in `breaking_news.json`, completely unrelated to the debate. Announced by The Host at the top of the next segment. Add your own headlines to the pool by editing the file directly, or regenerate the pool:
+
+```bash
+python generate_breaking_news.py
+```
+
+#### End condition
+
+The debate ends when ratings hit **4.0M** (went viral — network pulls the guests mid-segment) or drop to **0.2M** (show cancelled live on air). The end report scores guests on entertainment value: most combative gets a Fox News seat, most catchphrase-happy gets a podcast deal, longest average response gets the 3am C-SPAN slot.
+
 ---
 
 ## Bar UI controls
@@ -288,6 +338,7 @@ Type these at the input prompt:
 | `philosopher` | Candidate generation, token counts, debate arcs | on |
 | `consensus` | Transcript sent to checker, structured result | on |
 | `routing` | Graph edge decisions | on |
+| `cable` | Catchphrase generation, ratings deltas, chyrons, producer stress, host messages | on |
 | `state` | Full state snapshot after every node (very verbose) | off |
 
 ## Debate logic
@@ -456,7 +507,25 @@ START → moderator ─┬─ consensus_check → consensus_checker → END
 
 ## Adding characters
 
-Add an entry to `CHARACTERS` in `personas.py`. All fields are required:
+### Generate a new persona
+
+```bash
+python generate_persona.py "Hannah Arendt"
+python generate_persona.py "Voltaire" --portrait   # also generate portrait after
+```
+
+Uses `gpt-4o` to produce a complete `personas.py` entry — all required fields plus a `cable_news` block. Output is printed to stdout for review and copy-pasting into `personas.py`. The generated entry includes historically grounded `core_beliefs`, `rhetorical_moves`, `cite_these`, `hot_topics`, `dynamics` entries for several existing characters, and a satirical `cable_news` persona.
+
+After adding a new character to `personas.py`, run the portrait generators if you want them in the web UI:
+
+```bash
+python generate_portraits.py "Hannah Arendt"
+python generate_newspaper_portraits.py "Hannah Arendt"
+```
+
+### Manual entry
+
+Add an entry directly to `CHARACTERS` in `personas.py`. All fields are required:
 
 ```python
 "Name": {
@@ -470,10 +539,34 @@ Add an entry to `CHARACTERS` in `personas.py`. All fields are required:
     "dynamics": {
         "Other Character": "how they relate to that specific person",
     },
+    "cable_news": {
+        "tv_persona":        "their on-screen character — the distorted, simplified TV version",
+        "agenda":            "the one talking point they push regardless of what is asked",
+        "rhetorical_style":  "TV-specific arguing style: signature openers, interruption patterns, deflection tactics",
+        "never_concedes":    "the one position they will never back down from on air",
+    },
 },
 ```
 
-`dynamics` keys only have effect when that character is in the same room.
+`dynamics` keys only have effect when that character is in the same room. `cable_news` is only used in Cable News format sessions.
+
+### Regenerating cable_news blocks
+
+If you add new characters or want to regenerate the cable news personas for existing ones:
+
+```bash
+# Generate cable_news blocks for all characters that don't have one yet
+python generate_cable_news_personas.py --apply
+
+# Regenerate for a single character (saves to cable_news_blocks.json, then apply)
+python generate_cable_news_personas.py --name "Isaac Newton"
+python generate_cable_news_personas.py --from-file cable_news_blocks.json --apply
+
+# Generate without patching (review first)
+python generate_cable_news_personas.py
+# then inspect cable_news_blocks.json, then:
+python generate_cable_news_personas.py --from-file cable_news_blocks.json --apply
+```
 
 ## Requirements
 

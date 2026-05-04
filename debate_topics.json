@@ -1558,5 +1558,257 @@
     "format": "oxford",
     "source": "generated",
     "generated_at": "2026-05-03"
+  },
+  {
+    "id": "a307c1a0",
+    "topic": "Scientific truth is ultimately defined by objective reality",
+    "tagline": "Can science ever be fully objective?",
+    "characters": [
+      "Niels Bohr",
+      "Albert Einstein",
+      "Isaac Newton",
+      "Werner Heisenberg"
+    ],
+    "roles": {
+      "proposition": [
+        "Niels Bohr",
+        "Albert Einstein"
+      ],
+      "opposition": [
+        "Isaac Newton",
+        "Werner Heisenberg"
+      ]
+    },
+    "category": "scientific",
+    "theme": "scientific_objectivity",
+    "audience_level": "university",
+    "rationale": "The Proposition believes that scientific truth is constructed through observation and theory, while the Opposition holds that objective reality exists independently of our perceptions or theories.",
+    "format": "oxford",
+    "source": "generated",
+    "generated_at": "2026-05-03"
+  },
+  {
+    "id": "973126ec",
+    "topic": "Art is a powerful tool for societal change",
+    "tagline": "Can creativity spark the revolution?",
+    "characters": [
+      "Pablo Picasso",
+      "John Lennon",
+      "Salvador Dalí",
+      "Andy Warhol"
+    ],
+    "roles": {
+      "proposition": [
+        "Pablo Picasso",
+        "John Lennon"
+      ],
+      "opposition": [
+        "Salvador Dalí",
+        "Andy Warhol"
+      ]
+    },
+    "category": "cultural",
+    "theme": "art_and_society",
+    "audience_level": "university",
+    "rationale": "Picasso and Lennon believe art can drive social and political change, while Dalí and Warhol prioritize individual expression and aesthetic innovation over activism.",
+    "format": "oxford",
+    "source": "generated",
+    "generated_at": "2026-05-03"
+  },
+  {
+    "id": "c7dc023b",
+    "topic": "The pursuit of knowledge is inherently a moral duty.",
+    "tagline": "Knowledge without morality risks chaos and destruction.",
+    "characters": [
+      "Albert Einstein",
+      "Carl Sagan",
+      "Sigmund Freud",
+      "David Bowie"
+    ],
+    "roles": {
+      "proposition": [
+        "Albert Einstein",
+        "Carl Sagan"
+      ],
+      "opposition": [
+        "Sigmund Freud",
+        "David Bowie"
+      ]
+    },
+    "category": "philosophical",
+    "theme": "knowledge_and_morality",
+    "audience_level": "university",
+    "rationale": "The Proposition believes that knowledge must be paired with ethical responsibility, while the Opposition sees knowledge and creativity as more personal and subjective pursuits.",
+    "format": "oxford",
+    "source": "generated",
+    "generated_at": "2026-05-03"
+  },
+  {
+    "id": "14c4e49e",
+    "topic": "Art must prioritize individual expression over societal obligations",
+    "tagline": "True art thrives in freedom, not in service to society",
+    "characters": [
+      "Salvador Dalí",
+      "Pablo Picasso",
+      "Mao Zedong",
+      "Joseph Stalin"
+    ],
+    "roles": {
+      "proposition": [
+        "Salvador Dalí",
+        "Pablo Picasso"
+      ],
+      "opposition": [
+        "Mao Zedong",
+        "Joseph Stalin"
+      ]
+    },
+    "category": "cultural",
+    "theme": "art_vs_society",
+    "audience_level": "university",
+    "rationale": "The proposition believes that art's true value lies in individual creativity and expression; the opposition argues that art should advance the ideals of society for the greater good.",
+    "format": "oxford",
+    "source": "generated",
+    "generated_at": "2026-05-03"
+  },
+  {
+    "id": "67f6dbec",
+    "topic": "State intervention is essential for true economic equality",
+    "tagline": "Equality requires active state policies, not mere market solutions.",
+    "characters": [
+      "Vladimir Lenin",
+      "Joseph Stalin",
+      "Ronald Reagan",
+      "Margaret Thatcher"
+    ],
+    "roles": {
+      "proposition": [
+        "Vladimir Lenin",
+        "Joseph Stalin"
+      ],
+      "opposition": [
+        "Ronald Reagan",
+        "Margaret Thatcher"
+      ]
+    },
+    "category": "political",
+    "theme": "state_intervention_vs_market_freedom",
+    "audience_level": "university",
+    "rationale": "Lenin and Stalin advocate for state intervention as a means to achieve economic equality, while Reagan and Thatcher believe in free market solutions that promote individual freedom and initiative.",
+    "format": "oxford",
+    "source": "generated",
+    "generated_at": "2026-05-03"
+  },
+  {
+    "id": "09743418",
+    "topic": "Cultural Appropriation vs Cultural Appreciation",
+    "tagline": "Respectful homage or theft?",
+    "characters": [
+      "John Lennon",
+      "Richard Feynman",
+      "Winston Churchill",
+      "George Orwell"
+    ],
+    "roles": {
+      "proposition": [
+        "John Lennon",
+        "Richard Feynman"
+      ],
+      "opposition": [
+        "Winston Churchill",
+        "George Orwell"
+      ]
+    },
+    "category": "cultural",
+    "theme": "cultural_appropriation_vs_appreciation",
+    "audience_level": "university",
+    "rationale": "Proposition sees cultural blending as positive; opposition warns of exploitation and erasure.",
+    "format": "oxford",
+    "source": "generated",
+    "generated_at": "2026-05-03"
+  },
+  {
+    "id": "817d6b21",
+    "topic": "Art should prioritize individual expression over societal obligations.",
+    "tagline": "Is personal creativity more important than societal context in art?",
+    "characters": [
+      "Pablo Picasso",
+      "John Lennon",
+      "Richard Wagner",
+      "Friedrich Nietzsche"
+    ],
+    "roles": {
+      "proposition": [
+        "Pablo Picasso",
+        "John Lennon"
+      ],
+      "opposition": [
+        "Richard Wagner",
+        "Friedrich Nietzsche"
+      ]
+    },
+    "category": "cultural",
+    "theme": "individual_expression_vs_societal_context",
+    "audience_level": "university",
+    "rationale": "The Proposition believes that art's primary role is individual expression, while the Opposition values societal influences and context in artistic creation.",
+    "format": "oxford",
+    "source": "generated",
+    "generated_at": "2026-05-03"
+  },
+  {
+    "id": "ad0d16ac",
+    "topic": "The state should actively promote scientific research for societal progress",
+    "tagline": "Government investment in science is critical for future innovation and public benefit.",
+    "characters": [
+      "Winston Churchill",
+      "Franklin Delano Roosevelt",
+      "Nikola Tesla",
+      "Richard Nixon"
+    ],
+    "roles": {
+      "proposition": [
+        "Winston Churchill",
+        "Franklin Delano Roosevelt"
+      ],
+      "opposition": [
+        "Nikola Tesla",
+        "Richard Nixon"
+      ]
+    },
+    "category": "scientific",
+    "theme": "state_support_vs_market_innovation",
+    "audience_level": "university",
+    "rationale": "The Proposition argues that state support is essential for research advancement; the Opposition contends that innovation should thrive in a free, unregulated market.",
+    "format": "oxford",
+    "source": "generated",
+    "generated_at": "2026-05-03"
+  },
+  {
+    "id": "6707d03f",
+    "topic": "Art should challenge societal norms rather than reinforce them",
+    "tagline": "Art must provoke, not conform.",
+    "characters": [
+      "Salvador Dalí",
+      "Pablo Picasso",
+      "Richard Wagner",
+      "Leonardo da Vinci"
+    ],
+    "roles": {
+      "proposition": [
+        "Salvador Dalí",
+        "Pablo Picasso"
+      ],
+      "opposition": [
+        "Richard Wagner",
+        "Leonardo da Vinci"
+      ]
+    },
+    "category": "cultural",
+    "theme": "art_and_society",
+    "audience_level": "university",
+    "rationale": "The Proposition believes art's purpose is to disrupt and question societal standards, while the Opposition maintains that art reflects and enhances existing cultural values.",
+    "format": "oxford",
+    "source": "generated",
+    "generated_at": "2026-05-03"
   }
 ]
