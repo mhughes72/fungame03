@@ -487,6 +487,9 @@ class Session:
         if producer_directive:
             self.state = {**self.state, "producer_directive": producer_directive}
 
+        if call_in:
+            self._put(evt.system(f'📞 "{call_in}"'))
+
         host_msg = _generate_host_message(self.state, call_in=call_in)
         if host_msg:
             self.state = {

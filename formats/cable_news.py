@@ -274,17 +274,21 @@ def generate_host_message(state: RoomState, call_in: str = "") -> str:
     )
 
     lines = [f"Ratings: {ratings}M viewers. Topic: {topic}."]
+    if call_in:
+        lines.append(
+            f'VIEWER CALL-IN: "{call_in}"\n'
+            f"You MUST open your response by reading this question on air and directing it at a specific guest by name. "
+            f"Do not paraphrase — use their words."
+        )
     if breaking_news:
-        lines.append(f"ANNOUNCE BREAKING NEWS first: \"{breaking_news}\"")
+        lines.append(f"After the call-in, ANNOUNCE BREAKING NEWS: \"{breaking_news}\"" if call_in else f"ANNOUNCE BREAKING NEWS first: \"{breaking_news}\"")
     if producer_note:
         lines.append(f"[PRODUCER whispers: {producer_note}]")
     if directive_label:
         lines.append(f"[DIRECTIVE: {directive_label}]")
     if catchphrase_list:
         lines.append(f"Guest catchphrases to weaponise:\n{catchphrase_list}")
-    if call_in:
-        lines.append(f'Viewer call-in question: "{call_in}" — read it on air to a specific guest.')
-    else:
+    if not call_in:
         lines.append("No call-in — fire your own question based on the producer note.")
 
     try:
