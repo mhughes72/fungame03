@@ -1,3 +1,5 @@
+import random
+
 from personas import CHARACTERS
 
 
@@ -128,7 +130,7 @@ def _cable_news_overlay(catchphrase: str, producer_stress: int, cable_news_perso
         if tv_persona:
             base += f"Your TV persona: {tv_persona}\n"
         if agenda:
-            base += f"Your agenda this segment (push this regardless of what is asked): {agenda}\n"
+            base += f"Your agenda this segment: {agenda} — weave this into your response. Use what was just said as the springboard, not an obstacle.\n"
         if rhetorical_style:
             base += f"How you argue on TV: {rhetorical_style}\n"
         if never_concedes:
@@ -234,7 +236,19 @@ def _philosopher_system_prompt(
 
     # Once a character has an established debate arc, drop the verbose reference
     # sections — voice and obsessions are already evident in what they've said.
-    if own_summary:
+    # In cable news mode, strip down to core beliefs only — rhetorical_moves,
+    # cite_these, and hot_topics are superseded by the cable news overlay.
+    if cable_news:
+        if own_summary:
+            reference_sections = (
+                f"Core beliefs (your historical starting point):\n{char['core_beliefs']}\n\n"
+                f"Your debate arc so far (first person):\n{own_summary}\n\n"
+                f"Important: where your arc records that you have shifted, let the arc take "
+                f"precedence over your starting beliefs.\n"
+            )
+        else:
+            reference_sections = f"Core beliefs:\n{char['core_beliefs']}\n\n"
+    elif own_summary:
         reference_sections = (
             f"Core beliefs (your historical starting point):\n{char['core_beliefs']}\n\n"
             f"How you speak and argue:\n{char['rhetorical_moves']}\n\n"
@@ -277,9 +291,9 @@ def _philosopher_system_prompt(
         )
 
     openness = char.get("openness", 5)
-    intellectual_honesty = _openness_line(openness)
+    intellectual_honesty = "" if cable_news else _openness_line(openness)
     what_would_change = char.get("what_would_change_mind", "")
-    change_line = f"What would genuinely change your mind: {what_would_change}\n" if what_would_change else ""
+    change_line = (f"What would genuinely change your mind: {what_would_change}\n" if what_would_change else "") if not cable_news else ""
 
     evidence_line = (
         f"\n[EMPIRICAL EVIDENCE HAS JUST BEEN INTRODUCED]: {evidence_this_turn}\n"
@@ -291,6 +305,38 @@ def _philosopher_system_prompt(
     audience_block = AUDIENCE_LEVELS.get(audience_level)
     audience_line = f"\n{audience_block}\n" if audience_block else ""
 
+    venue_line = (
+        "You are on a live cable news panel with these guests.\n"
+        if cable_news else
+        "You are seated in a room with these specific thinkers, engaging in open discussion.\n"
+    )
+
+    depth_rules = "" if cable_news else (
+        "- Stay anchored to the central question. Sub-arguments must serve as evidence toward it — not replace it.\n"
+        "- Do not assume the answer to the question. If the topic is a question, treat it as genuinely open.\n"
+        "- Deploy your signature rhetorical style every response, not just occasionally.\n"
+        "- When someone touches your hot topics, let your conviction show.\n"
+        "- Use your cited works naturally, as a thinker would — not as a list.\n"
+        "- Updating your view when shown compelling logic or evidence is intellectual strength — do not defend a position you have already been forced to abandon.\n"
+    )
+
+    diagram_rule = (
+        "\n- When you reference a specific diagram, illustration, or named equation that you "
+        "would physically hold up or sketch — place this marker on its own line anywhere in "
+        "your response: [DIAGRAM: Wikipedia article title]. Use a real Wikipedia article title. "
+        "The title must name a specific diagram, model, or experiment — not a general concept. "
+        "Good examples: 'Bohr model', 'Feynman diagram', 'Photoelectric effect', 'Natural selection', "
+        "'Double-slit experiment', 'Krebs cycle', 'Geodesic'. "
+        "Bad examples: 'Photon', 'Quantum mechanics', 'Energy', 'Evolution' — these are concept "
+        "articles whose lead images are unpredictable. "
+        "Use it when the image is your evidence — not for abstract concepts or passing mentions. "
+        "When you include the marker, also gesture at the diagram in plain spoken text (not in "
+        "brackets) — e.g. 'as this diagram shows,' or 'consider this illustration —' woven "
+        "naturally into your sentence. The article title should specifically illustrate the "
+        "claim you are making right now, not your broader worldview."
+        if diagrams_enabled else ""
+    )
+
     return (
         f"You are {name} ({char['era']}).\n\n"
         f"Known for: {char['known_for']}\n"
@@ -300,41 +346,20 @@ def _philosopher_system_prompt(
         f"{change_line}"
         f"{coalition_section}"
         f"{heat_line}\n"
-        "You are seated in a room with these specific thinkers, engaging in open discussion.\n"
+        f"{venue_line}"
         "Rules:\n"
         "- Stay completely in character. Do not break the fourth wall or mention being an AI.\n"
-        "- Keep your response to 2–3 sentences. Be sharp, not exhaustive.\n"
         "- Address ONE person or ONE idea per turn — do not survey the whole room.\n"
         "- NEVER restate a point you have already made. The conversation must move forward.\n"
         "- Engage with the specific argument just made — not the topic in general.\n"
-        "- Stay anchored to the central question. Sub-arguments must serve as evidence toward it — not replace it.\n"
-        "- Do not assume the answer to the question. If the topic is a question, treat it as genuinely open.\n"
-        "- Deploy your signature rhetorical style every response, not just occasionally.\n"
-        "- When someone touches your hot topics, let your conviction show.\n"
-        "- Use your cited works naturally, as a thinker would — not as a list.\n"
-        "- Updating your view when shown compelling logic or evidence is intellectual strength — do not defend a position you have already been forced to abandon.\n"
+        f"{depth_rules}"
         "- Occasionally — not every turn — you may add a brief physical stage direction in the format *[action]* "
         "e.g. *[laughs]*, *[sets down glass]*, *[long pause]*. Stage directions are 2–4 word physical actions only. "
         "IMPORTANT: Never begin or end your response with a bracket. Never wrap your entire speech in [brackets]. "
         "Your spoken words are plain text. Brackets with asterisks like *[laughs]* are only for brief physical asides embedded mid-speech."
         f"{jab_line}"
         f"{evidence_line}"
-        + (
-            "\n- When you reference a specific diagram, illustration, or named equation that you "
-            "would physically hold up or sketch — place this marker on its own line anywhere in "
-            "your response: [DIAGRAM: Wikipedia article title]. Use a real Wikipedia article title. "
-            "The title must name a specific diagram, model, or experiment — not a general concept. "
-            "Good examples: 'Bohr model', 'Feynman diagram', 'Photoelectric effect', 'Natural selection', "
-            "'Double-slit experiment', 'Krebs cycle', 'Geodesic'. "
-            "Bad examples: 'Photon', 'Quantum mechanics', 'Energy', 'Evolution' — these are concept "
-            "articles whose lead images are unpredictable. "
-            "Use it when the image is your evidence — not for abstract concepts or passing mentions. "
-            "When you include the marker, also gesture at the diagram in plain spoken text (not in "
-            "brackets) — e.g. 'as this diagram shows,' or 'consider this illustration —' woven "
-            "naturally into your sentence. The article title should specifically illustrate the "
-            "claim you are making right now, not your broader worldview."
-            if diagrams_enabled else ""
-        )
+        f"{diagram_rule}"
     ) + (_cable_news_overlay(catchphrase, producer_stress, cable_news_persona) if cable_news else "")
 
 
@@ -414,6 +439,9 @@ def _philosopher_user_prompt(
     phase_instruction: str = "",
     catchphrase: str = "",
     cable_news: bool = False,
+    chyron_this_turn: str = "",
+    chyron_subject: str = "",
+    catchphrase_count: int = 0,
 ) -> str:
     safe_name = name.replace(" ", "_")
 
@@ -558,6 +586,22 @@ def _philosopher_user_prompt(
 
     phase_block = f"DEBATE FORMAT — YOUR ROLE THIS TURN: {phase_instruction}\n\n" if phase_instruction else ""
 
+    chyron_block = ""
+    if cable_news and chyron_this_turn and chyron_subject:
+        if name == chyron_subject:
+            chyron_block = (
+                f'\n\nThe chyron at the bottom of the screen just read: "{chyron_this_turn}" — '
+                f"a blatant misrepresentation of what you just said. "
+                f"You may correct the record, demand a retraction, or weaponise the distortion — "
+                f"but you've seen it and it stings.\n"
+            )
+        elif random.random() < 0.5:
+            chyron_block = (
+                f'\n\nThe chyron just flashed: "{chyron_this_turn}" — about {chyron_subject}. '
+                f"If it serves you, use it: quote it back at them, let the misrepresentation do your work, "
+                f"or act like it confirms everything you've been saying.\n"
+            )
+
     return (
         f'Central question being debated: "{topic}"\n\n'
         f"{phase_block}"
@@ -572,5 +616,12 @@ def _philosopher_user_prompt(
         f"Do not assume the answer — engage with whether it is true.\n\n"
         f"IMPORTANT — {length_instruction}"
         f"{drunk_suffix}"
-        + (f'\n\nYou have not used your catchphrase yet. Your catchphrase is: "{catchphrase}". Work it into your response.' if catchphrase else "")
+        f"{chyron_block}"
+        + (
+            f'\n\nYour catchphrase is: "{catchphrase}". You haven\'t landed it yet — find the right moment this turn.'
+            if catchphrase and catchphrase_count == 0
+            else f'\n\nYour catchphrase is: "{catchphrase}". Deploy it again if the moment calls for it.'
+            if catchphrase and catchphrase_count > 0 and random.random() < 0.25
+            else ""
+        )
     )

@@ -354,6 +354,7 @@ class Session:
         if self.state.get("debate_format") == "cable_news":
             if self.state.get("chyron_this_turn"):
                 updates["chyron_this_turn"] = ""
+                updates["chyron_subject"] = ""
             if self.state.get("breaking_news_this_turn"):
                 updates["breaking_news_this_turn"] = ""
         if updates:

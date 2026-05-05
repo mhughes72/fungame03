@@ -158,7 +158,7 @@ def ratings_node(state: RoomState) -> dict:
 def chyron_node(state: RoomState) -> dict:
     """50% chance: generate a sensationalist chyron misrepresenting the last turn."""
     if random.random() > 0.5:
-        return {"chyron_this_turn": ""}
+        return {"chyron_this_turn": "", "chyron_subject": ""}
 
     messages = state.get("messages") or []
     last_msg = next(
@@ -167,7 +167,7 @@ def chyron_node(state: RoomState) -> dict:
         None,
     )
     if not last_msg:
-        return {"chyron_this_turn": ""}
+        return {"chyron_this_turn": "", "chyron_subject": ""}
 
     speaker = (last_msg.name or "Unknown").replace("_", " ")
     content = last_msg.content[:400]
@@ -183,10 +183,10 @@ def chyron_node(state: RoomState) -> dict:
             HumanMessage(content=f'{speaker} said: "{content}"'),
         ])
         chyron = r.content.strip().upper().strip('"')
-        dbg.dlog("CABLE", f"chyron: {chyron!r}")
-        return {"chyron_this_turn": chyron}
+        dbg.dlog("CABLE", f"chyron: {chyron!r} (subject: {speaker})")
+        return {"chyron_this_turn": chyron, "chyron_subject": speaker}
     except Exception:
-        return {"chyron_this_turn": ""}
+        return {"chyron_this_turn": "", "chyron_subject": ""}
 
 
 def producer_node(state: RoomState) -> dict:
@@ -205,17 +205,17 @@ def producer_node(state: RoomState) -> dict:
          if isinstance(m, AIMessage) and not (m.name or "").endswith("_bc")),
         None,
     )
-    if last_msg and len(last_msg.content) > 300:
+    if last_msg and len(last_msg.content) > 450:
         triggers += 1
 
-    if len(ratings_history) >= 4:
-        last_4 = ratings_history[-4:]
-        if max(last_4) - min(last_4) < 0.05:
+    if len(ratings_history) >= 5:
+        last_5 = ratings_history[-5:]
+        if max(last_5) - min(last_5) < 0.04:
             triggers += 1
 
     if triggers >= 2:
         producer_stress = min(5, producer_stress + 1)
-    elif triggers == 0 and producer_stress > 0:
+    elif triggers <= 1 and producer_stress > 0:
         producer_stress = max(0, producer_stress - 1)
 
     producer_note = _PRODUCER_STRESS_LINES[min(producer_stress, 5)]

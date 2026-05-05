@@ -243,10 +243,18 @@ def _generate_candidate(name: str, state: RoomState) -> dict:
     system_prompt = _philosopher_system_prompt(name, participants, partial_agreements, own_summary, heat, evidence_this_turn, diagrams_enabled, audience_level, cable_news, catchphrase, producer_stress, cable_news_persona)
     philosopher_length = state.get("philosopher_length") or "normal"
     phase_instruction  = state.get("phase_instruction") or ""
+    chyron_this_turn = (state.get("chyron_this_turn") or "") if cable_news else ""
+    chyron_subject   = (state.get("chyron_subject") or "") if cable_news else ""
+    safe_name_key    = name.replace(" ", "_")
+    catchphrase_count = (
+        ((state.get("guest_stats") or {}).get(safe_name_key) or {}).get("catchphrase_count", 0)
+        if cable_news else 0
+    )
     user_prompt   = _philosopher_user_prompt(
         name, state["messages"], topic, argument_log, turn_count, concession_counts,
         concession_log, challenge_counts, drunk_level, drunk_levels, philosopher_length,
-        phase_instruction, catchphrase, cable_news,
+        phase_instruction, catchphrase, cable_news, chyron_this_turn, chyron_subject,
+        catchphrase_count,
     )
 
     messages = (

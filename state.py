@@ -57,6 +57,7 @@ class RoomState(TypedDict):
     producer_directive:   str        # player choice at commercial break
     cable_news_end:       str        # "viral" | "cancelled" | ""
     chyron_this_turn:     str        # cleared after each batch
+    chyron_subject:       str        # name of the person the chyron misrepresented
     breaking_news_this_turn: str     # cleared after each batch
 
 
@@ -160,6 +161,7 @@ def new_room_state(
         "producer_directive":    "",
         "cable_news_end":        "",
         "chyron_this_turn":      "",
+        "chyron_subject":        "",
         "breaking_news_this_turn": "",
     }
 
@@ -211,5 +213,6 @@ def reset_for_new_topic(state: RoomState, topic: str) -> RoomState:
         "producer_directive":    "",
         "cable_news_end":        "",
         "chyron_this_turn":      "",
+        "chyron_subject":        "",
         "breaking_news_this_turn": "",
     }

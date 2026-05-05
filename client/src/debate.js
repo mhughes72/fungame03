@@ -349,7 +349,7 @@ function appendMessage(el, { role, name, content, backchannel, debate_label = ''
   } else if (role === 'moderator') {
     div.className = 'msg msg-moderator'
     div.innerHTML =
-      `<div class="msg-mod-label">― Moderator ―</div>` +
+      `<div class="msg-mod-label">― ${escHtml(name)} ―</div>` +
       `<div class="msg-content">${renderContent(content)}</div>`
   } else if (role === 'user') {
     div.className = 'msg msg-user'
