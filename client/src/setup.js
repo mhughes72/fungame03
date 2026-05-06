@@ -310,8 +310,10 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
   function topicsForLevel(level) {
     const fmt = getSelectedFormat()
     return allTopics.filter(t =>
-      t.audience_level === level &&
-      (fmt === 'oxford' ? t.format === 'oxford' : t.format !== 'oxford')
+      (fmt === 'oxford'     ? t.format === 'oxford'     :
+       fmt === 'cable_news' ? t.format === 'cable_news' :
+       t.format !== 'oxford' && t.format !== 'cable_news') &&
+      (fmt === 'cable_news' || t.audience_level === level)
     )
   }
 
@@ -335,6 +337,8 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
       : '<span class="dotd-generated">AI</span>'
     const oxfordBadge = topic.format === 'oxford'
       ? '<span class="dotd-oxford">Oxford</span>'
+      : topic.format === 'cable_news'
+      ? '<span class="dotd-oxford">📺 Cable News</span>'
       : ''
     const rolesHtml = topic.roles
       ? `<div class="dotd-roles">
@@ -360,7 +364,7 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
       </div>
     `
     dotdCard.querySelector('#dotd-start').addEventListener('click', () => {
-      const fmt = topic.format === 'oxford' ? 'oxford' : ''
+      const fmt = topic.format === 'oxford' ? 'oxford' : topic.format === 'cable_news' ? 'cable_news' : ''
       onStart({ characters: topic.characters, topic: topic.topic, ...getToggles(), debateFormat: fmt, formatRoles: topic.roles || null })
     })
     dotdCard.querySelector('#dotd-new').addEventListener('click', () => {
