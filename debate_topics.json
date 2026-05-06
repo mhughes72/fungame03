@@ -1810,5 +1810,261 @@
     "format": "oxford",
     "source": "generated",
     "generated_at": "2026-05-03"
+  },
+  {
+    "id": "82397b77",
+    "topic": "Is Elon Musk a modern-day villain?",
+    "tagline": "Elon Musk: Innovator or Ruinous Tycoon?",
+    "characters": [
+      "Elon Musk",
+      "Bill Gates",
+      "Richard Feynman",
+      "Christopher Hitchens"
+    ],
+    "hot_seat": "Elon Musk",
+    "category": "economic",
+    "theme": "elon_villainy",
+    "audience_level": "university",
+    "rationale": "This combination of tech giants against Musk's polarizing reputation will spark intense debates.",
+    "format": "cable_news",
+    "source": "generated",
+    "generated_at": "2026-05-05"
+  },
+  {
+    "id": "98f60816",
+    "topic": "Is Karl Marx a Dangerous Ideologue?",
+    "tagline": "Marx's ideas: revolutionary or ruinous?",
+    "characters": [
+      "Karl Marx",
+      "Margaret Thatcher",
+      "Friedrich Nietzsche"
+    ],
+    "hot_seat": "Karl Marx",
+    "category": "political",
+    "theme": "marxism_debate",
+    "audience_level": "university",
+    "rationale": "This trio will clash over the legacy and implications of Marxism, igniting fierce debate.",
+    "format": "cable_news",
+    "source": "generated",
+    "generated_at": "2026-05-05"
+  },
+  {
+    "id": "d3db4a49",
+    "topic": "Was Steve Jobs a visionary or a tyrant?",
+    "tagline": "The genius of Steve Jobs: Innovator or abusive boss?",
+    "characters": [
+      "Steve Jobs",
+      "Bill Gates",
+      "Richard Feynman",
+      "Jordan Peterson"
+    ],
+    "hot_seat": "Steve Jobs",
+    "category": "cultural",
+    "theme": "jobs_legacy",
+    "audience_level": "university",
+    "rationale": "This cast will clash over Jobs' legacy in tech and leadership.",
+    "format": "cable_news",
+    "source": "generated",
+    "generated_at": "2026-05-05"
+  },
+  {
+    "id": "ce0c2b89",
+    "topic": "Was Stalin a necessary evil for modern Russia?",
+    "tagline": "Stalin's legacy: Hero or Monster?",
+    "characters": [
+      "Vladimir Putin",
+      "Joseph Stalin",
+      "Winston Churchill"
+    ],
+    "hot_seat": "Vladimir Putin",
+    "category": "political",
+    "theme": "stalin_legacy",
+    "audience_level": "university",
+    "rationale": "Stalin's brutal regime challenges Putin's modern ideal of Russia, sparking fierce debate.",
+    "format": "cable_news",
+    "source": "generated",
+    "generated_at": "2026-05-05"
+  },
+  {
+    "id": "72bdc0d1",
+    "topic": "Should we glorify the legacies of dictators?",
+    "tagline": "Dictators: Legacy of Evil or Lessons from History?",
+    "characters": [
+      "Vladimir Putin",
+      "Adolf Hitler",
+      "Mao Zedong",
+      "Winston Churchill"
+    ],
+    "hot_seat": "Vladimir Putin",
+    "category": "political",
+    "theme": "dictatorship_legacies",
+    "audience_level": "university",
+    "rationale": "The presence of Putin, a current leader, heightens tension with historical comparisons, ensuring a fiery debate.",
+    "format": "cable_news",
+    "source": "generated",
+    "generated_at": "2026-05-05"
+  },
+  {
+    "id": "290deb5a",
+    "topic": "Was Nietzsche a precursor to fascism?",
+    "tagline": "Nietzsche's philosophy or fascist misappropriation: what's the truth?",
+    "characters": [
+      "Friedrich Nietzsche",
+      "Jordan Peterson",
+      "Christopher Hitchens",
+      "Bill Maher"
+    ],
+    "hot_seat": "Friedrich Nietzsche",
+    "category": "cultural",
+    "theme": "nietzsche_fascism",
+    "audience_level": "university",
+    "rationale": "This debate ignites fierce ideological clashes over philosophy and morality.",
+    "format": "cable_news",
+    "source": "generated",
+    "generated_at": "2026-05-05"
+  },
+  {
+    "id": "49ff8701",
+    "topic": "Was Nikola Tesla a misunderstood genius or a fraud?",
+    "tagline": "The debate on Tesla’s true legacy continues!",
+    "characters": [
+      "Nikola Tesla",
+      "Elon Musk",
+      "Richard Feynman"
+    ],
+    "hot_seat": "Nikola Tesla",
+    "category": "cultural",
+    "theme": "tesla_debate",
+    "audience_level": "university",
+    "rationale": "Tesla's lofty claims and Musk's involvement create perfect tension.",
+    "format": "cable_news",
+    "source": "generated",
+    "generated_at": "2026-05-05"
+  },
+  {
+    "id": "44dcc895",
+    "topic": "Was Albert Einstein's legacy inflated by race and privilege?",
+    "tagline": "Einstein: Genius or just another privileged white man?",
+    "characters": [
+      "Albert Einstein",
+      "Noam Chomsky"
+    ],
+    "hot_seat": "Albert Einstein",
+    "category": "moral",
+    "theme": "einstein_privilege",
+    "audience_level": "university",
+    "rationale": "The guest lineup pits Einstein's accolades against critiques of privilege and racial bias.",
+    "format": "cable_news",
+    "source": "generated",
+    "generated_at": "2026-05-05"
+  },
+  {
+    "id": "b362dd77",
+    "topic": "Did John Lennon do more harm than good?",
+    "tagline": "Is John Lennon a peace hero or a hypocrite?",
+    "characters": [
+      "John Lennon",
+      "Bill Maher",
+      "Jordan Peterson",
+      "Abraham Lincoln"
+    ],
+    "hot_seat": "John Lennon",
+    "category": "moral",
+    "theme": "lennon_hypocrisy",
+    "audience_level": "university",
+    "rationale": "This debate will erupt as Lennon’s pacifism clashes with Maher and Peterson's critiques of celebrity activism.",
+    "format": "cable_news",
+    "source": "generated",
+    "generated_at": "2026-05-05"
+  },
+  {
+    "id": "779a426b",
+    "topic": "Did John F. Kennedy betray civil rights for political gain?",
+    "tagline": "Kennedy's legacy: Martyr or political opportunist?",
+    "characters": [
+      "Frederick Douglass",
+      "John F. Kennedy",
+      "Margaret Thatcher"
+    ],
+    "hot_seat": "John F. Kennedy",
+    "category": "moral",
+    "theme": "kennedy_betrayal",
+    "audience_level": "university",
+    "rationale": "This cast will clash over Kennedy's civil rights decisions, igniting passionate debates.",
+    "format": "cable_news",
+    "source": "generated",
+    "generated_at": "2026-05-05"
+  },
+  {
+    "id": "93fe2fbb",
+    "topic": "Was Karl Marx a prophet or a madman?",
+    "tagline": "Karl Marx: Visionary genius or dangerous ideologue?",
+    "characters": [
+      "Karl Marx",
+      "Friedrich Nietzsche",
+      "Ronald Reagan"
+    ],
+    "hot_seat": "Karl Marx",
+    "category": "heated",
+    "theme": "marxism_folly",
+    "audience_level": "university",
+    "rationale": "This cast includes a fierce critic in Nietzsche and Reagan, heightening the stakes.",
+    "format": "cable_news",
+    "source": "generated",
+    "generated_at": "2026-05-05"
+  },
+  {
+    "id": "ad50ed51",
+    "topic": "Was John F. Kennedy's Legacy Built on Deception?",
+    "tagline": "Kennedy: America's Hero or a Master Manipulator?",
+    "characters": [
+      "John F. Kennedy",
+      "Richard Nixon",
+      "Noam Chomsky",
+      "Joseph Stalin"
+    ],
+    "hot_seat": "John F. Kennedy",
+    "category": "historic",
+    "theme": "legacy_debate",
+    "audience_level": "university",
+    "rationale": "The clash of Kennedy's iconic legacy with accusations of deceit will spark heated debate.",
+    "format": "cable_news",
+    "source": "generated",
+    "generated_at": "2026-05-05"
+  },
+  {
+    "id": "789911c9",
+    "topic": "Did Thomas Jefferson Betray His Own Principles?",
+    "tagline": "Thomas Jefferson: Hypocrite or Hero of Freedom?",
+    "characters": [
+      "Thomas Jefferson",
+      "Frederick Douglass",
+      "Abraham Lincoln"
+    ],
+    "hot_seat": "Thomas Jefferson",
+    "category": "historic",
+    "theme": "jefferson_hypocrisy",
+    "audience_level": "university",
+    "rationale": "This cast will ignite controversy over Jefferson's legacy versus abolitionism.",
+    "format": "cable_news",
+    "source": "generated",
+    "generated_at": "2026-05-05"
+  },
+  {
+    "id": "efa7acee",
+    "topic": "Did Nikola Tesla Exploit His Genius for Profit?",
+    "tagline": "Was Tesla a visionary or a self-serving opportunist?",
+    "characters": [
+      "Nikola Tesla",
+      "Elon Musk"
+    ],
+    "hot_seat": "Nikola Tesla",
+    "category": "economic",
+    "theme": "tesla_profitability",
+    "audience_level": "university",
+    "rationale": "The clash between Tesla's idealism and Edison's capitalism promises high drama.",
+    "format": "cable_news",
+    "source": "generated",
+    "generated_at": "2026-05-05"
   }
 ]

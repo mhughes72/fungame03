@@ -64,6 +64,16 @@ class _OxfordTopicSchema(BaseModel):
     theme: str
 
 
+class _CableNewsTopicSchema(BaseModel):
+    topic: str           # short, punchy, emotionally loaded — not academic
+    tagline: str         # ≤12 words, sounds like a chyron
+    characters: list[str]
+    hot_seat: str        # one character the topic is most hostile to — names them
+    rationale: str
+    category: str
+    theme: str
+
+
 def _load() -> list[dict]:
     if TOPICS_FILE.exists():
         return json.loads(TOPICS_FILE.read_text(encoding="utf-8"))
@@ -223,6 +233,48 @@ def _generate_one_oxford(existing: list[dict]) -> _OxfordTopicSchema:
     raise last_err  # type: ignore[misc]
 
 
+def _generate_one_cable_news(existing: list[dict]) -> _CableNewsTopicSchema:
+    existing_cn = [t for t in existing if t.get("format") == "cable_news"]
+    avoid = _avoid_block(existing_cn)
+
+    valid = set(CHARACTERS.keys())
+    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.95)
+    result: _CableNewsTopicSchema = llm.with_structured_output(_CableNewsTopicSchema).invoke([
+        SystemMessage(content=(
+            "You are a cable news segment producer booking guests for a live debate segment.\n\n"
+            "Your job is to pick a topic and 2–4 guests that will generate maximum friction, "
+            "heat, and ratings. This is NOT a philosophy seminar — it's cable television.\n\n"
+            "Topic requirements:\n"
+            "- Short, punchy, emotionally loaded — sounds like a chyron, not an essay title\n"
+            "- Must have a clear two-sided split — one side will look bad no matter what\n"
+            "- Touches power, money, morality, legacy, or ideology — things people get angry about\n"
+            "- Framed as a provocation, not an open question: 'Was X a fraud?', "
+            "'Should the rich be allowed to X?', 'Did Y do more harm than good?'\n"
+            "- Avoid abstract philosophy — keep it grounded in something people argue about at dinner\n\n"
+            "Cast requirements:\n"
+            "- 2–4 guests maximum\n"
+            "- At least one guest should be directly implicated by or hostile to the topic — "
+            "someone who has skin in the game, not just an observer\n"
+            "- Ideological conflict is mandatory — guests must represent genuinely opposed camps\n"
+            "- hot_seat: name the ONE guest who is most on the defensive given this topic "
+            "(their legacy, beliefs, or record is directly challenged by it)\n\n"
+            "- tagline: ≤12 words, written like a chyron — provocative, declarative, no hedging\n"
+            "- rationale: one sentence on why this cast will explode on air\n"
+            "- category: exactly one of: heated, historic, political, cultural, economic, moral\n"
+            "- theme: short snake_case label\n"
+            "- Character names MUST be copied EXACTLY from the roster"
+        )),
+        HumanMessage(content=f"Available guests:\n{_roster_text()}{avoid}"),
+    ])
+
+    result.characters = [c for c in result.characters if c in valid]
+    if len(result.characters) < 2:
+        raise ValueError(f"Too few valid characters: {result.characters}")
+    if result.hot_seat not in result.characters:
+        result.hot_seat = result.characters[0]
+    return result
+
+
 # --------------------------------------------------------------------------- #
 # Commands                                                                      #
 # --------------------------------------------------------------------------- #
@@ -235,6 +287,8 @@ def cmd_generate(count: int, level: str | None, fmt: str | None, verbose: bool) 
     queue: list[tuple[str, str]] = []
     if fmt == "oxford":
         queue = [("university", "oxford")] * count
+    elif fmt == "cable_news":
+        queue = [("university", "cable_news")] * count
     elif fmt == "freeform":
         if level is None:
             queue = [(valid_levels[i % len(valid_levels)], "freeform") for i in range(count)]
@@ -286,6 +340,30 @@ def cmd_generate(count: int, level: str | None, fmt: str | None, verbose: bool) 
                     print(f"  Tagline:     {r.tagline}")
                     print(f"  Rationale:   {r.rationale}")
                     print()
+            elif entry_fmt == "cable_news":
+                r = _generate_one_cable_news(topics)
+                entry = {
+                    "id":             uuid.uuid4().hex[:8],
+                    "topic":          r.topic,
+                    "tagline":        r.tagline,
+                    "characters":     r.characters,
+                    "hot_seat":       r.hot_seat,
+                    "category":       r.category,
+                    "theme":          r.theme,
+                    "audience_level": "university",
+                    "rationale":      r.rationale,
+                    "format":         "cable_news",
+                    "source":         "generated",
+                    "generated_at":   date.today().isoformat(),
+                }
+                label = f"[cable_news] {r.topic[:50]}"
+                if verbose:
+                    print(f"[{i}/{count}] {label}")
+                    print(f"  Cast:      {', '.join(r.characters)}")
+                    print(f"  Hot seat:  {r.hot_seat}")
+                    print(f"  Tagline:   {r.tagline}")
+                    print(f"  Rationale: {r.rationale}")
+                    print()
             else:
                 r = _generate_one_freeform(lvl, topics)
                 entry = {
@@ -325,8 +403,10 @@ def cmd_list(level: str | None, fmt: str | None) -> None:
         topics = [t for t in topics if t.get("audience_level") == level]
     if fmt == "oxford":
         topics = [t for t in topics if t.get("format") == "oxford"]
+    elif fmt == "cable_news":
+        topics = [t for t in topics if t.get("format") == "cable_news"]
     elif fmt == "freeform":
-        topics = [t for t in topics if t.get("format") != "oxford"]
+        topics = [t for t in topics if t.get("format") not in ("oxford", "cable_news")]
     if not topics:
         print("No topics found.")
         return
@@ -347,8 +427,13 @@ def cmd_clear(fmt: str | None) -> None:
         removed = len(topics) - len(kept)
         _save(kept)
         print(f"Removed {removed} generated Oxford entries. {len(kept)} entries kept.")
+    elif fmt == "cable_news":
+        kept    = [t for t in topics if t.get("source") == "curated" or t.get("format") != "cable_news"]
+        removed = len(topics) - len(kept)
+        _save(kept)
+        print(f"Removed {removed} generated cable news entries. {len(kept)} entries kept.")
     elif fmt == "freeform":
-        kept    = [t for t in topics if t.get("source") == "curated" or t.get("format") == "oxford"]
+        kept    = [t for t in topics if t.get("source") == "curated" or t.get("format") in ("oxford", "cable_news")]
         removed = len(topics) - len(kept)
         _save(kept)
         print(f"Removed {removed} generated freeform entries. {len(kept)} entries kept.")
@@ -393,13 +478,13 @@ def main() -> None:
     parser.add_argument("--verbose", action="store_true",          help="Print full details during generation")
     args = parser.parse_args()
 
-    if args.format and args.format not in ("freeform", "oxford"):
-        print(f"Unknown format '{args.format}'. Use: freeform, oxford", file=sys.stderr)
+    if args.format and args.format not in ("freeform", "oxford", "cable_news"):
+        print(f"Unknown format '{args.format}'. Use: freeform, oxford, cable_news", file=sys.stderr)
         sys.exit(1)
     if args.level and args.level not in AUDIENCE_LEVELS:
         print(f"Unknown level '{args.level}'. Valid: {', '.join(AUDIENCE_LEVELS)}", file=sys.stderr)
         sys.exit(1)
-    if args.format == "oxford" and args.level:
+    if args.format in ("oxford", "cable_news") and args.level:
         print("--level is ignored for oxford format (always university)", file=sys.stderr)
 
     if args.levels:

@@ -187,11 +187,15 @@ python generate_debate_topics.py --count 5 --format freeform --level expert
 # Generate Oxford-style topics only (always university level, always 4 characters, 2v2)
 python generate_debate_topics.py --count 5 --format oxford
 
+# Generate cable news topics only — punchy, divisive, guest-hostile
+python generate_debate_topics.py --count 10 --format cable_news
+
 # List all topics currently in the file
 python generate_debate_topics.py --list
 
 # List topics filtered by format or level
 python generate_debate_topics.py --list --format oxford
+python generate_debate_topics.py --list --format cable_news
 python generate_debate_topics.py --list --format freeform
 python generate_debate_topics.py --list --level university
 
@@ -203,18 +207,22 @@ python generate_debate_topics.py --clear
 
 # Delete only generated topics of a specific format
 python generate_debate_topics.py --clear --format oxford
+python generate_debate_topics.py --clear --format cable_news
 python generate_debate_topics.py --clear --format freeform
 
 # Verbose output — shows cast, tagline, rationale, and roles for each entry
 python generate_debate_topics.py --count 5 --verbose
 python generate_debate_topics.py --count 5 --format oxford --verbose
+python generate_debate_topics.py --count 5 --format cable_news --verbose
 ```
 
 **Freeform topics** include 2–4 characters with roughly equal distribution across cast sizes. Each entry includes a tagline, category, theme, and audience level. The generator avoids repeating casts, themes, and categories already present in the file for that level.
 
 **Oxford topics** always have exactly 4 characters split 2v2. The generator assigns characters to Proposition and Opposition based on their actual historical views — characters are never assigned to a side that contradicts their real beliefs. Oxford entries include a `roles` field (`proposition` and `opposition` arrays) and `format: "oxford"`.
 
-**Adding curated entries manually:** open `debate_topics.json` and add an entry with `"source": "curated"`. For freeform: set `id`, `topic`, `tagline`, `characters`, `category`, `theme`, `audience_level`. For Oxford: also add `format: "oxford"` and `roles: {"proposition": [...], "opposition": [...]}`. The `--clear` command never touches curated entries.
+**Cable news topics** are pitched as TV segment provocations — short, emotionally loaded, and framed to put at least one guest on the defensive. Each entry includes a `hot_seat` field naming the guest most implicated by the topic. These are served by the frontend only when Cable News format is selected. Cable news topics ignore audience level (always university).
+
+**Adding curated entries manually:** open `debate_topics.json` and add an entry with `"source": "curated"`. For freeform: set `id`, `topic`, `tagline`, `characters`, `category`, `theme`, `audience_level`. For Oxford: also add `format: "oxford"` and `roles: {"proposition": [...], "opposition": [...]}`. For cable news: also add `format: "cable_news"` and `hot_seat: "Character Name"`. The `--clear` command never touches curated entries.
 
 Requires `OPENAI_API_KEY` in `.env`.
 
