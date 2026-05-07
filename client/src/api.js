@@ -70,6 +70,10 @@ export async function searchEvidence(query) {
   return post('/search', { query })   // { finding, source }
 }
 
+export async function suggestCast(topic) {
+  return post('/suggest-cast', { topic })   // { picks: [{name, reason}] }
+}
+
 export async function newTopic(sessionId, topic) {
   return post(`/sessions/${sessionId}/new-topic`, { topic })
 }

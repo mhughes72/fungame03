@@ -1381,3 +1381,37 @@ def generate_oxford_verdict(state: RoomState) -> dict:
         }
     except Exception:
         return {}
+
+
+# --------------------------------------------------------------------------- #
+# Cast suggestion                                                               #
+# --------------------------------------------------------------------------- #
+
+class _CastPick(BaseModel):
+    name:   str   # must match a key in CHARACTERS exactly
+    reason: str   # ≤12 words explaining why this character suits the topic
+
+
+class _CastSuggestion(BaseModel):
+    picks: list[_CastPick]   # 2–4 items
+
+
+def suggest_cast(topic: str) -> list[dict]:
+    """Return 2–4 character picks best suited to debate the given topic."""
+    roster = "\n".join(
+        f"- {name}: {data['known_for']}. Energised by: {data['hot_topics']}"
+        for name, data in CHARACTERS.items()
+    )
+    prompt = (
+        f'You are selecting 2–4 historical figures to debate this topic: "{topic}"\n\n'
+        "Choose the combination that will produce the most interesting, contentious, and illuminating debate. "
+        "Favour characters with strong, conflicting views on the topic. Avoid characters who would broadly agree with each other. "
+        "Pick exactly 3 or 4 unless the topic is very narrow — then 2 is acceptable.\n\n"
+        f"Available characters:\n{roster}\n\n"
+        "Return each pick with a one-line reason (max 12 words) explaining why they suit this debate. "
+        "The name field must match the character name exactly as listed above."
+    )
+    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.7).with_structured_output(_CastSuggestion)
+    result = llm.invoke([HumanMessage(content=prompt)])
+    valid = [p for p in result.picks if p.name in CHARACTERS]
+    return [{"name": p.name, "reason": p.reason} for p in valid[:4]]

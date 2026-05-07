@@ -252,6 +252,21 @@ async def stream_session(session_id: str):
     )
 
 
+class SuggestCastRequest(BaseModel):
+    topic: str = Field(..., min_length=1, max_length=500)
+
+
+@app.post("/api/suggest-cast")
+def suggest_cast_endpoint(req: SuggestCastRequest):
+    """Suggest 2–4 characters best suited to debate the given topic."""
+    from nodes import suggest_cast
+    try:
+        picks = suggest_cast(req.topic)
+        return {"picks": picks}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/api/search")
 async def search_evidence(req: SearchRequest):
     """Search the web and return a summarised empirical finding for evidence injection."""

@@ -21,15 +21,24 @@ function _ratingsBarHtml(ratings) {
   return `<div class="ratings-bar-track"><div class="ratings-bar-fill" style="width:${w}%;background:${color}"></div></div>`
 }
 
+const STYLE_ICONS = {
+  'socratic':         '💭',
+  'combative':        '⚔️',
+  "devil's advocate": '😈',
+  'koan':             '☯️',
+  'journalist':       '🎤',
+  'straw man':        '🪆',
+  'steel man':        '🛡️',
+  'last call':        '🔔',
+}
+
 export function open(currentStyle, styles, summary = '', drawerContainer, searchFn = null, participants = [], skin = {}) {
   const styleNames = skin.moderatorStyleNames ?? {}
   const s_title    = skin.steerTitle            ?? "── STEER THE DEBATE ──"
   const s_quit     = skin.steerQuitLabel        ?? "Quit game"
   const s_ph       = skin.steerInputPlaceholder ?? "Speak into the debate — or leave blank for the moderator…"
   const s_submit   = skin.steerSubmitLabel      ?? "Steer ▶"
-  const s_evidence = skin.evidenceLabel         ?? "── inject evidence ──"
   const s_evPh     = skin.evidencePlaceholder   ?? "Search term — result will be injected as empirical fact…"
-  const s_approach = skin.moderatorStyleLabel   ?? "── choose a moderator approach ──"
 
   return new Promise((resolve) => {
     const drawer = document.createElement('div')
@@ -53,49 +62,73 @@ export function open(currentStyle, styles, summary = '', drawerContainer, search
         <button class="steer-submit-btn" id="steer-submit">${escHtml(s_submit)}</button>
       </div>
 
-      <div class="steer-or">${s_evidence}</div>
-
-      <div class="evidence-search-row">
-        <input
-          class="steer-text-input"
-          id="evidence-query"
-          type="text"
-          placeholder="${escHtml(s_evPh)}"
-          autocomplete="off"
-        />
-        <button class="steer-search-btn" id="evidence-search">Search</button>
+      <div class="style-grid" id="style-grid">
+        ${styles.map(s => {
+          const icon  = STYLE_ICONS[s.style] ?? '◆'
+          const label = styleNames[s.style] ?? s.style
+          return `<button
+            class="style-icon-btn${s.style === currentStyle ? ' style-selected' : ''}"
+            data-style="${escHtml(s.style)}"
+            title="${escHtml(label + ' — ' + s.description)}"
+          >
+            <span class="style-icon-glyph">${icon}</span>
+            <span class="style-icon-name">${escHtml(label)}</span>
+          </button>`
+        }).join('')}
       </div>
 
-      <div id="evidence-preview" class="evidence-preview" style="display:none"></div>
+      <div class="steer-secondary-row">
+        <button class="steer-pill" id="evidence-toggle">⚡ Evidence</button>
+      </div>
 
-      <div class="steer-or">${s_approach}</div>
-
-      <div class="style-list" id="style-list">
-        ${styles.map(s => `
-          <button
-            class="style-item${s.style === currentStyle ? ' style-selected' : ''}"
-            data-style="${escHtml(s.style)}"
-          >
-            <span class="style-name">${escHtml(styleNames[s.style] ?? s.style)}</span>
-            <span class="style-desc">${escHtml(s.description)}</span>
-          </button>
-        `).join('')}
+      <div id="evidence-panel" style="display:none">
+        <div class="evidence-search-row">
+          <input
+            class="steer-text-input"
+            id="evidence-query"
+            type="text"
+            placeholder="${escHtml(s_evPh)}"
+            autocomplete="off"
+          />
+          <button class="steer-search-btn" id="evidence-search">Search</button>
+        </div>
+        <div id="evidence-preview" class="evidence-preview" style="display:none"></div>
       </div>
     `
 
     const target = drawerContainer || document.body
     target.appendChild(drawer)
 
-    const textInput    = drawer.querySelector('#steer-text-input')
-    const queryInput   = drawer.querySelector('#evidence-query')
-    const searchBtn    = drawer.querySelector('#evidence-search')
-    const preview      = drawer.querySelector('#evidence-preview')
+    const textInput  = drawer.querySelector('#steer-text-input')
     textInput.focus()
 
-    let selectedStyle  = currentStyle
+    let selectedStyle   = currentStyle
     let pendingEvidence = ''
 
-    // ── evidence search ──
+    // ── style grid — click fires immediately ──
+    drawer.querySelectorAll('.style-icon-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        drawer.querySelectorAll('.style-icon-btn').forEach(b => b.classList.remove('style-selected'))
+        btn.classList.add('style-selected')
+        selectedStyle = btn.dataset.style
+        submit()
+      })
+    })
+
+    // ── evidence toggle ──
+    const evidenceToggle = drawer.querySelector('#evidence-toggle')
+    const evidencePanel  = drawer.querySelector('#evidence-panel')
+    const preview        = drawer.querySelector('#evidence-preview')
+    const queryInput     = drawer.querySelector('#evidence-query')
+    const searchBtn      = drawer.querySelector('#evidence-search')
+
+    evidenceToggle.addEventListener('click', () => {
+      const open = evidencePanel.style.display === 'none'
+      evidencePanel.style.display = open ? '' : 'none'
+      evidenceToggle.classList.toggle('steer-pill--active', open)
+      if (open) queryInput.focus()
+    })
+
     async function doSearch() {
       const query = queryInput.value.trim()
       if (!query || !searchFn) return
@@ -134,31 +167,14 @@ export function open(currentStyle, styles, summary = '', drawerContainer, search
     searchBtn.addEventListener('click', doSearch)
     queryInput.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch() })
 
-    // ── style selection ──
-    drawer.querySelectorAll('.style-item').forEach(item => {
-      item.addEventListener('click', () => {
-        drawer.querySelectorAll('.style-item').forEach(i => i.classList.remove('style-selected'))
-        item.classList.add('style-selected')
-        selectedStyle = item.dataset.style
-        submit()
-      })
-    })
-
     function submit() {
-      const text = textInput.value.trim()
       drawer.remove()
-      resolve({ text, style: selectedStyle, evidence: pendingEvidence })
+      resolve({ text: textInput.value.trim(), style: selectedStyle, evidence: pendingEvidence })
     }
 
     drawer.querySelector('#steer-submit').addEventListener('click', submit)
-    drawer.querySelector('#steer-quit').addEventListener('click', () => {
-      drawer.remove()
-      resolve(null)
-    })
-
-    textInput.addEventListener('keydown', e => {
-      if (e.key === 'Enter') submit()
-    })
+    drawer.querySelector('#steer-quit').addEventListener('click', () => { drawer.remove(); resolve(null) })
+    textInput.addEventListener('keydown', e => { if (e.key === 'Enter') submit() })
   })
 }
 

@@ -7,7 +7,7 @@
  */
 
 import { openAbout, openHelp } from './info.js'
-import { fetchTopics } from './api.js'
+import { fetchTopics, suggestCast } from './api.js'
 
 export function mount(container, characters, onStart, { isLocal = false, skin = {} } = {}) {
   const s_appName    = skin.appName             ?? "THE PHILOSOPHER'S BAR"
@@ -25,6 +25,12 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
         <h1 class="setup-title">${s_appName}</h1>
         <p class="setup-sub">${s_sub}</p>
 
+        <div class="dotd-card" id="dotd-card">
+          <div class="dotd-loading">${escHtml(s_dotdLoad)}</div>
+        </div>
+
+        <div class="setup-or">── or build your own ──</div>
+
         <input
           id="char-filter"
           class="char-filter-input"
@@ -35,96 +41,117 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
         />
 
         <div class="char-list" id="char-list">
-          ${characters.map(c => `
-            <label class="char-row"
-              data-name="${c.name.toLowerCase()}"
-              data-desc="${escHtml(c.known_for)}"
-              data-category="${escHtml(c.category || '')}"
-              data-portrait="${escHtml(c.name.replace(/ /g, '_'))}">
-              <input type="checkbox" value="${c.name}" />
-              <span class="char-name">${c.name}</span>
-              <span class="char-era">${c.era}</span>
-            </label>
-          `).join('')}
+          ${(() => {
+            const CAT_ORDER = ['Philosophy','Science','Politics','Arts','Literature','Technology','Media','Psychology','Religion']
+            const grouped = {}
+            for (const c of characters) {
+              const cat = c.category || 'Other'
+              ;(grouped[cat] = grouped[cat] || []).push(c)
+            }
+            return CAT_ORDER.filter(cat => grouped[cat]).map(cat => `
+              <div class="char-category-group">
+                <div class="char-category-label">${escHtml(cat)}</div>
+                <div class="char-category-cards">
+                  ${grouped[cat].map(c => {
+                    const portrait  = c.name.replace(/ /g, '_')
+                    const initials  = c.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+                    return `<label class="char-card"
+                        data-name="${c.name.toLowerCase()}"
+                        data-desc="${escHtml(c.known_for)}"
+                        data-category="${escHtml(cat)}">
+                        <input type="checkbox" value="${escHtml(c.name)}" />
+                        <div class="char-card-img">
+                          <img src="/portraits/${portrait}.png" alt=""
+                            onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
+                          <div class="char-card-initials" style="display:none">${escHtml(initials)}</div>
+                        </div>
+                        <div class="char-card-name">${escHtml(c.name)}</div>
+                      </label>`
+                  }).join('')}
+                </div>
+              </div>`
+            ).join('')
+          })()}
           <div class="char-no-results" id="char-no-results" style="display:none">No match</div>
         </div>
 
         <p class="selection-hint" id="selection-hint">Select 2–4 thinkers</p>
 
         <label class="topic-label" for="topic-input">${s_topicLabel}</label>
-        <input
-          id="topic-input"
-          class="topic-input"
-          type="text"
-          placeholder="${escHtml(s_topicPh)}"
-          maxlength="500"
-          autocomplete="off"
-        />
-
-        <div class="setup-toggles">
-          <label class="setup-toggle">
-            <input type="checkbox" id="toggle-diagrams" />
-            <span class="toggle-label">Diagrams</span>
-            <span class="toggle-desc">characters produce supporting images <span class="toggle-wip">· work in progress</span></span>
-          </label>
+        <div class="topic-row">
+          <input
+            id="topic-input"
+            class="topic-input"
+            type="text"
+            placeholder="${escHtml(s_topicPh)}"
+            maxlength="500"
+            autocomplete="off"
+          />
+          <button class="suggest-btn" id="suggest-btn" title="Let AI pick the best characters for this topic">Suggest cast ✦</button>
         </div>
+        <div class="cast-suggestion" id="cast-suggestion" style="display:none"></div>
 
-        <div class="setup-audience">
-          <span class="audience-label">Audience level</span>
-          <div class="audience-options">
-            <label class="audience-opt"><input type="radio" name="audience" value="grade5" /> Grade 5</label>
-            <label class="audience-opt"><input type="radio" name="audience" value="highschool" /> High School</label>
-            <label class="audience-opt"><input type="radio" name="audience" value="university" checked /> University</label>
-            <label class="audience-opt"><input type="radio" name="audience" value="expert" /> Expert</label>
+        <button class="advanced-toggle" id="advanced-toggle">Advanced ▾</button>
+        <div class="advanced-panel" id="advanced-panel">
+          <div class="setup-toggles">
+            <label class="setup-toggle">
+              <input type="checkbox" id="toggle-diagrams" />
+              <span class="toggle-label">Diagrams</span>
+              <span class="toggle-desc">characters produce supporting images <span class="toggle-wip">· work in progress</span></span>
+            </label>
           </div>
-        </div>
 
-        <div class="setup-format" id="setup-format" style="display:none">
-          <span class="length-label">Debate format</span>
-          <div class="length-options">
-            <label class="length-opt"><input type="radio" name="debate-format" value="" checked /> Freeform</label>
-            <label class="length-opt"><input type="radio" name="debate-format" value="oxford" /> Oxford-style</label>
-            <label class="length-opt"><input type="radio" name="debate-format" value="cable_news" /> 📺 Cable News</label>
-          </div>
-        </div>
-
-        <div class="setup-lengths" id="setup-lengths" style="display:none">
-          <div class="length-group">
-            <span class="length-label">Philosopher length</span>
-            <div class="length-options">
-              <label class="length-opt"><input type="radio" name="phil-length" value="punchy" /> Punchy</label>
-              <label class="length-opt"><input type="radio" name="phil-length" value="normal" checked /> Normal</label>
-              <label class="length-opt"><input type="radio" name="phil-length" value="conversational" /> Conversational</label>
-              <label class="length-opt"><input type="radio" name="phil-length" value="expansive" /> Expansive</label>
+          <div class="setup-audience">
+            <span class="audience-label">Audience level</span>
+            <div class="audience-options">
+              <label class="audience-opt"><input type="radio" name="audience" value="grade5" /> Grade 5</label>
+              <label class="audience-opt"><input type="radio" name="audience" value="highschool" /> High School</label>
+              <label class="audience-opt"><input type="radio" name="audience" value="university" checked /> University</label>
+              <label class="audience-opt"><input type="radio" name="audience" value="expert" /> Expert</label>
             </div>
           </div>
-          <div class="length-group">
-            <span class="length-label">Commentator</span>
+
+          <div class="setup-format" id="setup-format">
+            <span class="length-label">Debate format</span>
             <div class="length-options">
-              <label class="length-opt"><input type="radio" name="comm-length" value="off" /> Off</label>
-              <label class="length-opt"><input type="radio" name="comm-length" value="normal" checked /> Normal</label>
-              <label class="length-opt"><input type="radio" name="comm-length" value="verbose" /> Verbose</label>
+              <label class="length-opt"><input type="radio" name="debate-format" value="" checked /> Freeform</label>
+              <label class="length-opt"><input type="radio" name="debate-format" value="oxford" /> Oxford-style</label>
+              <label class="length-opt"><input type="radio" name="debate-format" value="cable_news" /> 📺 Cable News</label>
             </div>
           </div>
-          <div class="length-group">
-            <span class="length-label">Moderator</span>
-            <div class="length-options">
-              <label class="length-opt"><input type="radio" name="mod-length" value="off" /> Off</label>
-              <label class="length-opt"><input type="radio" name="mod-length" value="brief" /> Brief</label>
-              <label class="length-opt"><input type="radio" name="mod-length" value="normal" checked /> Normal</label>
-              <label class="length-opt"><input type="radio" name="mod-length" value="elaborate" /> Elaborate</label>
+
+          <div class="setup-lengths" id="setup-lengths" style="display:none">
+            <div class="length-group">
+              <span class="length-label">Philosopher length</span>
+              <div class="length-options">
+                <label class="length-opt"><input type="radio" name="phil-length" value="punchy" /> Punchy</label>
+                <label class="length-opt"><input type="radio" name="phil-length" value="normal" checked /> Normal</label>
+                <label class="length-opt"><input type="radio" name="phil-length" value="conversational" /> Conversational</label>
+                <label class="length-opt"><input type="radio" name="phil-length" value="expansive" /> Expansive</label>
+              </div>
+            </div>
+            <div class="length-group">
+              <span class="length-label">Commentator</span>
+              <div class="length-options">
+                <label class="length-opt"><input type="radio" name="comm-length" value="off" /> Off</label>
+                <label class="length-opt"><input type="radio" name="comm-length" value="normal" checked /> Normal</label>
+                <label class="length-opt"><input type="radio" name="comm-length" value="verbose" /> Verbose</label>
+              </div>
+            </div>
+            <div class="length-group">
+              <span class="length-label">Moderator</span>
+              <div class="length-options">
+                <label class="length-opt"><input type="radio" name="mod-length" value="off" /> Off</label>
+                <label class="length-opt"><input type="radio" name="mod-length" value="brief" /> Brief</label>
+                <label class="length-opt"><input type="radio" name="mod-length" value="normal" checked /> Normal</label>
+                <label class="length-opt"><input type="radio" name="mod-length" value="elaborate" /> Elaborate</label>
+              </div>
             </div>
           </div>
         </div>
 
         <button class="start-btn" id="start-btn" disabled>${escHtml(s_start)}</button>
         <p class="setup-error" id="setup-error"></p>
-
-        <div class="setup-or">${s_or}</div>
-
-        <div class="dotd-card" id="dotd-card">
-          <div class="dotd-loading">${escHtml(s_dotdLoad)}</div>
-        </div>
 
         <div class="setup-footer">
           <button class="setup-info-btn" id="setup-about">About</button>
@@ -136,7 +163,7 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
   `
 
   const checkboxes = container.querySelectorAll('#char-list input[type=checkbox]')
-  const rows      = container.querySelectorAll('.char-row')
+  const rows      = container.querySelectorAll('.char-card')
   const noResults = container.querySelector('#char-no-results')
   const filterInput = container.querySelector('#char-filter')
 
@@ -148,6 +175,10 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
       row.style.display = show ? '' : 'none'
       if (show) visible++
     })
+    container.querySelectorAll('.char-category-group').forEach(group => {
+      const anyVisible = [...group.querySelectorAll('.char-card')].some(c => c.style.display !== 'none')
+      group.style.display = anyVisible ? '' : 'none'
+    })
     noResults.style.display = visible === 0 ? '' : 'none'
   })
 
@@ -158,16 +189,12 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
   document.body.appendChild(tooltip)
 
   function showTooltip(e) {
-    const { desc, category, portrait } = e.currentTarget.dataset
+    const { desc, category } = e.currentTarget.dataset
     if (!desc) return
-    const portraitUrl = `/portraits/${portrait}.png`
     tooltip.innerHTML = `
-      <div class="tt-inner">
-        <img class="tt-portrait" src="${portraitUrl}" alt="" onerror="this.style.display='none'" />
-        <div class="tt-body">
-          ${category ? `<span class="tt-category">${escHtml(category)}</span>` : ''}
-          <span class="tt-desc">${escHtml(desc)}</span>
-        </div>
+      <div class="tt-body">
+        ${category ? `<span class="tt-category">${escHtml(category)}</span>` : ''}
+        <span class="tt-desc">${escHtml(desc)}</span>
       </div>`
     tooltip.style.display = 'block'
     positionTooltip(e)
@@ -202,10 +229,21 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
   })
   observer.observe(document.body, { childList: true, subtree: true })
 
-  container.querySelector('#setup-format').style.display = ''
+
   if (isLocal) {
     container.querySelector('#setup-lengths').style.display = ''
   }
+
+  // ── Advanced panel toggle ─────────────────────────────────────────────── //
+  const advancedToggle = container.querySelector('#advanced-toggle')
+  const advancedPanel  = container.querySelector('#advanced-panel')
+  let advancedOpen = false
+
+  advancedToggle.addEventListener('click', () => {
+    advancedOpen = !advancedOpen
+    advancedPanel.style.display  = advancedOpen ? 'block' : 'none'
+    advancedToggle.textContent   = advancedOpen ? 'Advanced ▴' : 'Advanced ▾'
+  })
 
   const hint    = container.querySelector('#selection-hint')
   const startBtn = container.querySelector('#start-btn')
@@ -213,6 +251,7 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
 
   function updateHint() {
     const count = [...checkboxes].filter(cb => cb.checked).length
+    container.querySelector('#char-list').classList.toggle('char-list--maxed', count >= 4)
     if (count < 2) {
       hint.textContent = count === 0 ? 'Select 2 to 4 thinkers' : 'Select 1 more'
       hint.classList.remove('hint-ok', 'hint-warn')
@@ -247,7 +286,56 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
   }
 
   updateHint()
-  checkboxes.forEach(cb => cb.addEventListener('change', updateHint))
+
+  // ── Suggest cast ──────────────────────────────────────────────────────── //
+  const suggestBtn     = container.querySelector('#suggest-btn')
+  const castSuggestion = container.querySelector('#cast-suggestion')
+  let suggestionActive = false
+
+  suggestBtn.addEventListener('click', async () => {
+    const topic = topicInput.value.trim()
+    if (!topic) { topicInput.focus(); return }
+    suggestBtn.disabled = true
+    suggestBtn.textContent = 'thinking…'
+    castSuggestion.innerHTML = '<div class="cs-loading">selecting the best minds for this topic…</div>'
+    castSuggestion.style.display = ''
+    try {
+      const { picks } = await suggestCast(topic)
+      if (!picks || !picks.length) return
+      checkboxes.forEach(cb => { cb.checked = false })
+      picks.forEach(({ name }) => {
+        const cb = container.querySelector(`#char-list input[value="${CSS.escape(name)}"]`)
+        if (cb) cb.checked = true
+      })
+      suggestionActive = true
+      updateHint()
+      castSuggestion.innerHTML =
+        '<div class="cs-header">── suggested cast ──</div>' +
+        picks.map(p =>
+          `<div class="cs-pick">
+            <span class="cs-name">${escHtml(p.name)}</span>
+            <span class="cs-reason">${escHtml(p.reason)}</span>
+          </div>`
+        ).join('')
+      castSuggestion.style.display = ''
+      const firstRow = container.querySelector(`.char-card[data-name="${picks[0].name.toLowerCase()}"]`)
+      if (firstRow) firstRow.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    } catch (e) {
+      console.error('suggest cast failed', e)
+      castSuggestion.style.display = 'none'
+    } finally {
+      suggestBtn.disabled = false
+      suggestBtn.textContent = 'Suggest cast ✦'
+    }
+  })
+
+  checkboxes.forEach(cb => cb.addEventListener('change', () => {
+    if (suggestionActive) {
+      castSuggestion.style.display = 'none'
+      suggestionActive = false
+    }
+    updateHint()
+  }))
 
   function getToggles() {
     const audienceEl  = container.querySelector('input[name="audience"]:checked')
@@ -295,7 +383,8 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
   }
 
   let allTopics    = []
-  let currentTopic = null
+  let topicHistory = []
+  let historyIdx   = -1
 
   function getLevel() {
     const el = container.querySelector('input[name="audience"]:checked')
@@ -330,16 +419,15 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
   }
 
   function renderDotd(topic) {
-    currentTopic = topic
     const color = catColors[topic.category] || 'var(--text-dim)'
-    const sourceBadge = topic.source === 'curated'
+    const isOxford    = topic.format === 'oxford'
+    const isCableNews = topic.format === 'cable_news'
+    const formatBadge = isOxford    ? '<span class="dotd-oxford">🎓 Oxford</span>'
+                      : isCableNews ? '<span class="dotd-oxford">📺 Cable News</span>'
+                      :               '<span class="dotd-freeform">Freeform</span>'
+    const sourceBadge = isOxford ? '' : topic.source === 'curated'
       ? '<span class="dotd-curated">★ curated</span>'
       : '<span class="dotd-generated">AI</span>'
-    const oxfordBadge = topic.format === 'oxford'
-      ? '<span class="dotd-oxford">Oxford</span>'
-      : topic.format === 'cable_news'
-      ? '<span class="dotd-oxford">📺 Cable News</span>'
-      : ''
     const rolesHtml = topic.roles
       ? `<div class="dotd-roles">
            <span class="dotd-role-prop">For: ${topic.roles.proposition.join(', ')}</span>
@@ -351,7 +439,7 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
         <span class="dotd-label">── SUGGESTED DEBATE ──</span>
         <span class="dotd-badges">
           <span class="dotd-category" style="color:${color}">${topic.category.toUpperCase()}</span>
-          ${oxfordBadge}
+          ${formatBadge}
           ${sourceBadge}
         </span>
       </div>
@@ -359,23 +447,32 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
       <div class="dotd-topic">${escHtml(topic.topic)}</div>
       <div class="dotd-tagline">${escHtml(topic.tagline)}</div>
       <div class="dotd-actions">
-        <button class="dotd-new-btn" id="dotd-new">Next suggestion ↻</button>
+        <button class="dotd-new-btn" id="dotd-prev" ${historyIdx <= 0 ? 'disabled' : ''}>← Prev</button>
         <button class="dotd-start-btn" id="dotd-start">Start this debate ▶</button>
+        <button class="dotd-new-btn" id="dotd-next">Next →</button>
       </div>
     `
     dotdCard.querySelector('#dotd-start').addEventListener('click', () => {
-      const fmt = topic.format === 'oxford' ? 'oxford' : topic.format === 'cable_news' ? 'cable_news' : ''
+      const fmt = isOxford ? 'oxford' : isCableNews ? 'cable_news' : ''
       onStart({ characters: topic.characters, topic: topic.topic, ...getToggles(), debateFormat: fmt, formatRoles: topic.roles || null })
     })
-    dotdCard.querySelector('#dotd-new').addEventListener('click', () => {
-      const next = weightedPick(topicsForLevel(getLevel()), currentTopic)
-      if (next) renderDotd(next)
+    dotdCard.querySelector('#dotd-prev').addEventListener('click', () => {
+      if (historyIdx > 0) { historyIdx--; renderDotd(topicHistory[historyIdx]) }
+    })
+    dotdCard.querySelector('#dotd-next').addEventListener('click', () => {
+      if (historyIdx < topicHistory.length - 1) {
+        historyIdx++
+        renderDotd(topicHistory[historyIdx])
+      } else {
+        const next = weightedPick(topicsForLevel(getLevel()), topicHistory[historyIdx])
+        if (next) { topicHistory.push(next); historyIdx++; renderDotd(next) }
+      }
     })
   }
 
   function loadSuggestion() {
     const pick = weightedPick(topicsForLevel(getLevel()))
-    if (pick) renderDotd(pick)
+    if (pick) { topicHistory = [pick]; historyIdx = 0; renderDotd(pick) }
     else dotdCard.style.display = 'none'
   }
 
