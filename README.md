@@ -115,6 +115,60 @@ python run_server.py    # serve as normal
 
 Skin assets (textures, images) go in `client/src/skins/<name>/assets/` and are bundled by Vite. Custom seat HTML can be exported as `renderSeat(name, portraitUrl, slug, lastName, initials)` from `skin.js` — if not exported, the default oval-table seat layout is used.
 
+## Automated debate runner
+
+`debate_runner.py` runs one or more debates automatically via the server API, captures full transcripts, and optionally sends them to GPT-4o for a cross-run analysis report. The server must be running first (`python run_server.py`).
+
+```bash
+# Single run — 4 random personas, default topic and style
+python debate_runner.py
+
+# 5 runs with random personas each time
+python debate_runner.py --runs 5
+
+# Fix some personas; random fills the rest up to --count
+python debate_runner.py --personas "Newton,Musk" --count 4
+
+# Set the topic and audience level
+python debate_runner.py --topic "Is democracy the best form of government" --level university
+
+# Pick a random topic from debate_topics.json each run (filtered by level)
+python debate_runner.py --runs 5 --random-topic --level highschool
+
+# Fix the moderator style
+python debate_runner.py --style combative
+
+# Random moderator style each run (picks from all 8 styles)
+python debate_runner.py --runs 5 --style random
+
+# Skip the GPT-4o cross-run analysis (faster, no extra API cost)
+python debate_runner.py --runs 3 --no-analysis
+```
+
+**All flags:**
+
+| Flag | Default | Description |
+|---|---|---|
+| `--runs N` | `1` | Number of sequential debate runs |
+| `--count N` | `4` | Personas per run (2–4); combined with `--personas` |
+| `--personas "A,B"` | *(none)* | Comma-separated names to fix; random fills remaining slots |
+| `--topic "X"` | `"What is the nature of justice"` | Debate topic for all runs |
+| `--random-topic` | off | Pick a different topic from `debate_topics.json` each run |
+| `--level X` | `university` | Audience level: `grade5`, `highschool`, `university`, `expert` |
+| `--style X` | `combative` | Moderator style (any of the 8 styles), or `random` |
+| `--no-analysis` | off | Skip the GPT-4o cross-run analysis |
+
+**Output files** are written to the project root:
+
+- `transcript_TIMESTAMP_runN.json` — full transcript, stats, and state for each run
+- `analysis_TIMESTAMP.txt` — cross-run analysis report (unless `--no-analysis`)
+
+The cross-run analysis identifies systemic issues across runs (character balance, audience level adherence, argument quality, heat vs. tone, repetition loops) and ranks concrete recommendations by impact. It uses `gpt-4o` and is billed to your OpenAI account.
+
+Requires `OPENAI_API_KEY` in `.env` (for the analysis). The server handles all debate API calls.
+
+---
+
 ## Generating portraits
 
 Two portrait generators ship with the project. Both use DALL-E 3 for most characters and fall back to real Wikipedia photos for figures that DALL-E refuses to generate (Hitler, Stalin, Mao, Pol Pot, Lenin, Putin, Xi Jinping, and current tech figures). The `WIKIPEDIA_SOURCES` dict at the top of each script is the place to add more if DALL-E blocks additional characters.

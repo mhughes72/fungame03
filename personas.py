@@ -3248,7 +3248,10 @@ CHARACTERS: dict[str, dict] = {
             "The Soviet Union and its collapse — he believes his pressure accelerated it; historians debate this endlessly. "
             "Iran-Contra — arms to Iran, money to the Contras; he says he did not know the details. This remains contested. "
             "AIDS — the silence of his administration's first years is the accusation he cannot fully answer. "
-            "The deficit — the man who preached fiscal conservatism tripled the national debt. He considers this the price of winning the Cold War."
+            "The deficit — the man who preached fiscal conservatism tripled the national debt. He considers this the price of winning the Cold War. "
+            "Individual freedom and justice — the belief that true fairness means equal opportunity, not equal outcomes; that justice is corrupted when "
+            "the state decides who wins and who loses; that rules should be the same for everyone, not bent to serve a political agenda. "
+            "The rule of law — when law is applied selectively or used as a political weapon, justice dies. Fairness, rights, punishment, freedom."
         ),
         "openness": 4,
         "what_would_change_mind": (

@@ -30,6 +30,9 @@ AUDIENCE_LEVELS: dict[str, str | None] = {
         '"individualism" → "believing each person should live by their own rules".\n'
         "- Short sentences. One idea per sentence. Use words a 10-year-old would know.\n"
         "- Use everyday analogies: food, school, sport, games, playground, weather.\n"
+        "- MANDATORY: Every response must include at least one concrete example from everyday life "
+        "(e.g. sharing lunch, a rule at school, a game in the playground, getting punished for something). "
+        "No abstract argument counts unless it is grounded in a real, specific example a child would recognise.\n"
         "- You must still argue passionately and stay completely in character — just speak plainly.\n"
     ),
     "highschool": (
@@ -188,6 +191,7 @@ def _philosopher_system_prompt(
     catchphrase: str = "",
     producer_stress: int = 0,
     cable_news_persona: dict | None = None,
+    moderator_style: str = "",
 ) -> str:
     char = CHARACTERS[name]
 
@@ -265,19 +269,24 @@ def _philosopher_system_prompt(
             f"What fires you up:\n{char['hot_topics']}\n"
         )
 
-    if heat <= 2:
+    _combative_styles = {"combative", "devil's advocate", "straw man"}
+    _effective_heat = heat
+    if heat <= 2 and moderator_style in _combative_styles:
+        _effective_heat = 3  # treat low-heat combative sessions as heat 3 for instruction purposes
+
+    if _effective_heat <= 2:
         heat_line = ""
         jab_line  = ""
-    elif heat <= 4:
-        heat_line = f"\nAtmosphere: {_heat_description(heat)}\n"
+    elif _effective_heat <= 4:
+        heat_line = f"\nAtmosphere: {_heat_description(heat)}\n" if heat > 2 else ""
         jab_line  = "\n- Positions are hardening. Be assertive — state your view directly without hedging.\n"
-    elif heat <= 6:
-        heat_line = f"\nAtmosphere: {_heat_description(heat)}\n"
+    elif _effective_heat <= 6:
+        heat_line = f"\nAtmosphere: {_heat_description(heat)}\n" if heat > 2 else ""
         jab_line  = (
             "\n- Don't soften your position. Push back directly and name the specific flaw in what was just said.\n"
             "- If the moment demands it, cut in before the other person finishes — end your response mid-sentence with an em-dash (—) to show you can't wait.\n"
         )
-    elif heat <= 8:
+    elif _effective_heat <= 8:
         heat_line = f"\nAtmosphere: {_heat_description(heat)}\n"
         jab_line  = (
             "\n- Land a pointed challenge. Name the contradiction in their position or their record. Don't let them off the hook.\n"
@@ -442,6 +451,7 @@ def _philosopher_user_prompt(
     chyron_this_turn: str = "",
     chyron_subject: str = "",
     catchphrase_count: int = 0,
+    moderator_style: str = "",
 ) -> str:
     safe_name = name.replace(" ", "_")
 
@@ -602,6 +612,31 @@ def _philosopher_user_prompt(
                 f"or act like it confirms everything you've been saying.\n"
             )
 
+    # No-hedge rule: ban conciliatory openers only for the most confrontational styles
+    _aggressive_styles = {"combative", "devil's advocate", "straw man"}
+    no_hedge_block = ""
+    if moderator_style in _aggressive_styles and not cable_news:
+        no_hedge_block = (
+            "\n⚠ STYLE OVERRIDE: The moderator is running a combative session. "
+            "Do NOT open your response with any of the following: "
+            "'I appreciate', 'I understand', 'While I see', 'I acknowledge', 'I agree', "
+            "'You raise a good point', 'That's a fair point', 'I see your concern', 'I can see'. "
+            "Start directly with your counter-argument, challenge, or disagreement. "
+            "Find the flaw in what was just said and lead with it.\n"
+        )
+
+    # Fix 4: enforce yes/no follow-through when the moderator asked a direct yes/no question
+    yesno_block = ""
+    if last_msg and getattr(last_msg, "name", "") == "Moderator":
+        content_lower = last_msg.content.lower()
+        if "yes or no" in content_lower or "yes or no?" in content_lower:
+            yesno_block = (
+                "\n⚠ DIRECT CHALLENGE: The moderator asked you a yes/no question. "
+                "You MUST open your response with the word 'Yes' or 'No' — then explain. "
+                "Do NOT open with 'I appreciate', 'I understand', 'While I see', or any acknowledgment. "
+                "Answer first. Explain second.\n"
+            )
+
     return (
         f'Central question being debated: "{topic}"\n\n'
         f"{phase_block}"
@@ -611,6 +646,8 @@ def _philosopher_user_prompt(
         f"{concession_pressure}"
         f"{challenge_pressure}"
         f"{opponents_drunk}"
+        f"{no_hedge_block}"
+        f"{yesno_block}"
         f"{respond_to}\n\n"
         f'Ensure your response connects back to the central question: "{topic}". '
         f"Do not assume the answer — engage with whether it is true.\n\n"

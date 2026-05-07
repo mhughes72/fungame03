@@ -44,22 +44,37 @@ class _HeatScore(BaseModel):
     conceded: bool   # true when the speaker grants a point to an opponent
 
 
-def _score_heat(speaker: str, content: str) -> _HeatScore:
+_COMBATIVE_HEAT_STYLES = {"combative", "devil's advocate", "straw man"}
+
+
+def _score_heat(speaker: str, content: str, moderator_style: str = "") -> _HeatScore:
     """Ask gpt-4o-mini to classify a philosopher's response for heat tracking."""
+    if moderator_style in _COMBATIVE_HEAT_STYLES:
+        # Combative sessions: any genuine counter-argument scores +1
+        scoring_rules = (
+            "Return delta=1 if the speaker pushes back with any disagreement — "
+            "challenging, questioning, or countering an opponent's argument, even if politely phrased. "
+            "Any genuine counter-argument counts as +1.\n"
+            "Return delta=0 only if the response is purely expository or restates the opponent's point approvingly.\n"
+            "Return delta=-1 if the speaker explicitly concedes a point or softens their position.\n"
+            "Default to +1 when in doubt — combative sessions generate pushback."
+        )
+    else:
+        # Non-combative sessions: only clear, direct disagreement scores +1
+        scoring_rules = (
+            "Return delta=1 ONLY if the speaker is clearly and directly disagreeing — "
+            "aggressively challenging, attacking an argument, or expressing strong opposition. "
+            "Polite disagreement, questions, or mild counter-points do NOT count as +1.\n"
+            "Return delta=0 for most responses: expository content, questions, mild pushback, "
+            "exploratory arguments, or anything less than direct confrontation.\n"
+            "Return delta=-1 if the speaker explicitly concedes, agrees with, or validates the opponent.\n"
+            "Default to 0 when in doubt — non-combative sessions are naturally measured."
+        )
     try:
         result = ChatOpenAI(model="gpt-4o-mini", temperature=0).with_structured_output(
             _HeatScore
         ).invoke([
-            SystemMessage(content=(
-                "You are scoring a single debate response for emotional tone.\n"
-                "Return delta=1 if the speaker is combative: attacking, dismissing, mocking, "
-                "or aggressively challenging an opponent's position.\n"
-                "Return delta=-1 if the speaker concedes or genuinely agrees with an opponent: "
-                "grants a point, acknowledges merit, softens their stance.\n"
-                "Return delta=0 if the tone is neutral, expository, or neither.\n"
-                "Return conceded=true only when delta=-1.\n"
-                "Be strict — mild disagreement is 0, not +1."
-            )),
+            SystemMessage(content=f"You are scoring a single debate response for emotional tone.\n{scoring_rules}\nReturn conceded=true only when delta=-1."),
             HumanMessage(content=f"{speaker} said:\n\n{content[:600]}"),
         ])
         return result
@@ -240,7 +255,8 @@ def _generate_candidate(name: str, state: RoomState) -> dict:
     catchphrase      = (state.get("catchphrases") or {}).get(name, "") if cable_news else ""
     producer_stress  = state.get("producer_stress") or 0
     cable_news_persona = CHARACTERS.get(name, {}).get("cable_news") if cable_news else None
-    system_prompt = _philosopher_system_prompt(name, participants, partial_agreements, own_summary, heat, evidence_this_turn, diagrams_enabled, audience_level, cable_news, catchphrase, producer_stress, cable_news_persona)
+    moderator_style    = state.get("moderator_style") or ""
+    system_prompt = _philosopher_system_prompt(name, participants, partial_agreements, own_summary, heat, evidence_this_turn, diagrams_enabled, audience_level, cable_news, catchphrase, producer_stress, cable_news_persona, moderator_style)
     philosopher_length = state.get("philosopher_length") or "normal"
     phase_instruction  = state.get("phase_instruction") or ""
     chyron_this_turn = (state.get("chyron_this_turn") or "") if cable_news else ""
@@ -254,7 +270,7 @@ def _generate_candidate(name: str, state: RoomState) -> dict:
         name, state["messages"], topic, argument_log, turn_count, concession_counts,
         concession_log, challenge_counts, drunk_level, drunk_levels, philosopher_length,
         phase_instruction, catchphrase, cable_news, chyron_this_turn, chyron_subject,
-        catchphrase_count,
+        catchphrase_count, moderator_style,
     )
 
     messages = (
@@ -491,8 +507,9 @@ def parallel_turn_node(state: RoomState) -> dict:
         if do_backchannel:
             reactor = random.choice(reactors)
 
+    moderator_style = state.get("moderator_style") or ""
     with ThreadPoolExecutor(max_workers=2) as ex:
-        heat_fut = ex.submit(_score_heat, winner["name"], winner["content"])
+        heat_fut = ex.submit(_score_heat, winner["name"], winner["content"], moderator_style)
         bc_fut   = ex.submit(_generate_backchannel, reactor, winner["content"]) if reactor else None
         score    = heat_fut.result()
         bc       = bc_fut.result() if bc_fut else None
@@ -872,13 +889,22 @@ def generate_moderator_steer(state: RoomState) -> tuple[str, str]:
     challenge_counts = state.get("challenge_counts") or {}
     recent_speakers  = state.get("recent_speakers") or []
 
+    # Fix 2: silence detection — override target if someone hasn't spoken in 4+ turns
+    silent_threshold = 4
+    recent_speaker_set = set(recent_speakers[-silent_threshold:]) if recent_speakers else set()
+    silent_participants = [p for p in participants if p not in recent_speaker_set]
+
     def _dominance(name: str) -> int:
         return challenge_counts.get(name, 0) - concession_counts.get(name, 0)
 
     target = None
     reason = ""
 
-    if participants:
+    # Prioritise calling out a silent participant over pressing the dominant one
+    if silent_participants:
+        target = silent_participants[0]
+        reason = f"has not spoken in {silent_threshold}+ turns — bring them back in"
+    elif participants:
         by_dominance = sorted(participants, key=_dominance, reverse=True)
         candidate = by_dominance[0]
         score = _dominance(candidate)
@@ -906,6 +932,35 @@ def generate_moderator_steer(state: RoomState) -> tuple[str, str]:
         f"Do not pose questions to multiple participants. "
         f"Ask {target} one sharp, direct question they cannot dodge.\n"
     )
+
+    # Fix 3: loop detection — check if the last 8 philosopher messages share the same core vocabulary
+    recent_phil_msgs = [
+        m.content for m in messages[-8:]
+        if isinstance(m, AIMessage) and getattr(m, "name", "") and not (m.name or "").endswith("_bc")
+    ]
+    loop_warning = ""
+    if len(recent_phil_msgs) >= 6:
+        # Count words across all recent messages; if the 5 most common content words repeat heavily
+        import collections, re as _re
+        stopwords = {"the", "a", "an", "and", "or", "but", "in", "is", "it", "of", "to", "you",
+                     "your", "i", "my", "we", "that", "this", "what", "if", "not", "for", "on",
+                     "with", "have", "be", "as", "so", "do", "at", "by", "from", "are", "was",
+                     "has", "its", "their", "they", "which", "can", "just", "more", "while"}
+        all_words = _re.findall(r"[a-z]+", " ".join(recent_phil_msgs).lower())
+        content_words = [w for w in all_words if w not in stopwords and len(w) > 4]
+        freq = collections.Counter(content_words)
+        top5 = [w for w, _ in freq.most_common(5)]
+        total = len(content_words)
+        top5_count = sum(freq[w] for w in top5)
+        if total > 0 and top5_count / total > 0.25:
+            loop_warning = (
+                f"\n⚠ LOOP DETECTED: The last several turns have been repeating the same argument "
+                f"(dominant words: {', '.join(top5)}). "
+                f"Do NOT ask about this same tension again. "
+                f"Force a completely new angle: demand a specific concrete example, "
+                f"introduce a hypothetical scenario, or challenge an entirely different aspect of their position. "
+                f"The debate must move forward.\n"
+            )
 
     heat = state.get("heat") or 0
     heat_context = f"Room atmosphere: {_heat_description(heat)}\n\n"
@@ -945,6 +1000,7 @@ def generate_moderator_steer(state: RoomState) -> tuple[str, str]:
         f"{heat_context}"
         f"{agreement_context}"
         f"{bridge_context}"
+        f"{loop_warning}"
         f"Recent exchange:\n{recent_text}\n"
         f"{targeting}\n"
         f"{style_instruction}"

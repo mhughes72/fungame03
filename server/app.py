@@ -115,6 +115,7 @@ class StartRequest(BaseModel):
     moderator_length: str = "normal"
     debate_format: str = ""
     format_roles: dict | None = None
+    moderator_style: str = "socratic"
 
 
 class SteerRequest(BaseModel):
@@ -193,6 +194,7 @@ def create_session(req: StartRequest):
         moderator_length=req.moderator_length,
         debate_format=req.debate_format,
         format_roles=req.format_roles or None,
+        moderator_style=req.moderator_style,
     )
     return {
         "session_id": session.id,

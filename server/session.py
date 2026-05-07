@@ -560,10 +560,10 @@ class SessionStore:
         self._sessions: dict[str, Session] = {}
         self._lock = threading.Lock()
 
-    def create(self, participants: list[str], topic: str, commentator_enabled: bool = True, moderator_enabled: bool = True, diagrams_enabled: bool = False, audience_level: str = "university", philosopher_length: str = "normal", commentator_length: str = "normal", moderator_length: str = "normal", debate_format: str = "", format_roles: dict | None = None) -> Session:
+    def create(self, participants: list[str], topic: str, commentator_enabled: bool = True, moderator_enabled: bool = True, diagrams_enabled: bool = False, audience_level: str = "university", philosopher_length: str = "normal", commentator_length: str = "normal", moderator_length: str = "normal", debate_format: str = "", format_roles: dict | None = None, moderator_style: str = "socratic") -> Session:
         session_id = uuid.uuid4().hex
         graph = build_graph(participants, debate_format=debate_format)
-        state = new_room_state(participants, topic, max_turns=len(participants) * 6, diagrams_enabled=diagrams_enabled, audience_level=audience_level, philosopher_length=philosopher_length, commentator_length=commentator_length, moderator_length=moderator_length, debate_format=debate_format, format_roles=format_roles)
+        state = new_room_state(participants, topic, max_turns=len(participants) * 6, diagrams_enabled=diagrams_enabled, audience_level=audience_level, philosopher_length=philosopher_length, commentator_length=commentator_length, moderator_length=moderator_length, debate_format=debate_format, format_roles=format_roles, moderator_style=moderator_style)
         session = Session(
             id=session_id,
             state=state,

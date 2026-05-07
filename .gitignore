@@ -67,3 +67,7 @@ podcasts/
 .claude/worktrees/
 .claude/settings.local.json
 .claire/
+
+# debate_runner.py output artifacts
+transcript_*.json
+analysis_*.txt
