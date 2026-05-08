@@ -25,6 +25,24 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
         <h1 class="setup-title">${s_appName}</h1>
         <p class="setup-sub">${s_sub}</p>
 
+        <div class="format-selector">
+          <label class="format-opt" data-desc="Open philosophical debate — the moderator guides the conversation freely with no fixed sides">
+            <input type="radio" name="debate-format" value="" checked />
+            <span class="format-opt-icon">💭</span>
+            <span class="format-opt-name">Freeform</span>
+          </label>
+          <label class="format-opt" data-desc="Structured Oxford-style debate with proposition and opposition sides — characters are pre-assigned to argue for or against the motion">
+            <input type="radio" name="debate-format" value="oxford" />
+            <span class="format-opt-icon">🎓</span>
+            <span class="format-opt-name">Oxford</span>
+          </label>
+          <label class="format-opt" data-desc="Chaotic cable TV showdown — ratings-driven, catchphrases, commercial breaks, and a host fighting for airtime">
+            <input type="radio" name="debate-format" value="cable_news" />
+            <span class="format-opt-icon">📺</span>
+            <span class="format-opt-name">Cable News</span>
+          </label>
+        </div>
+
         <div class="dotd-card" id="dotd-card">
           <div class="dotd-loading">${escHtml(s_dotdLoad)}</div>
         </div>
@@ -108,15 +126,6 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
               <label class="audience-opt"><input type="radio" name="audience" value="highschool" /> High School</label>
               <label class="audience-opt"><input type="radio" name="audience" value="university" checked /> University</label>
               <label class="audience-opt"><input type="radio" name="audience" value="expert" /> Expert</label>
-            </div>
-          </div>
-
-          <div class="setup-format" id="setup-format">
-            <span class="length-label">Debate format</span>
-            <div class="length-options">
-              <label class="length-opt"><input type="radio" name="debate-format" value="" checked /> Freeform</label>
-              <label class="length-opt"><input type="radio" name="debate-format" value="oxford" /> Oxford-style</label>
-              <label class="length-opt"><input type="radio" name="debate-format" value="cable_news" /> 📺 Cable News</label>
             </div>
           </div>
 
@@ -220,6 +229,12 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
     row.addEventListener('mouseleave', hideTooltip)
   })
 
+  container.querySelectorAll('.format-opt').forEach(opt => {
+    opt.addEventListener('mouseenter', showTooltip)
+    opt.addEventListener('mousemove',  positionTooltip)
+    opt.addEventListener('mouseleave', hideTooltip)
+  })
+
   // clean up tooltip when setup screen is replaced
   const observer = new MutationObserver(() => {
     if (!document.body.contains(container)) {
@@ -271,15 +286,19 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
   const charFilter = container.querySelector('#char-filter')
   const topicInput = container.querySelector('#topic-input')
 
-  function setOxfordMode(isOxford) {
-    charList.classList.toggle('oxford-locked', isOxford)
-    charFilter.disabled = isOxford
-    topicInput.disabled = isOxford
-    checkboxes.forEach(cb => { cb.disabled = isOxford })
-    if (isOxford) {
+  const setupOr    = container.querySelector('.setup-or')
+  const topicLabel = container.querySelector('.topic-label')
+  const topicRow   = container.querySelector('.topic-row')
+  const castSugg   = container.querySelector('#cast-suggestion')
+
+  function setRestrictedMode(isRestricted) {
+    [setupOr, charFilter, charList, hint, topicLabel, topicRow].forEach(el => {
+      el.style.display = isRestricted ? 'none' : ''
+    })
+    if (isRestricted) castSugg.style.display = 'none'
+    // castSugg is only re-shown by the suggest-cast button; never force it open here
+    if (isRestricted) {
       startBtn.disabled = true
-      hint.textContent = skin.oxfordHint ?? 'Select a suggested Oxford debate below'
-      hint.classList.remove('hint-ok', 'hint-warn')
     } else {
       updateHint()
     }
@@ -422,8 +441,11 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
     const color = catColors[topic.category] || 'var(--text-dim)'
     const isOxford    = topic.format === 'oxford'
     const isCableNews = topic.format === 'cable_news'
+
+    dotdCard.classList.toggle('dotd-card--cable', isCableNews)
+
     const formatBadge = isOxford    ? '<span class="dotd-oxford">🎓 Oxford</span>'
-                      : isCableNews ? '<span class="dotd-oxford">📺 Cable News</span>'
+                      : isCableNews ? ''
                       :               '<span class="dotd-freeform">Freeform</span>'
     const sourceBadge = isOxford ? '' : topic.source === 'curated'
       ? '<span class="dotd-curated">★ curated</span>'
@@ -434,9 +456,18 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
            <span class="dotd-role-opp">Against: ${topic.roles.opposition.join(', ')}</span>
          </div>`
       : `<div class="dotd-cast">${topic.characters.join(' · ')}</div>`
+
+    const cableBreaking = isCableNews ? `
+      <div class="cable-dotd-bar">
+        <span class="cable-dotd-live"><span class="cable-dotd-dot"></span>LIVE</span>
+        <span class="cable-dotd-breaking">BREAKING NOW</span>
+        <span class="cable-dotd-channel">📺 DEBATE ZONE</span>
+      </div>` : ''
+
     dotdCard.innerHTML = `
+      ${cableBreaking}
       <div class="dotd-header">
-        <span class="dotd-label">── SUGGESTED DEBATE ──</span>
+        <span class="dotd-label">${isCableNews ? 'TONIGHT\'S SHOWDOWN' : '── SUGGESTED DEBATE ──'}</span>
         <span class="dotd-badges">
           <span class="dotd-category" style="color:${color}">${topic.category.toUpperCase()}</span>
           ${formatBadge}
@@ -448,7 +479,7 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
       <div class="dotd-tagline">${escHtml(topic.tagline)}</div>
       <div class="dotd-actions">
         <button class="dotd-new-btn" id="dotd-prev" ${historyIdx <= 0 ? 'disabled' : ''}>← Prev</button>
-        <button class="dotd-start-btn" id="dotd-start">Start this debate ▶</button>
+        <button class="dotd-start-btn" id="dotd-start">${isCableNews ? '🔴 GO LIVE ▶' : 'Start this debate ▶'}</button>
         <button class="dotd-new-btn" id="dotd-next">Next →</button>
       </div>
     `
@@ -489,7 +520,8 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
   })
   container.querySelectorAll('input[name="debate-format"]').forEach(radio => {
     radio.addEventListener('change', () => {
-      setOxfordMode(radio.value === 'oxford' && radio.checked)
+      const fmt = container.querySelector('input[name="debate-format"]:checked')?.value || ''
+      setRestrictedMode(fmt === 'oxford' || fmt === 'cable_news')
       loadSuggestion()
     })
   })

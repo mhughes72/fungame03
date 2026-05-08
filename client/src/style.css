@@ -19,14 +19,16 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 .setup-overlay {
   flex: 1;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   padding: 1rem;
+  overflow-y: auto;
 }
 
 .setup-box {
   width: 560px;
   max-width: 100%;
+  min-height: 480px;
   background: var(--bg-mid);
   border: 1px solid var(--border-hi);
   padding: 2rem 2.5rem;
@@ -43,7 +45,52 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   letter-spacing: 0.05em;
 }
 
-.setup-sub { color: var(--text-dim); text-align: center; font-size: 0.85rem; }
+.setup-sub { color: var(--text-dim); text-align: center; font-size: 0.85rem; margin-bottom: 0.75rem; }
+
+/* ── Format selector ────────────────────────────────────────────────────── */
+.format-selector {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.format-opt {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.55rem 0.25rem 0.45rem;
+  border: 1px solid var(--border);
+  background: var(--bg-dark);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  user-select: none;
+}
+
+.format-opt:hover { border-color: var(--border-hi); }
+
+.format-opt:has(input:checked) {
+  border-color: var(--gold);
+  background: var(--bg-mid);
+}
+
+.format-opt input[type=radio] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.format-opt-icon { font-size: 1.35rem; line-height: 1; }
+
+.format-opt-name {
+  font-size: 0.68rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.format-opt:has(input:checked) .format-opt-name { color: var(--gold); }
 
 /* ── Debate of the Day card ─────────────────────────────────────────────── */
 .dotd-card {
@@ -191,6 +238,113 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   transition: background 0.15s, border-color 0.15s;
 }
 .dotd-start-btn:hover { background: var(--border-hi); border-color: var(--gold); }
+
+/* ── dotd card — cable news skin ──────────────────────────────────── */
+.dotd-card--cable {
+  border: 2px solid #cc2200;
+  background: #0d0a0a;
+  animation: cable-dotd-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes cable-dotd-pulse {
+  0%, 100% { border-color: #cc2200; box-shadow: 0 0 10px rgba(204,34,0,0.3); }
+  50%       { border-color: #ff3300; box-shadow: 0 0 20px rgba(255,51,0,0.5); }
+}
+
+.cable-dotd-bar {
+  background: #cc2200;
+  margin: -0.65rem -0.9rem 0.5rem;
+  padding: 0.3rem 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.cable-dotd-live {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #fff;
+  color: #cc2200;
+  font-size: 0.65rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  padding: 0.05rem 0.35rem;
+}
+
+.cable-dotd-dot {
+  width: 7px;
+  height: 7px;
+  background: #cc2200;
+  border-radius: 50%;
+  animation: cable-blink 1s step-end infinite;
+}
+
+@keyframes cable-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+.cable-dotd-breaking {
+  color: #ffcc00;
+  font-weight: 900;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  flex: 1;
+}
+
+.cable-dotd-channel {
+  color: rgba(255,255,255,0.7);
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+}
+
+.dotd-card--cable .dotd-label {
+  color: #ff8866;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  font-size: 0.7rem;
+}
+
+.dotd-card--cable .dotd-topic {
+  text-transform: uppercase;
+  font-family: var(--mono);
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.03em;
+  line-height: 1.35;
+}
+
+.dotd-card--cable .dotd-tagline {
+  background: #ffcc00;
+  color: #000;
+  font-style: normal;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  margin: 0.1rem -0.9rem 0;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.dotd-card--cable .dotd-cast {
+  color: #ffcc00;
+  font-size: 0.82rem;
+}
+
+.dotd-card--cable .dotd-start-btn {
+  background: #cc2200;
+  border: 1px solid #ff4400;
+  color: #fff;
+  letter-spacing: 0.06em;
+}
+
+.dotd-card--cable .dotd-start-btn:hover {
+  background: #ff3300;
+  border-color: #ffcc00;
+}
 
 .char-filter-input {
   background: var(--bg-dark);
