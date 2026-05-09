@@ -6,7 +6,7 @@ A terminal game powered by LangGraph and OpenAI where famous thinkers from histo
 
 You pick 2–4 historical figures, give them a topic, and watch them argue. Each turn the most likely candidate to react (scored by hot-topic keyword overlap with the last message) generates a response — a second candidate is generated only when scores are tied, and a selector LLM picks the winner. The debate runs in structured rounds: every 4 turns a moderator automatically steers the conversation toward common ground; every 12 turns a consensus checker evaluates whether the room has converged. You can jump in at any point to guide the conversation yourself.
 
-**27 characters** spanning philosophy, physics, politics, and tech — including Socrates, Nietzsche, Marx, Lenin, Stalin, Mao, Pol Pot, Hitler, Newton, Einstein, Bohr, Heisenberg, Feynman, Penrose, Musk, Gates, Jobs, Churchill, Roosevelt, Putin, Xi Jinping, and more.
+**61 characters** spanning philosophy, science, politics, history, arts, literature, psychology, and media — including Socrates, Nietzsche, Marx, Lincoln, Tesla, Douglass, Newton, Einstein, Feynman, Hawking, Darwin, Churchill, Napoleon, Machiavelli, Jefferson, Kennedy, Thatcher, Reagan, Lenin, Stalin, Mao, Hitler, Pol Pot, Putin, Xi Jinping, Freud, Dostoevsky, Orwell, Kafka, Twain, Wilde, da Vinci, Picasso, Warhol, Bowie, Cobain, Beethoven, Hitchens, Chomsky, Peterson, Rogan, Musk, Gates, Jobs, and more.
 
 Response length adapts to context: a short pointed question gets a blunt one-liner; a long developed argument gets a full response.
 
@@ -61,6 +61,7 @@ Opens at `http://localhost:8000`. The frontend is pre-built and served as static
 - **Cheat button** — always-accessible button in the debate header; opens a modal to directly set the heat level (0–10 slider) and buy rounds for any character; drink controls were moved here from the steer drawer
 - **End-of-debate report** — shown on both consensus and quit, with turn count, heat level, agreements reached, partial alignments, and unresolved tensions
 - **Newspaper front page** — after a debate ends, click "Read the morning paper" to generate a sensationalist Victorian-style newspaper front page summarising the debate, complete with headline, scandal sidebar, pull quote, and portrait photos of all participants
+- **Suggest cast / Suggest topic** — AI-powered setup helpers: enter a topic to get the best cast for it, or select characters to get the topic they'll clash hardest on
 - **About / Help** — accessible from both the setup screen and the debate header; explains the rules and mechanics to new players
 
 **To rebuild the frontend after editing `client/src/`:**
@@ -333,9 +334,9 @@ Each turn runs a fixed pipeline after the philosopher speaks:
 parallel_turn → ratings_node → chyron_node → producer_node → moderator
 ```
 
-- **`ratings_node`** — rule-based scoring after every turn. Short response (+0.1M), long response (−0.2M), exclamation marks (+0.05M), words like "however" or "furthermore" (−0.05M each), catchphrase deployed (+0.1M), concession detected (−0.1M), backchannel fired this turn (+0.05M).
+- **`ratings_node`** — rule-based scoring after every turn. Short response &lt;50 chars (+0.1M), long response &gt;500 chars (−0.1M), exclamation marks (+0.05M), words like "however" or "furthermore" (−0.05M each), catchphrase deployed (+0.1M), concession detected (−0.1M), backchannel fired this turn (+0.05M), plus a 5% mean-reversion nudge toward 2.0M each turn.
 - **`chyron_node`** — 50% chance per turn. Sends the last message to an LLM with instructions to produce an ALL CAPS misrepresentation of what was said — the most alarming or absurd reading possible.
-- **`producer_node`** — tracks stress (0–5) based on three triggers firing simultaneously: ratings dropping three turns in a row, last response over 300 chars, ratings flat for 4 turns. Stress maps to escalating panic messages visible in the conversation as `[PRODUCER]` lines. At stress 4–5 the guest prompts are instructed to say one incendiary sentence and stop.
+- **`producer_node`** — tracks stress (0–5) based on three triggers firing simultaneously: ratings dropping three turns in a row, last response over 450 chars, ratings flat (range &lt; 0.04M) over the last 5 turns. Stress maps to escalating panic messages visible in the conversation as `[PRODUCER]` lines. At stress 4–5 the guest prompts are instructed to say one incendiary sentence and stop.
 
 #### Guest personas
 
@@ -530,6 +531,14 @@ At the same time, a first-person debate arc is generated for each participant in
 | History summarizer | `gpt-4o` |
 | Character arc summaries | `gpt-4o-mini` |
 | Moderator steer | `gpt-4o-mini` |
+| Backchannel reactions | `gpt-4o-mini` |
+| Heat scoring (per turn) | `gpt-4o-mini` |
+| Cable news host | `gpt-4o-mini` |
+| Catchphrase generation | `gpt-4o-mini` |
+| Chyron generation | `gpt-4o-mini` |
+| Evidence distillation (Tavily results) | `gpt-4o-mini` |
+| Oxford pre/post vote | `gpt-4o-mini` |
+| Suggest cast / suggest topic | `gpt-4o-mini` |
 
 > **API costs:** with 4 participants, each steer cycle (8 turns) makes ~8 philosopher calls plus 1 moderator call. The consensus checker (`gpt-4o`) runs every 3 cycles. The biggest single cost lever is reducing participants from 4 to 2.
 

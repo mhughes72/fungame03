@@ -103,8 +103,8 @@ def ratings_node(state: RoomState) -> dict:
 
     if len(content) < 50:
         delta += 0.1
-    elif len(content) > 300:
-        delta -= 0.2
+    elif len(content) > 500:
+        delta -= 0.1
 
     if "!" in content:
         delta += 0.05
@@ -124,7 +124,11 @@ def ratings_node(state: RoomState) -> dict:
     if any(w in content.lower() for w in _CONCESSION_WORDS):
         delta -= 0.1
 
-    current     = state.get("ratings") or 0.8
+    current = state.get("ratings") or 0.8
+    # Gentle mean-reversion: nudge 5% toward 2.0M each turn so ratings stay dynamic
+    _TARGET = 2.0
+    delta += (_TARGET - current) * 0.05
+
     new_ratings = round(max(RATINGS_FLOOR, min(RATINGS_CEILING, current + delta)), 2)
     history     = list(state.get("ratings_history") or [])
     history.append(new_ratings)

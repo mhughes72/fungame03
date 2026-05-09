@@ -282,9 +282,19 @@ def _generate_candidate(name: str, state: RoomState) -> dict:
     dbg.dlog("PHILOSOPHER", f"{name} — generating candidate")
 
     safe_name = name.replace(" ", "_")
+    content_filtered = False
     for attempt in range(4):
         try:
-            response = _chat_llm().invoke(messages)
+            invoke_messages = messages
+            if content_filtered:
+                # Nudge away from whatever triggered the filter on the previous attempt
+                filter_note = SystemMessage(content=(
+                    "Your previous response was blocked by a content filter. "
+                    "Make the same point but keep it abstract and rhetorical — "
+                    "no graphic detail, no incitement, no specific targets."
+                ))
+                invoke_messages = messages + [filter_note]
+            response = _chat_llm().invoke(invoke_messages)
             content = response.content.strip()
             # Strip spurious outer brackets the LLM occasionally wraps the whole response in
             if content.startswith('[') and content.endswith(']') and content.count('[') == 1:
@@ -295,14 +305,20 @@ def _generate_candidate(name: str, state: RoomState) -> dict:
                 continue
             break
         except Exception as e:
-            if "429" in str(e) or "rate_limit" in str(e).lower():
+            err = str(e)
+            if "429" in err or "rate_limit" in err.lower():
                 wait = (attempt + 1) * 8 + random.uniform(0, 3)
                 dbg.dlog("PHILOSOPHER", f"{name} — rate limit, retrying in {wait:.1f}s (attempt {attempt + 1})")
                 time.sleep(wait)
+            elif "content filtering policy" in err.lower() or "content_filter" in err.lower():
+                dbg.dlog("PHILOSOPHER", f"{name} — content filter hit, retrying with softened prompt (attempt {attempt + 1})")
+                content_filtered = True
             else:
                 raise
     else:
-        raise RuntimeError(f"{name}: failed after 4 attempts")
+        # All attempts exhausted — use a neutral in-character fallback rather than crashing
+        content = f"*[{name} falls silent, jaw tight, choosing not to dignify that with a response.]*"
+        dbg.dlog("PHILOSOPHER", f"{name} — all retries failed, using fallback")
 
     usage = getattr(response, "usage_metadata", None)
     dbg.dlog("PHILOSOPHER", f"{name} — done", {
@@ -1394,6 +1410,29 @@ class _CastPick(BaseModel):
 
 class _CastSuggestion(BaseModel):
     picks: list[_CastPick]   # 2–4 items
+
+
+class _TopicSuggestion(BaseModel):
+    topic:  str   # short debate topic, under 10 words
+    reason: str   # ≤15 words explaining why this cast suits this topic
+
+
+def suggest_topic(characters: list[str]) -> dict:
+    """Return a debate topic well-suited to the given cast of characters."""
+    cast_info = "\n".join(
+        f"- {name}: {CHARACTERS[name]['known_for']}. Core beliefs: {CHARACTERS[name]['core_beliefs']}. Hot topics: {CHARACTERS[name]['hot_topics']}"
+        for name in characters if name in CHARACTERS
+    )
+    prompt = (
+        f"You are suggesting a debate topic for this cast of historical figures:\n{cast_info}\n\n"
+        "Choose a topic that will produce maximum tension and disagreement given their specific worldviews. "
+        "The topic should be something each character has strong, genuinely conflicting views on. "
+        "Return a short debate topic (under 10 words, phrased as a proposition or question) "
+        "and a brief reason (max 15 words) explaining why this cast will clash on it."
+    )
+    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.8).with_structured_output(_TopicSuggestion)
+    result = llm.invoke([HumanMessage(content=prompt)])
+    return {"topic": result.topic, "reason": result.reason}
 
 
 def suggest_cast(topic: str) -> list[dict]:

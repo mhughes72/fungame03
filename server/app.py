@@ -256,6 +256,21 @@ class SuggestCastRequest(BaseModel):
     topic: str = Field(..., min_length=1, max_length=500)
 
 
+class SuggestTopicRequest(BaseModel):
+    characters: list[str] = Field(..., min_length=2, max_length=4)
+
+
+@app.post("/api/suggest-topic")
+def suggest_topic_endpoint(req: SuggestTopicRequest):
+    """Suggest a debate topic well-suited to the given cast."""
+    from nodes import suggest_topic
+    try:
+        result = suggest_topic(req.characters)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/api/suggest-cast")
 def suggest_cast_endpoint(req: SuggestCastRequest):
     """Suggest 2–4 characters best suited to debate the given topic."""

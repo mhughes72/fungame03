@@ -21,6 +21,22 @@ function _ratingsBarHtml(ratings) {
   return `<div class="ratings-bar-track"><div class="ratings-bar-fill" style="width:${w}%;background:${color}"></div></div>`
 }
 
+const DIRECTIVE_ICONS = {
+  'get_them_fighting': '🥊',
+  'force_soundbite':   '💬',
+  'push_narrative':    '📢',
+  'wrap_it_up':        '⏱️',
+  'go_soft':           '🕊️',
+}
+
+const DIRECTIVE_LABELS = {
+  'get_them_fighting': 'fight',
+  'force_soundbite':   'soundbite',
+  'push_narrative':    'narrative',
+  'wrap_it_up':        'wrap up',
+  'go_soft':           'go soft',
+}
+
 const STYLE_ICONS = {
   'socratic':         '💭',
   'combative':        '⚔️',
@@ -227,13 +243,19 @@ export function openCommercialBreak(breakData, drawerContainer, skin = {}) {
 
       <div class="steer-or">── producer directive ──</div>
 
-      <div class="style-list" id="directive-list">
-        ${directives.map(([d, desc]) => `
-          <button class="style-item" data-directive="${escHtml(d)}">
-            <span class="style-name">${escHtml(d.replace(/_/g, ' '))}</span>
-            <span class="style-desc">${escHtml(desc)}</span>
-          </button>
-        `).join('')}
+      <div class="style-grid" id="directive-list">
+        ${directives.map(([d, desc]) => {
+          const icon  = DIRECTIVE_ICONS[d]  ?? '◆'
+          const label = DIRECTIVE_LABELS[d] ?? d.replace(/_/g, ' ')
+          return `<button
+            class="style-icon-btn"
+            data-directive="${escHtml(d)}"
+            title="${escHtml(label + ' — ' + desc)}"
+          >
+            <span class="style-icon-glyph">${icon}</span>
+            <span class="style-icon-name">${escHtml(label)}</span>
+          </button>`
+        }).join('')}
       </div>
     `
 
@@ -245,9 +267,9 @@ export function openCommercialBreak(breakData, drawerContainer, skin = {}) {
 
     let selectedDirective = ''
 
-    drawer.querySelectorAll('.style-item').forEach(item => {
+    drawer.querySelectorAll('#directive-list .style-icon-btn').forEach(item => {
       item.addEventListener('click', () => {
-        drawer.querySelectorAll('.style-item').forEach(i => i.classList.remove('style-selected'))
+        drawer.querySelectorAll('#directive-list .style-icon-btn').forEach(i => i.classList.remove('style-selected'))
         item.classList.add('style-selected')
         selectedDirective = item.dataset.directive
         submit()

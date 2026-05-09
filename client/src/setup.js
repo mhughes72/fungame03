@@ -7,7 +7,7 @@
  */
 
 import { openAbout, openHelp } from './info.js'
-import { fetchTopics, suggestCast } from './api.js'
+import { fetchTopics, suggestCast, suggestTopic } from './api.js'
 
 export function mount(container, characters, onStart, { isLocal = false, skin = {} } = {}) {
   const s_appName    = skin.appName             ?? "THE PHILOSOPHER'S BAR"
@@ -106,7 +106,9 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
             autocomplete="off"
           />
           <button class="suggest-btn" id="suggest-btn" title="Let AI pick the best characters for this topic">Suggest cast ✦</button>
+          <button class="suggest-btn" id="suggest-topic-btn" title="Let AI suggest a topic for your selected cast" disabled>Suggest topic ✦</button>
         </div>
+        <div class="topic-suggestion" id="topic-suggestion" style="display:none"></div>
         <div class="cast-suggestion" id="cast-suggestion" style="display:none"></div>
 
         <button class="advanced-toggle" id="advanced-toggle">Advanced ▾</button>
@@ -280,6 +282,8 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
       hint.classList.remove('hint-warn')
     }
     startBtn.disabled = count < 2 || count > 4
+    const topicBtn = container.querySelector('#suggest-topic-btn')
+    if (topicBtn) topicBtn.disabled = count < 2 || count > 4
   }
 
   const charList   = container.querySelector('#char-list')
@@ -348,11 +352,43 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
     }
   })
 
+  // ── Suggest topic ─────────────────────────────────────────────────────── //
+  const suggestTopicBtn  = container.querySelector('#suggest-topic-btn')
+  const topicSuggestion  = container.querySelector('#topic-suggestion')
+
+  suggestTopicBtn.addEventListener('click', async () => {
+    const selected = [...checkboxes].filter(cb => cb.checked).map(cb => cb.value)
+    if (selected.length < 2) return
+    suggestTopicBtn.disabled = true
+    suggestTopicBtn.textContent = 'thinking…'
+    topicSuggestion.innerHTML = '<div class="cs-loading">finding the perfect flashpoint…</div>'
+    topicSuggestion.style.display = ''
+    try {
+      const { topic, reason } = await suggestTopic(selected)
+      if (!topic) return
+      topicInput.value = topic
+      topicSuggestion.innerHTML =
+        '<div class="cs-header">── suggested topic ──</div>' +
+        `<div class="cs-pick">
+          <span class="cs-name">${escHtml(topic)}</span>
+          <span class="cs-reason">${escHtml(reason)}</span>
+        </div>`
+      topicSuggestion.style.display = ''
+    } catch (e) {
+      console.error('suggest topic failed', e)
+      topicSuggestion.style.display = 'none'
+    } finally {
+      suggestTopicBtn.disabled = false
+      suggestTopicBtn.textContent = 'Suggest topic ✦'
+    }
+  })
+
   checkboxes.forEach(cb => cb.addEventListener('change', () => {
     if (suggestionActive) {
       castSuggestion.style.display = 'none'
       suggestionActive = false
     }
+    topicSuggestion.style.display = 'none'
     updateHint()
   }))
 
