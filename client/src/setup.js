@@ -60,7 +60,7 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
 
         <div class="char-list" id="char-list">
           ${(() => {
-            const CAT_ORDER = ['Philosophy','Science','Politics','Arts','Literature','Technology','Media','Psychology','Religion']
+            const CAT_ORDER = ['Philosophy','Theology','Science','Politics','Arts','Literature','Technology','Media','Psychology']
             const grouped = {}
             for (const c of characters) {
               const cat = c.category || 'Other'
@@ -380,8 +380,11 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
     topicErrorEl.textContent = ''
     suggestBtn.disabled = true
     suggestBtn.textContent = 'thinking…'
-    castSuggestion.innerHTML = '<div class="cs-loading">selecting the best minds for this topic…</div>'
-    castSuggestion.style.display = ''
+    const isAdvanced = setupBox.classList.contains('setup-box--advanced')
+    if (!isAdvanced) {
+      castSuggestion.innerHTML = '<div class="cs-loading">selecting the best minds for this topic…</div>'
+      castSuggestion.style.display = ''
+    }
     try {
       const { picks } = await suggestCast(topic)
       if (!picks || !picks.length) return
@@ -392,17 +395,43 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
       })
       suggestionActive = true
       updateHint()
-      castSuggestion.innerHTML =
-        '<div class="cs-header">── suggested cast ──</div>' +
-        picks.map(p =>
-          `<div class="cs-pick">
-            <span class="cs-name">${escHtml(p.name)}</span>
-            <span class="cs-reason">${escHtml(p.reason)}</span>
-          </div>`
-        ).join('')
-      castSuggestion.style.display = ''
-      const firstRow = container.querySelector(`.char-card[data-name="${picks[0].name.toLowerCase()}"]`)
-      if (firstRow) firstRow.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+      if (isAdvanced) {
+        // Deselect oxford / cable_news so the card shows as freeform
+        const fmtRadios = container.querySelectorAll('input[name="debate-format"]')
+        fmtRadios.forEach(r => { if (r.value === 'oxford' || r.value === 'cable_news') r.checked = false })
+        const freeformRadio = container.querySelector('input[name="debate-format"][value=""]')
+        if (freeformRadio) freeformRadio.checked = true
+
+        // Render into the suggested debate card
+        const syntheticTopic = {
+          id: '_suggested',
+          topic,
+          tagline: picks.map(p => p.reason).join(' · '),
+          characters: picks.map(p => p.name),
+          category: 'philosophical',
+          audience_level: getLevel(),
+          format: '',
+          source: 'generated',
+        }
+        topicHistory = [syntheticTopic]
+        historyIdx = 0
+        dotdCard.style.display = ''
+        renderDotd(syntheticTopic)
+        castSuggestion.style.display = 'none'
+        dotdCard.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+      } else {
+        castSuggestion.innerHTML =
+          '<div class="cs-header">── suggested cast ──</div>' +
+          picks.map(p =>
+            `<div class="cs-pick">
+              <span class="cs-name">${escHtml(p.name)}</span>
+              <span class="cs-reason">${escHtml(p.reason)}</span>
+            </div>`
+          ).join('')
+        castSuggestion.style.display = ''
+        const firstRow = container.querySelector(`.char-card[data-name="${picks[0].name.toLowerCase()}"]`)
+        if (firstRow) firstRow.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+      }
     } catch (e) {
       castSuggestion.style.display = 'none'
       topicErrorEl.textContent = e.message || 'Could not suggest a cast — please try again.'
@@ -530,7 +559,7 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
       (fmt === 'oxford'     ? t.format === 'oxford'     :
        fmt === 'cable_news' ? t.format === 'cable_news' :
        t.format !== 'oxford' && t.format !== 'cable_news') &&
-      (fmt === 'cable_news' || t.audience_level === level)
+      (fmt === 'oxford' || fmt === 'cable_news' || t.audience_level === level)
     )
   }
 
@@ -553,8 +582,12 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
 
     dotdCard.classList.toggle('dotd-card--cable', isCableNews)
 
+    const isAdvanced  = setupBox.classList.contains('setup-box--advanced')
+    const levelLabels = { grade5: 'Grade 5', highschool: 'High School', university: 'University', expert: 'Expert' }
+    const levelLabel  = levelLabels[topic.audience_level] || ''
     const formatBadge = isOxford    ? '<span class="dotd-oxford">🎓 Oxford</span>'
                       : isCableNews ? ''
+                      : isAdvanced && levelLabel ? `<span class="dotd-freeform">${escHtml(levelLabel)}</span>`
                       :               '<span class="dotd-freeform">Freeform</span>'
     const sourceBadge = isOxford ? '' : topic.source === 'curated'
       ? '<span class="dotd-curated">★ curated</span>'
@@ -587,19 +620,21 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
       <div class="dotd-topic">${escHtml(topic.topic)}</div>
       <div class="dotd-tagline">${escHtml(topic.tagline)}</div>
       <div class="dotd-actions">
-        <button class="dotd-new-btn" id="dotd-prev" ${historyIdx <= 0 ? 'disabled' : ''}>← Prev</button>
+        ${topic.id === '_suggested' ? '' : `<button class="dotd-new-btn" id="dotd-prev" ${historyIdx <= 0 ? 'disabled' : ''}>← Prev</button>`}
         <button class="dotd-start-btn" id="dotd-start">${isCableNews ? '🔴 GO LIVE ▶' : 'Start this debate ▶'}</button>
-        <button class="dotd-new-btn" id="dotd-next">Next →</button>
+        ${topic.id === '_suggested' ? '' : `<button class="dotd-new-btn" id="dotd-next">Next →</button>`}
       </div>
     `
     dotdCard.querySelector('#dotd-start').addEventListener('click', () => {
       const fmt = isOxford ? 'oxford' : isCableNews ? 'cable_news' : ''
       onStart({ characters: topic.characters, topic: topic.topic, ...getToggles(), debateFormat: fmt, formatRoles: topic.roles || null })
     })
-    dotdCard.querySelector('#dotd-prev').addEventListener('click', () => {
+    const prevBtn = dotdCard.querySelector('#dotd-prev')
+    if (prevBtn) prevBtn.addEventListener('click', () => {
       if (historyIdx > 0) { historyIdx--; renderDotd(topicHistory[historyIdx]) }
     })
-    dotdCard.querySelector('#dotd-next').addEventListener('click', () => {
+    const nextBtn = dotdCard.querySelector('#dotd-next')
+    if (nextBtn) nextBtn.addEventListener('click', () => {
       if (historyIdx < topicHistory.length - 1) {
         historyIdx++
         renderDotd(topicHistory[historyIdx])
@@ -623,9 +658,18 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
     dotdCard.style.display = 'none'
   })
 
-  // Re-pick when audience level or format changes
+  // Re-pick when audience level or format changes.
+  // Selecting an audience level resets format to freeform so oxford/cable_news
+  // topics (which have no audience level) don't swallow the level selection.
   container.querySelectorAll('input[name="audience"]').forEach(radio => {
-    radio.addEventListener('change', loadSuggestion)
+    radio.addEventListener('change', () => {
+      const fmt = getSelectedFormat()
+      if (fmt === 'oxford' || fmt === 'cable_news') {
+        const freeformRadio = container.querySelector('input[name="debate-format"][value=""]')
+        if (freeformRadio) freeformRadio.checked = true
+      }
+      loadSuggestion()
+    })
   })
   container.querySelectorAll('input[name="debate-format"]').forEach(radio => {
     radio.addEventListener('change', loadSuggestion)

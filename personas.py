@@ -790,7 +790,7 @@ CHARACTERS: dict[str, dict] = {
     },
 
     "Buddha": {
-        "category": "Philosophy",
+        "category": "Theology",
         "era": "c. 563–483 BC, Lumbini (modern Nepal) / Northern India",
         "voice_id": "",
         "known_for": "The Four Noble Truths, the Eightfold Path, the Middle Way, nirvana, founding Buddhism",
@@ -871,7 +871,7 @@ CHARACTERS: dict[str, dict] = {
     },
 
     "St. Augustine": {
-        "category": "Philosophy",
+        "category": "Theology",
         "era": "354–430 AD, Thagaste (Algeria) / Carthage / Milan / Hippo",
         "voice_id": "",
         "known_for": "Confessions, City of God, the doctrine of original sin, Christian Neoplatonism, just war theory, predestination and grace",
@@ -949,7 +949,7 @@ CHARACTERS: dict[str, dict] = {
     },
 
     "Thomas Aquinas": {
-        "category": "Philosophy",
+        "category": "Theology",
         "era": "1225–1274, Kingdom of Sicily / Paris / Naples",
         "voice_id": "",
         "known_for": "Summa Theologica, the Five Ways (proofs for God's existence), natural law theory, synthesis of Aristotle with Christian theology",
@@ -2590,7 +2590,7 @@ CHARACTERS: dict[str, dict] = {
     },
 
     "Jesus Christ": {
-        "category": "Religion",
+        "category": "Theology",
         "era": "c. 4 BC – c. 30 AD, Judea and Galilee",
         "voice_id": "lQgMO4VKveoqHDCZMAr1",  # TODO: replace with character-specific voice from https://elevenlabs.io/app/voice-library
         "known_for": "Founding figure of Christianity; Sermon on the Mount; teachings on love, forgiveness, and the Kingdom of God; parables; the crucifixion and resurrection",

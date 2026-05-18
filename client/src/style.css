@@ -100,6 +100,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
+  min-height: 9rem;
 }
 
 .dotd-loading {
@@ -186,6 +187,10 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   font-family: var(--serif);
   font-size: 0.9rem;
   line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .dotd-tagline {
@@ -194,6 +199,10 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   font-family: var(--serif);
   font-size: 0.82rem;
   line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .setup-or {
@@ -632,21 +641,9 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   font-weight: 700;
 }
 
-/* Advanced mode: prominent start button — matches simple mode */
-.setup-box--advanced .start-btn {
-  font-size: 1rem;
-  padding: 0.85rem;
-  letter-spacing: 0.08em;
-  background: var(--gold);
-  color: var(--bg-dark);
-  border-color: var(--gold);
-  margin-top: 0.5rem;
-}
-.setup-box--advanced .start-btn:hover:not(:disabled) {
-  background: var(--amber);
-  border-color: var(--amber);
-  color: var(--bg-dark);
-}
+/* Advanced mode: start button not needed — dotd card has its own start button */
+.setup-box--advanced .start-btn { display: none; }
+.setup-box--advanced .start-error { display: none; }
 
 /* Advanced mode: panel always visible; hide simple-specific and char-picker elements */
 .setup-box--advanced .advanced-panel          { display: block; }
