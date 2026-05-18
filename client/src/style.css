@@ -101,6 +101,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   flex-direction: column;
   gap: 0.3rem;
   min-height: 14rem;
+  overflow: hidden;
 }
 
 .dotd-loading {
@@ -220,7 +221,8 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 0.2rem;
+  margin-top: auto;
+  padding-top: 0.4rem;
   gap: 0.5rem;
 }
 
@@ -256,7 +258,6 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   border: 2px solid #cc2200;
   background: #0d0a0a;
   animation: cable-dotd-pulse 2.5s ease-in-out infinite;
-  min-height: 17rem;
 }
 
 @keyframes cable-dotd-pulse {
