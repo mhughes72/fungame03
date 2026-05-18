@@ -235,7 +235,7 @@ const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/theme-CJEpj9dL.
         <div class="start-error" id="start-error"></div>
 
         <div class="setup-spacer"></div>
-        <div class="setup-dotd-sep">── or try a suggested debate ──</div>
+        <div class="setup-dotd-sep">── or try a curated debate ──</div>
 
         <div class="mode-toggle-row">
           <button class="mode-toggle-btn" id="mode-to-advanced">⚗ Experimental features</button>
@@ -272,7 +272,7 @@ const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/theme-CJEpj9dL.
       </div>`:"";U.innerHTML=`
       ${We}
       <div class="dotd-header">
-        <span class="dotd-label">${$?"TONIGHT'S SHOWDOWN":"── SUGGESTED DEBATE ──"}</span>
+        <span class="dotd-label">${$?"TONIGHT'S SHOWDOWN":"── CURATED DEBATE ──"}</span>
         <span class="dotd-badges">
           <span class="dotd-category" style="color:${b}">${r.category.toUpperCase()}</span>
           ${Ue}

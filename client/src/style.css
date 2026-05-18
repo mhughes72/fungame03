@@ -100,7 +100,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
-  min-height: 9rem;
+  min-height: 14rem;
 }
 
 .dotd-loading {
@@ -169,6 +169,9 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   font-weight: 700;
   font-size: 0.88rem;
   letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .dotd-roles {
@@ -253,6 +256,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   border: 2px solid #cc2200;
   background: #0d0a0a;
   animation: cable-dotd-pulse 2.5s ease-in-out infinite;
+  min-height: 17rem;
 }
 
 @keyframes cable-dotd-pulse {

@@ -170,7 +170,7 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
         <div class="start-error" id="start-error"></div>
 
         <div class="setup-spacer"></div>
-        <div class="setup-dotd-sep">── or try a suggested debate ──</div>
+        <div class="setup-dotd-sep">── or try a curated debate ──</div>
 
         <div class="mode-toggle-row">
           <button class="mode-toggle-btn" id="mode-to-advanced">⚗ Experimental features</button>
@@ -609,7 +609,7 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
     dotdCard.innerHTML = `
       ${cableBreaking}
       <div class="dotd-header">
-        <span class="dotd-label">${isCableNews ? 'TONIGHT\'S SHOWDOWN' : '── SUGGESTED DEBATE ──'}</span>
+        <span class="dotd-label">${isCableNews ? 'TONIGHT\'S SHOWDOWN' : '── CURATED DEBATE ──'}</span>
         <span class="dotd-badges">
           <span class="dotd-category" style="color:${color}">${topic.category.toUpperCase()}</span>
           ${formatBadge}
