@@ -79,11 +79,14 @@ store = SessionStore()
 # --------------------------------------------------------------------------- #
 
 _PORTRAITS           = Path(__file__).parent.parent / "portraits"
+_PORTRAIT_THUMBS     = Path(__file__).parent.parent / "portrait_thumbs"
 _NEWSPAPER_PORTRAITS = Path(__file__).parent.parent / "newspaper_portraits"
 
 def _mount_static() -> None:
     if _DIST.exists():
         app.mount("/assets", StaticFiles(directory=str(_DIST / "assets")), name="assets")
+    if _PORTRAIT_THUMBS.exists():
+        app.mount("/portrait_thumbs", StaticFiles(directory=str(_PORTRAIT_THUMBS)), name="portrait_thumbs")
     if _PORTRAITS.exists():
         app.mount("/portraits", StaticFiles(directory=str(_PORTRAITS)), name="portraits")
     if _NEWSPAPER_PORTRAITS.exists():

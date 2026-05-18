@@ -79,8 +79,9 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
                         data-category="${escHtml(cat)}">
                         <input type="checkbox" value="${escHtml(c.name)}" />
                         <div class="char-card-img">
-                          <img src="/portraits/${portrait}.png" alt=""
-                            onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
+                          <img src="/portrait_thumbs/${portrait}.webp" alt=""
+                            data-portrait="${portrait}"
+                            loading="lazy" />
                           <div class="char-card-initials" style="display:none">${escHtml(initials)}</div>
                         </div>
                         <div class="char-card-name">${escHtml(c.name)}</div>
@@ -191,6 +192,23 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
   const rows      = container.querySelectorAll('.char-card')
   const noResults = container.querySelector('#char-no-results')
   const filterInput = container.querySelector('#char-filter')
+
+  // Two-step portrait fallback: WebP thumb → original PNG → initials placeholder
+  container.querySelectorAll('.char-card-img img').forEach(img => {
+    img.addEventListener('error', function onThumbError() {
+      img.removeEventListener('error', onThumbError)
+      if (img.src.includes('/portrait_thumbs/')) {
+        img.addEventListener('error', () => {
+          img.style.display = 'none'
+          img.nextElementSibling.style.display = 'flex'
+        })
+        img.src = `/portraits/${img.dataset.portrait}.png`
+      } else {
+        img.style.display = 'none'
+        img.nextElementSibling.style.display = 'flex'
+      }
+    })
+  })
 
   filterInput.addEventListener('input', () => {
     const q = filterInput.value.toLowerCase().trim()
