@@ -187,6 +187,18 @@ python generate_portraits.py --overwrite      # regenerate existing images
 
 Style: flat vector illustration, bold cartoon, warm colour palette.
 
+### Portrait thumbnails (`generate_thumbs.py`)
+
+Generates 128×128 WebP thumbnails from `portraits/` into `portrait_thumbs/`, used by the web UI character grid. Run this after adding or regenerating any portrait — existing thumbnails are always overwritten.
+
+```bash
+python generate_thumbs.py                  # all portraits
+python generate_thumbs.py Newton           # one character (partial name OK)
+python generate_thumbs.py Newton Einstein  # multiple characters
+```
+
+Requires Pillow (`pip install Pillow`).
+
 ### Newspaper portraits (`generate_newspaper_portraits.py`)
 
 Used by the post-debate newspaper front page. Saved to `newspaper_portraits/`.
@@ -591,6 +603,7 @@ After adding a new character to `personas.py`, run the portrait generators if yo
 
 ```bash
 python generate_portraits.py "Hannah Arendt"
+python generate_thumbs.py "Hannah Arendt"
 python generate_newspaper_portraits.py "Hannah Arendt"
 ```
 
