@@ -11,7 +11,7 @@ python main.py           # CLI
 python main.py --ui      # Textual bar UI (recommended)
 python main.py --debug   # with debug output to stderr
 python run_server.py     # web server → http://localhost:8000
-python generate_portraits.py            # generate all character portraits via DALL-E 3
+python generate_portraits.py            # generate all character portraits via gpt-image-1
 python generate_portraits.py Newton     # generate specific character(s)
 ```
 
@@ -33,7 +33,7 @@ cd client && npm run build && cd ..
 | `state.py` | `RoomState` TypedDict — single source of truth for graph state |
 | `personas.py` | Character definitions — the only file to edit when adding characters |
 | `debug.py` | Per-channel debug logging (`dlog`, `toggle`, `status`) |
-| `generate_portraits.py` | Standalone CLI — generates DALL-E 3 portrait PNGs into `portraits/` |
+| `generate_portraits.py` | Standalone CLI — generates gpt-image-1 portrait PNGs into `portraits/` |
 | `run_server.py` | Web server entry point — reads `PORT` env var, disables reload in production |
 | `server/app.py` | FastAPI routes, SSE stream, static file serving |
 | `server/session.py` | `SessionStore`, per-session state, `run_batch()` thread runner |
@@ -205,7 +205,7 @@ The consensus checker's structured output includes a `drifted_topic` field. If t
 
 | Feature | Status | Notes |
 |---|---|---|
-| Seating chart with portraits | Done | Oval table, DALL-E 3 portraits, pulse/glow seat states |
+| Seating chart with portraits | Done | Oval table, gpt-image-1 portraits, pulse/glow seat states |
 | Debate summary in steer modal | Done | One-sentence state summary above text input |
 | Debate timeline strip | Removed | Was implemented as a heatmap strip but removed — CSS deleted, `timeline.js` remains as dead code |
 | End-of-debate report | Done | Shows on both consensus and quit: turn count, heat bar, agreements, partial alignments, open tensions |
@@ -252,9 +252,9 @@ Add an entry to `CHARACTERS` in `personas.py`. All fields are required:
 
 `dynamics` is defined but not currently injected into prompts — characters react based on what is actually said.
 
-Current characters (61): Socrates, Nietzsche, Marx, Sun Tzu, Abraham Lincoln, Nikola Tesla, Frederick Douglass, John Lennon, Wolfgang Amadeus Mozart, Elon Musk, Bill Gates, Steve Jobs, Vladimir Lenin, Adolf Hitler, Joseph Stalin, Mao Zedong, Pol Pot, Isaac Newton, Albert Einstein, Niels Bohr, Werner Heisenberg, Richard Feynman, Roger Penrose, Winston Churchill, Franklin Delano Roosevelt, Vladimir Putin, Xi Jinping, Charles Darwin, Jesus Christ, Oscar Wilde, Leonardo da Vinci, Pablo Picasso, Kurt Cobain, Salvador Dalí, Andy Warhol, David Bowie, Ludwig van Beethoven, Richard Wagner, Margaret Thatcher, Napoleon Bonaparte, Niccolò Machiavelli, Thomas Jefferson, John F. Kennedy, Richard Nixon, Theodore Roosevelt, Ronald Reagan, Galileo Galilei, Stephen Hawking, Carl Sagan, J. Robert Oppenheimer, Sigmund Freud, Fyodor Dostoevsky, George Orwell, Franz Kafka, Mark Twain, Ayn Rand, Christopher Hitchens, Noam Chomsky, Jordan Peterson, Joe Rogan, Bill Maher.
+Current characters (81): Socrates, Nietzsche, Marx, Sun Tzu, Abraham Lincoln, Nikola Tesla, Frederick Douglass, John Lennon, Wolfgang Amadeus Mozart, Elon Musk, Bill Gates, Steve Jobs, Vladimir Lenin, Adolf Hitler, Joseph Stalin, Mao Zedong, Pol Pot, Isaac Newton, Albert Einstein, Niels Bohr, Werner Heisenberg, Richard Feynman, Roger Penrose, Winston Churchill, Franklin Delano Roosevelt, Vladimir Putin, Xi Jinping, Charles Darwin, Jesus Christ, Oscar Wilde, Leonardo da Vinci, Pablo Picasso, Kurt Cobain, Salvador Dalí, Andy Warhol, David Bowie, Ludwig van Beethoven, Richard Wagner, Margaret Thatcher, Napoleon Bonaparte, Niccolò Machiavelli, Thomas Jefferson, John F. Kennedy, Richard Nixon, Theodore Roosevelt, Ronald Reagan, Galileo Galilei, Stephen Hawking, Carl Sagan, J. Robert Oppenheimer, Sigmund Freud, Fyodor Dostoevsky, George Orwell, Franz Kafka, Mark Twain, Ayn Rand, Christopher Hitchens, Noam Chomsky, Jordan Peterson, Joe Rogan, Bill Maher, Plato, Aristotle, Confucius, Laozi, Buddha, St. Augustine, Thomas Aquinas, Thomas Hobbes, John Locke, Jean-Jacques Rousseau, Adam Smith, John Stuart Mill, Carl Jung, Jean-Paul Sartre, Marshall McLuhan, Alan Turing, Ada Lovelace, Marie Curie, Jane Goodall, Slavoj Zizek.
 
-Good candidates to add: Hannah Arendt (essential with the authoritarian cast), Voltaire, Confucius, Ibn Khaldun.
+Good candidates to add: Hannah Arendt (essential with the authoritarian cast), Voltaire, Ibn Khaldun.
 
 ## Runtime `!` commands
 

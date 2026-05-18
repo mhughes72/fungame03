@@ -165,7 +165,7 @@ def _generate_one_freeform(level: str, existing: list[dict]) -> _TopicSchema:
     ])
 
     valid = set(CHARACTERS.keys())
-    result.characters = [c for c in result.characters if c in valid]
+    result.characters = [r for c in result.characters if (r := _normalize_name(c, valid))]
     if len(result.characters) < 2:
         raise ValueError(f"Too few valid characters: {result.characters}")
     return result
@@ -267,7 +267,7 @@ def _generate_one_cable_news(existing: list[dict]) -> _CableNewsTopicSchema:
         HumanMessage(content=f"Available guests:\n{_roster_text()}{avoid}"),
     ])
 
-    result.characters = [c for c in result.characters if c in valid]
+    result.characters = [r for c in result.characters if (r := _normalize_name(c, valid))]
     if len(result.characters) < 2:
         raise ValueError(f"Too few valid characters: {result.characters}")
     if result.hot_seat not in result.characters:

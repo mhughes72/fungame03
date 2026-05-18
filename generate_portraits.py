@@ -1,19 +1,23 @@
 """
-Generate portrait images for each philosopher in personas.py using DALL-E 3.
+Generate portrait images for each character in personas.py.
 
-Characters in WIKIPEDIA_SOURCES are fetched as real Wikipedia photos instead
-of being generated — useful for figures DALL-E refuses (Hitler, Stalin, etc.).
+Two built-in styles selectable via --style:
+  cartoon    (default) flat vector illustration, bold cartoon style
+  newspaper  era-aware: woodcut engraving for pre-1845, press photo for post-1845
+
+Characters in WIKIPEDIA_SOURCES get their Wikipedia photo instead of a
+generated image — useful for figures the model refuses (Hitler, Stalin, etc.).
 
 Run:
-    python generate_portraits.py            # all characters
-    python generate_portraits.py Newton Einstein  # specific names (partial match OK)
-
-Images are saved to OUTPUT_DIR. Already-generated portraits are skipped unless
-you pass --overwrite.
-
-Edit the block below to change style, size, quality, or the prompt template.
+    python generate_portraits.py                        # all, cartoon style
+    python generate_portraits.py Newton Einstein        # specific names (partial match OK)
+    python generate_portraits.py --style newspaper      # newspaper style, all
+    python generate_portraits.py Newton --style newspaper
+    python generate_portraits.py --overwrite            # regenerate existing
 """
 
+import base64
+import re
 import json
 import sys
 import time
@@ -29,30 +33,55 @@ from personas import CHARACTERS
 
 # ── Configurable parameters ────────────────────────────────────────────────────
 
-OUTPUT_DIR   = "portraits"          # folder to save images
-IMAGE_SIZE   = "1024x1024"          # "1024x1024" | "1792x1024" | "1024x1792"
-IMAGE_QUALITY = "standard"          # "standard" | "hd"
-MODEL        = "dall-e-3"
+OUTPUT_DIR    = "portraits"
+IMAGE_SIZE    = "1024x1024"
+IMAGE_QUALITY = "medium"        # "low" | "medium" | "high" | "auto"
+MODEL         = "gpt-image-1"
 
-# The style clause injected into every prompt.  Edit this to change the look.
-STYLE = (
-    "flat vector illustration, bold cartoon style, warm limited colour palette, "
-    "clean thick outlines, expressive face, no background clutter, "
-    "slightly caricatured but recognisable"
-)
+DELAY_BETWEEN = 2               # seconds between API calls to avoid rate limits
 
-# Prompt template.  Available variables: {name}, {era}, {known_for}, {style}
-PROMPT_TEMPLATE = (
-    "Portrait of {name} ({era}), {known_for}. "
-    "{style}. "
-    "Bust-length portrait, facing slightly left, confident expression."
-)
+# Characters who died after this year were photographed in their lifetime.
+PHOTO_ERA_CUTOFF = 1845
 
-DELAY_BETWEEN = 2   # seconds between API calls to avoid rate limits
+# ── Style definitions ──────────────────────────────────────────────────────────
+
+STYLES: dict[str, dict] = {
+    "cartoon": {
+        "template": (
+            "Portrait of {name} ({era}), {known_for}. "
+            "{style}. "
+            "Bust-length portrait, facing slightly left, confident expression."
+        ),
+        "style": (
+            "flat vector illustration, bold cartoon style, warm limited colour palette, "
+            "clean thick outlines, expressive face, no background clutter, "
+            "slightly caricatured but recognisable"
+        ),
+    },
+    "newspaper": {
+        "template": (
+            "Portrait of {name} ({era}), {known_for}. "
+            "{style}. "
+            "Head and shoulders, facing three-quarters, composed expression. "
+            "No text, no border, no frame."
+        ),
+        # style is era-dependent — resolved in _build_prompt()
+        "style_photo": (
+            "authentic period press photograph, sepia-toned, slightly grainy, "
+            "high contrast, newsprint reproduction quality, "
+            "formal posed portrait, no colour"
+        ),
+        "style_engraving": (
+            "Victorian newspaper woodcut engraving, fine cross-hatching, "
+            "black ink on white, period illustration style, "
+            "formal bust portrait, no colour"
+        ),
+    },
+}
 
 # ── Wikipedia sources ──────────────────────────────────────────────────────────
-# Characters here get their main Wikipedia photo instead of a DALL-E generation.
-# Add any name here if DALL-E refuses or the result is poor.
+# Characters here get their Wikipedia photo instead of a generated image.
+# Add any name here if the model refuses or the result is poor.
 
 WIKIPEDIA_SOURCES: dict[str, str] = {
     "Adolf Hitler":  "Adolf_Hitler",
@@ -65,20 +94,43 @@ WIKIPEDIA_SOURCES: dict[str, str] = {
     "Elon Musk":     "Elon_Musk",
     "Bill Gates":    "Bill_Gates",
     "Steve Jobs":    "Steve_Jobs",
+    "Bill O'Reilly": "Bill_O'Reilly_(political_commentator)",
 }
 
-# ── Image generation ───────────────────────────────────────────────────────────
+# ── Helpers ────────────────────────────────────────────────────────────────────
 
 def _safe_filename(name: str) -> str:
     return name.replace(" ", "_").replace("/", "-") + ".png"
 
 
-def _build_prompt(name: str, char: dict) -> str:
-    return PROMPT_TEMPLATE.format(
+def _death_year(era: str) -> int:
+    """Extract death year from an era string like '1643-1727, England'."""
+    if "present" in era.lower():
+        return 9999
+    bc = "bc" in era.lower()
+    m = re.search(r'\d{3,4}\s*[–\-]\s*(\d{3,4})', era)
+    if m:
+        y = int(m.group(1))
+        return -y if bc else y
+    m = re.search(r'(\d{3,4})', era)
+    if m:
+        y = int(m.group(1))
+        return -y if bc else y
+    return 0
+
+
+def _build_prompt(name: str, char: dict, style_name: str) -> str:
+    s = STYLES[style_name]
+    if style_name == "newspaper":
+        death = _death_year(char["era"])
+        style_str = s["style_photo"] if death > PHOTO_ERA_CUTOFF else s["style_engraving"]
+    else:
+        style_str = s["style"]
+    return s["template"].format(
         name=name,
         era=char["era"],
         known_for=char["known_for"][:200],
-        style=STYLE,
+        style=style_str,
     )
 
 
@@ -113,13 +165,24 @@ def _download(url: str, dest: Path) -> None:
                 raise
 
 
-def generate_portraits(names: list[str] | None = None, overwrite: bool = False, force_wiki: bool = False) -> None:
+# ── Main generation ────────────────────────────────────────────────────────────
+
+def generate_portraits(
+    names: list[str] | None = None,
+    overwrite: bool = False,
+    force_wiki: bool = False,
+    style: str = "cartoon",
+) -> None:
+    if style not in STYLES:
+        sys.exit(f"Unknown style '{style}'. Choose from: {', '.join(STYLES)}")
+
     load_dotenv()
-    client = OpenAI()
+    client = None   # lazy-init — only created if a generation is needed
+
     out = Path(OUTPUT_DIR)
     out.mkdir(exist_ok=True)
 
-    targets = {}
+    targets: dict[str, dict] = {}
     if names:
         for query in names:
             matches = [k for k in CHARACTERS if query.lower() in k.lower()]
@@ -128,47 +191,58 @@ def generate_portraits(names: list[str] | None = None, overwrite: bool = False, 
             for m in matches:
                 targets[m] = CHARACTERS[m]
     else:
-        targets = CHARACTERS
+        targets = dict(CHARACTERS)
 
     total = len(targets)
     for i, (name, char) in enumerate(targets.items(), 1):
         dest = out / _safe_filename(name)
         is_wiki = name in WIKIPEDIA_SOURCES or force_wiki
+
         if dest.exists() and not overwrite and not is_wiki:
             print(f"[{i}/{total}] {name} — already exists, skipping")
             continue
 
         # ── Wikipedia path ──────────────────────────────────────────────────
-        if name in WIKIPEDIA_SOURCES or force_wiki:
+        if is_wiki:
+            article = WIKIPEDIA_SOURCES.get(name, name.replace(" ", "_"))
             print(f"[{i}/{total}] {name} (wikipedia) … ", end="", flush=True)
-            img_url = _fetch_wikipedia_image(WIKIPEDIA_SOURCES.get(name, name.replace(" ", "_")))
+            img_url = _fetch_wikipedia_image(article)
             if img_url:
                 try:
                     _download(img_url, dest)
-                    print(f"saved → {dest}")
+                    print(f"saved -> {dest}")
                     if i < total:
                         time.sleep(DELAY_BETWEEN)
                     continue
                 except Exception as exc:
-                    print(f"download failed ({exc}), falling back to DALL-E … ", end="", flush=True)
+                    print(f"download failed ({exc}), falling back to {MODEL} … ", end="", flush=True)
             else:
-                print("no image found, falling back to DALL-E … ", end="", flush=True)
+                print(f"no image found, falling back to {MODEL} … ", end="", flush=True)
 
-        # ── DALL-E path ─────────────────────────────────────────────────────
-        print(f"[{i}/{total}] {name} (dalle) … ", end="", flush=True)
+        # ── Generation path ─────────────────────────────────────────────────
+        if style == "newspaper":
+            death = _death_year(char["era"])
+            mode  = "photo" if death > PHOTO_ERA_CUTOFF else "engraving"
+            print(f"[{i}/{total}] {name} ({MODEL}/{mode}) … ", end="", flush=True)
+        else:
+            print(f"[{i}/{total}] {name} ({MODEL}) … ", end="", flush=True)
+
+        if client is None:
+            client = OpenAI()
+
         try:
             response = client.images.generate(
                 model=MODEL,
-                prompt=_build_prompt(name, char),
+                prompt=_build_prompt(name, char, style),
                 size=IMAGE_SIZE,
                 quality=IMAGE_QUALITY,
                 n=1,
             )
-            img_url = response.data[0].url
-            _download(img_url, dest)
-            print(f"saved → {dest}")
-        except Exception as e:
-            print(f"FAILED — {e}")
+            img_bytes = base64.b64decode(response.data[0].b64_json)
+            dest.write_bytes(img_bytes)
+            print(f"saved -> {dest}")
+        except Exception as exc:
+            print(f"FAILED — {exc}")
 
         if i < total:
             time.sleep(DELAY_BETWEEN)
@@ -179,7 +253,20 @@ def generate_portraits(names: list[str] | None = None, overwrite: bool = False, 
 # ── CLI entry point ────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    args = [a for a in sys.argv[1:] if not a.startswith("--")]
-    overwrite    = "--overwrite" in sys.argv
-    force_wiki   = "--wiki"      in sys.argv
-    generate_portraits(names=args or None, overwrite=overwrite or force_wiki, force_wiki=force_wiki)
+    args      = [a for a in sys.argv[1:] if not a.startswith("--")]
+    overwrite  = "--overwrite" in sys.argv
+    force_wiki = "--wiki"      in sys.argv
+    style      = "cartoon"
+    for arg in sys.argv[1:]:
+        if arg.startswith("--style="):
+            style = arg.split("=", 1)[1]
+        elif arg == "--style" and sys.argv.index(arg) + 1 < len(sys.argv):
+            style = sys.argv[sys.argv.index(arg) + 1]
+            args  = [a for a in args if a != style]
+
+    generate_portraits(
+        names=args or None,
+        overwrite=overwrite or force_wiki,
+        force_wiki=force_wiki,
+        style=style,
+    )
