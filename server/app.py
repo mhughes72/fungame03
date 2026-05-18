@@ -139,6 +139,29 @@ class NewTopicRequest(BaseModel):
     topic: str = Field(..., min_length=1, max_length=500)
 
 
+class _TopicCheck(BaseModel):
+    valid: bool
+    reason: str
+
+
+def _validate_topic(topic: str) -> str | None:
+    """Return None if the topic is valid, or a user-facing error string if not."""
+    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+    structured = llm.with_structured_output(_TopicCheck)
+    result = structured.invoke([
+        SystemMessage(content=(
+            "You are a debate topic validator. "
+            "Return valid=true if the input is a coherent phrase or question that people could meaningfully debate. "
+            "Return valid=false for: gibberish, random characters, single keystrokes or meaningless strings, "
+            "or anything a debater cannot engage with substantively. "
+            "Be lenient — unusual, provocative, or niche topics are fine as long as they are coherent. "
+            "If invalid, give a short, friendly reason (one sentence, no jargon)."
+        )),
+        HumanMessage(content=f'Debate topic: "{topic}"'),
+    ])
+    return None if result.valid else result.reason
+
+
 # --------------------------------------------------------------------------- #
 # Routes                                                                        #
 # --------------------------------------------------------------------------- #
@@ -181,6 +204,10 @@ def create_session(req: StartRequest):
     unknown = [c for c in req.characters if c not in CHARACTERS]
     if unknown:
         raise HTTPException(status_code=400, detail=f"Unknown characters: {unknown}")
+
+    invalid_reason = _validate_topic(req.topic)
+    if invalid_reason:
+        raise HTTPException(status_code=422, detail=invalid_reason)
 
     session = store.create(
         participants=req.characters,
@@ -274,6 +301,9 @@ def suggest_topic_endpoint(req: SuggestTopicRequest):
 @app.post("/api/suggest-cast")
 def suggest_cast_endpoint(req: SuggestCastRequest):
     """Suggest 2–4 characters best suited to debate the given topic."""
+    invalid_reason = _validate_topic(req.topic)
+    if invalid_reason:
+        raise HTTPException(status_code=422, detail=invalid_reason)
     from nodes import suggest_cast
     try:
         picks = suggest_cast(req.topic)

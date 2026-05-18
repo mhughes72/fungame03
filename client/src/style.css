@@ -589,22 +589,63 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 
 /* Advanced generate-a-debate section heading */
 .advanced-generate-heading {
-  color: var(--gold-dim);
-  font-size: 0.75rem;
-  letter-spacing: 0.1em;
-  text-align: center;
-  padding-top: 0.5rem;
+  color: var(--gold);
+  font-size: 0.9rem;
+  letter-spacing: 0.06em;
+  text-align: left;
+  padding-top: 1.1rem;
   border-top: 1px solid var(--border);
-  margin-top: 0.25rem;
+  margin-top: 0.75rem;
+  font-weight: 700;
+}
+
+/* Advanced section title — "more experimental features" etc. */
+.adv-section-title {
+  color: var(--gold-dim);
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 700;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+  margin-top: 0.5rem;
+}
+.setup-box--simple .adv-section-title { display: none; }
+
+/* Advanced inner section label (inside bordered panel, no top border) */
+.adv-inner-title {
+  color: var(--gold-dim);
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+  padding-top: 0.25rem;
 }
 
 /* Dotd separator — simple mode only */
 .setup-dotd-sep {
-  color: var(--text-dim);
-  font-size: 0.75rem;
+  color: var(--gold-dim);
+  font-size: 0.9rem;
   letter-spacing: 0.08em;
   text-align: center;
-  opacity: 0.6;
+  font-weight: 700;
+}
+
+/* Advanced mode: prominent start button — matches simple mode */
+.setup-box--advanced .start-btn {
+  font-size: 1rem;
+  padding: 0.85rem;
+  letter-spacing: 0.08em;
+  background: var(--gold);
+  color: var(--bg-dark);
+  border-color: var(--gold);
+  margin-top: 0.5rem;
+}
+.setup-box--advanced .start-btn:hover:not(:disabled) {
+  background: var(--amber);
+  border-color: var(--amber);
+  color: var(--bg-dark);
 }
 
 /* Advanced mode: panel always visible; hide simple-specific and char-picker elements */
@@ -639,6 +680,27 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   transition: color 0.15s;
 }
 .mode-toggle-btn:hover { color: var(--amber); }
+
+/* Simple / Advanced mode toggle buttons — prominent, left-aligned */
+.setup-box--simple .mode-toggle-row,
+.setup-box--advanced .mode-toggle-row {
+  justify-content: flex-start;
+  margin-top: 1.25rem;
+}
+.setup-box--simple #mode-to-advanced,
+.setup-box--advanced #mode-to-simple {
+  color: var(--amber);
+  font-size: 0.9rem;
+  padding: 0.5rem 1.1rem;
+  border: 1px solid var(--border);
+  letter-spacing: 0.05em;
+  transition: color 0.15s, border-color 0.15s;
+}
+.setup-box--simple #mode-to-advanced:hover,
+.setup-box--advanced #mode-to-simple:hover {
+  border-color: var(--amber);
+  color: var(--gold);
+}
 
 .advanced-panel {
   border-left: 2px solid var(--border);
@@ -778,6 +840,16 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 .length-opt:has(input:checked) { color: var(--amber); }
 
 .setup-error { color: var(--red); font-size: 0.85rem; min-height: 1.2em; text-align: center; }
+
+.topic-error,
+.start-error {
+  color: var(--red);
+  font-size: 0.82rem;
+  line-height: 1.4;
+  min-height: 0;
+}
+.topic-error:empty,
+.start-error:empty { display: none; }
 
 .setup-footer {
   display: flex;

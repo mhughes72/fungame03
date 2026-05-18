@@ -47,7 +47,8 @@ async function showSetup() {
       const session = await api.createSession(chosen, topic, commentator, moderator, diagrams, audienceLevel, philosopherLength, commentatorLength, moderatorLength, debateFormat, formatRoles)
       showDebate(session.session_id, chosen, topic, styles)
     } catch (err) {
-      screen.showError(`Could not start session: ${err.message}`)
+      screen.showError(err.message)
+      throw err  // let setup.js restore the button state
     }
   }, { isLocal, skin: _skin })
 }

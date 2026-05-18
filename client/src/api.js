@@ -12,8 +12,15 @@ async function post(path, body) {
     body: JSON.stringify(body),
   })
   if (!res.ok) {
-    const text = await res.text()
-    throw new Error(`${res.status} ${res.statusText}: ${text}`)
+    let message = `${res.status} ${res.statusText}`
+    try {
+      const json = await res.json()
+      if (json.detail) message = String(json.detail)
+    } catch {
+      const text = await res.text().catch(() => '')
+      if (text) message = text
+    }
+    throw new Error(message)
   }
   return res.json()
 }

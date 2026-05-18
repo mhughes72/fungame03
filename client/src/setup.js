@@ -96,7 +96,7 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
         <p class="selection-hint" id="selection-hint">Select 2–4 thinkers</p>
 
         <label class="topic-label" for="topic-input">${s_topicLabel}</label>
-        <div class="advanced-generate-heading">── Generate a Debate ──</div>
+        <div class="advanced-generate-heading">or generate a debate</div>
         <div class="topic-row">
           <input
             id="topic-input"
@@ -111,6 +111,9 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
         </div>
         <div class="topic-suggestion" id="topic-suggestion" style="display:none"></div>
         <div class="cast-suggestion" id="cast-suggestion" style="display:none"></div>
+        <div class="topic-error" id="topic-error"></div>
+
+        <div class="adv-section-title">more experimental features</div>
 
         <div class="advanced-panel" id="advanced-panel">
           <div class="setup-toggles">
@@ -132,6 +135,7 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
           </div>
 
           <div class="setup-lengths" id="setup-lengths" style="display:none">
+            <div class="adv-inner-title">character response style</div>
             <div class="length-group">
               <span class="length-label">Philosopher length</span>
               <div class="length-options">
@@ -162,6 +166,7 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
         </div>
 
         <button class="start-btn" id="start-btn" disabled>${escHtml(s_start)}</button>
+        <div class="start-error" id="start-error"></div>
 
         <div class="setup-spacer"></div>
         <div class="setup-dotd-sep">── or try a suggested debate ──</div>
@@ -269,6 +274,11 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
   modeToAdv.addEventListener('click', () => {
     setupBox.classList.replace('setup-box--simple', 'setup-box--advanced')
     titleEl.textContent = "THE PHILOSOPHER'S EXPERIMENT"
+    const oxfordRadio = container.querySelector('input[name="debate-format"][value="oxford"]')
+    if (oxfordRadio && !oxfordRadio.checked) {
+      oxfordRadio.checked = true
+      loadSuggestion()
+    }
   })
 
   modeToSimple.addEventListener('click', () => {
@@ -282,12 +292,15 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
     }
   })
 
-  const hint    = container.querySelector('#selection-hint')
-  const startBtn = container.querySelector('#start-btn')
-  const errorEl  = container.querySelector('#setup-error')
+  const hint        = container.querySelector('#selection-hint')
+  const startBtn    = container.querySelector('#start-btn')
+  const errorEl     = container.querySelector('#setup-error')
+  const topicErrorEl = container.querySelector('#topic-error')
+  const startErrorEl = container.querySelector('#start-error')
 
   function updateHint() {
     const count = [...checkboxes].filter(cb => cb.checked).length
+    const hasTopic = topicInput.value.trim().length > 0
     container.querySelector('#char-list').classList.toggle('char-list--maxed', count >= 4)
     if (count < 2) {
       hint.textContent = count === 0 ? 'Select 2 to 4 thinkers' : 'Select 1 more'
@@ -296,12 +309,15 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
       hint.textContent = `Too many — deselect ${count - 4}`
       hint.classList.add('hint-warn')
       hint.classList.remove('hint-ok')
+    } else if (!hasTopic) {
+      hint.textContent = 'Enter a debate topic'
+      hint.classList.remove('hint-ok', 'hint-warn')
     } else {
       hint.textContent = `${count} selected`
       hint.classList.add('hint-ok')
       hint.classList.remove('hint-warn')
     }
-    startBtn.disabled = count < 2 || count > 4
+    startBtn.disabled = count < 2 || count > 4 || !hasTopic
     const topicBtn = container.querySelector('#suggest-topic-btn')
     if (topicBtn) topicBtn.disabled = count < 2 || count > 4
   }
@@ -309,6 +325,11 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
   const charList   = container.querySelector('#char-list')
   const charFilter = container.querySelector('#char-filter')
   const topicInput = container.querySelector('#topic-input')
+
+  topicInput.addEventListener('input', () => {
+    topicErrorEl.textContent = ''
+    updateHint()
+  })
 
   const setupOr    = container.querySelector('.setup-or')
   const topicLabel = container.querySelector('.topic-label')
@@ -338,6 +359,7 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
   suggestBtn.addEventListener('click', async () => {
     const topic = topicInput.value.trim()
     if (!topic) { topicInput.focus(); return }
+    topicErrorEl.textContent = ''
     suggestBtn.disabled = true
     suggestBtn.textContent = 'thinking…'
     castSuggestion.innerHTML = '<div class="cs-loading">selecting the best minds for this topic…</div>'
@@ -364,8 +386,8 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
       const firstRow = container.querySelector(`.char-card[data-name="${picks[0].name.toLowerCase()}"]`)
       if (firstRow) firstRow.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
     } catch (e) {
-      console.error('suggest cast failed', e)
       castSuggestion.style.display = 'none'
+      topicErrorEl.textContent = e.message || 'Could not suggest a cast — please try again.'
     } finally {
       suggestBtn.disabled = false
       suggestBtn.textContent = 'Suggest cast ✦'
@@ -430,12 +452,25 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
     }
   }
 
-  startBtn.addEventListener('click', () => {
+  startBtn.addEventListener('click', async () => {
     const selected = [...checkboxes].filter(cb => cb.checked).map(cb => cb.value)
     const topic = container.querySelector('#topic-input').value.trim()
-                  || 'What is the nature of justice?'
+    topicErrorEl.textContent = ''
+    startErrorEl.textContent = ''
     errorEl.textContent = ''
-    onStart({ characters: selected, topic, ...getToggles() })
+    const label = startBtn.textContent
+    startBtn.disabled = true
+    startBtn.textContent = 'opening…'
+    try {
+      await onStart({ characters: selected, topic, ...getToggles() })
+    } catch {
+      // error already shown via showError(); just restore the button
+    } finally {
+      if (document.contains(startBtn)) {
+        startBtn.textContent = label
+        updateHint()
+      }
+    }
   })
 
   container.querySelector('#topic-input').addEventListener('keydown', e => {
@@ -578,9 +613,18 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
     radio.addEventListener('change', loadSuggestion)
   })
 
-  // Expose a way to show errors without tearing down the screen
+  // Expose a way to show errors without tearing down the screen.
+  // Routes to the right element based on current mode.
   return {
-    showError(msg) { errorEl.textContent = msg },
+    showError(msg) {
+      if (setupBox.classList.contains('setup-box--advanced')) {
+        startErrorEl.textContent = msg
+        topicErrorEl.textContent = ''
+      } else {
+        topicErrorEl.textContent = msg
+        startErrorEl.textContent = ''
+      }
+    },
   }
 }
 
