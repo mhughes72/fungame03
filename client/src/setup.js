@@ -21,12 +21,12 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
 
   container.innerHTML = `
     <div class="setup-overlay">
-      <div class="setup-box">
+      <div class="setup-box setup-box--simple" id="setup-box">
         <h1 class="setup-title">${s_appName}</h1>
         <p class="setup-sub">${s_sub}</p>
 
         <div class="format-selector">
-          <label class="format-opt" data-desc="Open philosophical debate — the moderator guides the conversation freely with no fixed sides">
+          <label class="format-opt format-opt--freeform" data-desc="Open philosophical debate — the moderator guides the conversation freely with no fixed sides">
             <input type="radio" name="debate-format" value="" checked />
             <span class="format-opt-icon">💭</span>
             <span class="format-opt-name">Freeform</span>
@@ -96,6 +96,7 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
         <p class="selection-hint" id="selection-hint">Select 2–4 thinkers</p>
 
         <label class="topic-label" for="topic-input">${s_topicLabel}</label>
+        <div class="advanced-generate-heading">── Generate a Debate ──</div>
         <div class="topic-row">
           <input
             id="topic-input"
@@ -111,7 +112,6 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
         <div class="topic-suggestion" id="topic-suggestion" style="display:none"></div>
         <div class="cast-suggestion" id="cast-suggestion" style="display:none"></div>
 
-        <button class="advanced-toggle" id="advanced-toggle">Advanced ▾</button>
         <div class="advanced-panel" id="advanced-panel">
           <div class="setup-toggles">
             <label class="setup-toggle">
@@ -162,6 +162,15 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
         </div>
 
         <button class="start-btn" id="start-btn" disabled>${escHtml(s_start)}</button>
+
+        <div class="setup-spacer"></div>
+        <div class="setup-dotd-sep">── or try a suggested debate ──</div>
+
+        <div class="mode-toggle-row">
+          <button class="mode-toggle-btn" id="mode-to-advanced">⚗ Experimental features</button>
+          <button class="mode-toggle-btn" id="mode-to-simple">← Simple view</button>
+        </div>
+
         <p class="setup-error" id="setup-error"></p>
 
         <div class="setup-footer">
@@ -251,15 +260,26 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
     container.querySelector('#setup-lengths').style.display = ''
   }
 
-  // ── Advanced panel toggle ─────────────────────────────────────────────── //
-  const advancedToggle = container.querySelector('#advanced-toggle')
-  const advancedPanel  = container.querySelector('#advanced-panel')
-  let advancedOpen = false
+  // ── Simple / Advanced mode switch ────────────────────────────────────── //
+  const setupBox      = container.querySelector('#setup-box')
+  const modeToAdv     = container.querySelector('#mode-to-advanced')
+  const modeToSimple  = container.querySelector('#mode-to-simple')
+  const titleEl       = container.querySelector('.setup-title')
 
-  advancedToggle.addEventListener('click', () => {
-    advancedOpen = !advancedOpen
-    advancedPanel.style.display  = advancedOpen ? 'block' : 'none'
-    advancedToggle.textContent   = advancedOpen ? 'Advanced ▴' : 'Advanced ▾'
+  modeToAdv.addEventListener('click', () => {
+    setupBox.classList.replace('setup-box--simple', 'setup-box--advanced')
+    titleEl.textContent = "THE PHILOSOPHER'S EXPERIMENT"
+  })
+
+  modeToSimple.addEventListener('click', () => {
+    setupBox.classList.replace('setup-box--advanced', 'setup-box--simple')
+    titleEl.textContent = s_appName
+    // reset format to freeform so simple DOTD shows the right topics
+    const freeformRadio = container.querySelector('input[name="debate-format"][value=""]')
+    if (freeformRadio && !freeformRadio.checked) {
+      freeformRadio.checked = true
+      loadSuggestion()
+    }
   })
 
   const hint    = container.querySelector('#selection-hint')
@@ -555,11 +575,7 @@ export function mount(container, characters, onStart, { isLocal = false, skin = 
     radio.addEventListener('change', loadSuggestion)
   })
   container.querySelectorAll('input[name="debate-format"]').forEach(radio => {
-    radio.addEventListener('change', () => {
-      const fmt = container.querySelector('input[name="debate-format"]:checked')?.value || ''
-      setRestrictedMode(fmt === 'oxford' || fmt === 'cable_news')
-      loadSuggestion()
-    })
+    radio.addEventListener('change', loadSuggestion)
   })
 
   // Expose a way to show errors without tearing down the screen

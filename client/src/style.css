@@ -540,25 +540,112 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 .suggest-btn:hover:not(:disabled) { color: var(--gold); border-color: var(--border-hi); }
 .suggest-btn:disabled { opacity: 0.45; cursor: default; }
 
-.advanced-toggle {
+/* ── Simple / Advanced mode ──────────────────────────────────────────────── */
+
+/* Simple mode: reorder elements so dotd-card appears below the start button */
+.setup-box--simple .setup-spacer     { order: 9;  height: 1.5rem; }
+.setup-box--simple .setup-dotd-sep   { order: 10; }
+.setup-box--simple .dotd-card        { order: 11; }
+.setup-box--simple .mode-toggle-row  { order: 12; }
+.setup-box--simple .setup-error      { order: 13; }
+.setup-box--simple .setup-footer     { order: 14; }
+
+/* Simple mode: prominent start button */
+.setup-box--simple .start-btn {
+  font-size: 1rem;
+  padding: 0.85rem;
+  letter-spacing: 0.08em;
+  background: var(--gold);
+  color: var(--bg-dark);
+  border-color: var(--gold);
+}
+.setup-box--simple .start-btn:hover:not(:disabled) {
+  background: var(--amber);
+  border-color: var(--amber);
+  color: var(--bg-dark);
+}
+
+/* Suggest topic — hidden in both modes for now */
+#suggest-topic-btn { display: none; }
+
+/* Simple mode: hide advanced-only elements */
+.setup-box--simple .format-selector          { display: none; }
+.setup-box--simple .setup-or                 { display: none; }
+.setup-box--simple .selection-hint           { display: none; }
+.setup-box--simple #suggest-btn,
+.setup-box--simple #suggest-topic-btn        { display: none; }
+.setup-box--simple .topic-suggestion,
+.setup-box--simple .cast-suggestion          { display: none !important; }
+.setup-box--simple .advanced-panel           { display: none; }
+.setup-box--simple .advanced-generate-heading { display: none; }
+.setup-box--simple #mode-to-simple           { display: none; }
+
+/* Simple mode: make subtitle more prominent */
+.setup-box--simple .setup-sub {
+  font-size: 1.0rem;
+  color: var(--text);
+  margin-bottom: 0.25rem;
+}
+
+/* Advanced generate-a-debate section heading */
+.advanced-generate-heading {
+  color: var(--gold-dim);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-align: center;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border);
+  margin-top: 0.25rem;
+}
+
+/* Dotd separator — simple mode only */
+.setup-dotd-sep {
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-align: center;
+  opacity: 0.6;
+}
+
+/* Advanced mode: panel always visible; hide simple-specific and char-picker elements */
+.setup-box--advanced .advanced-panel          { display: block; }
+.setup-box--advanced .setup-spacer            { display: none; }
+.setup-box--advanced .setup-dotd-sep          { display: none; }
+.setup-box--advanced #mode-to-advanced        { display: none; }
+.setup-box--advanced .selection-hint          { display: none; }
+.setup-box--advanced .setup-sub               { display: none; }
+.setup-box--advanced .format-opt--freeform    { display: none; }
+.setup-box--advanced .char-filter-input       { display: none; }
+.setup-box--advanced .char-list               { display: none; }
+.setup-box--advanced .setup-or                { display: none; }
+.setup-box--advanced .topic-label             { display: none; }
+.setup-box--advanced .advanced-generate-heading { display: block; }
+
+/* Mode toggle row */
+.mode-toggle-row {
+  display: flex;
+  justify-content: center;
+}
+
+.mode-toggle-btn {
   background: transparent;
   border: none;
   color: var(--text-dim);
   font-family: var(--mono);
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   cursor: pointer;
   padding: 0.15rem 0;
-  text-align: left;
   letter-spacing: 0.04em;
   transition: color 0.15s;
 }
-.advanced-toggle:hover { color: var(--text); }
+.mode-toggle-btn:hover { color: var(--amber); }
 
 .advanced-panel {
-  display: none;
   border-left: 2px solid var(--border);
   padding-left: 0.75rem;
-  margin-top: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 .cast-suggestion {
