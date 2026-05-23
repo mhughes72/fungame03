@@ -544,21 +544,15 @@ function appendCableNewsEnd(el, { reason, report = {} }, participants, onQuit, s
     : ''
 
   const div = document.createElement('div')
-  div.className = 'end-panel'
+  div.className = 'end-panel end-panel-cable'
   div.innerHTML = `
     <div class="end-title ${reasonClass}">━━━ ${reasonTitle} ━━━</div>
+    ${pdfCtx ? `<div class="end-downloads"><button class="end-dl-btn end-dl-pdf" id="cable-end-pdf">⬇ Transcript</button></div>` : ''}
     ${scoreHtml}
     ${offersHtml}
     ${catchphraseHtml}
-    <div class="end-actions">
-      <div class="end-btn-row">
-        ${pdfCtx ? `<button class="end-pdf-btn" id="cable-end-pdf">⬇ Transcript</button>` : ''}
-        <button class="end-leave-btn" id="cable-end-leave">Leave the studio</button>
-      </div>
-    </div>
   `
   scrollAppend(el, div)
-  div.querySelector('#cable-end-leave').addEventListener('click', onQuit)
   div.querySelector('#cable-end-pdf')?.addEventListener('click', () => downloadTranscript({ ...pdfCtx, cableReport: report }))
 }
 
@@ -614,22 +608,19 @@ function appendOxfordVerdict(el, { winner, proposition_open, proposition_final, 
 
 function appendConsensus(el, { summary, points }, { onNewTopic, onQuit }, state = {}, sessionId, api, participants = [], pdfCtx = null) {
   const div = document.createElement('div')
-  div.className = 'end-panel'
+  div.className = 'end-panel end-panel-consensus'
   div.innerHTML = `
     <div class="end-title end-title-consensus">━━━ CONSENSUS REACHED ━━━</div>
     <blockquote class="end-summary">${escHtml(summary)}</blockquote>
+    <div class="end-downloads">
+      ${pdfCtx ? `<button class="end-dl-btn end-dl-pdf" id="consensus-pdf">⬇ Transcript</button>` : ''}
+      ${sessionId ? `<button class="end-dl-btn end-dl-paper" id="consensus-paper">📰 Morning Paper</button>` : ''}
+    </div>
     ${_debateScoreboard(state)}
     ${_endSections(points, state)}
-    <div class="end-actions">
-      <div class="end-new-topic-row">
-        <input class="end-topic-input" id="consensus-topic-input" type="text" placeholder="New topic…" autocomplete="off" />
-        <button class="end-continue-btn" id="consensus-continue">Continue ▶</button>
-      </div>
-      <div class="end-btn-row">
-        ${pdfCtx ? `<button class="end-pdf-btn" id="consensus-pdf">⬇ Transcript</button>` : ''}
-        ${sessionId ? `<button class="end-paper-btn" id="consensus-paper">Read the morning paper 📰</button>` : ''}
-        <button class="end-leave-btn" id="consensus-end">End the evening</button>
-      </div>
+    <div class="end-new-topic-row">
+      <input class="end-topic-input" id="consensus-topic-input" type="text" placeholder="New topic…" autocomplete="off" />
+      <button class="end-continue-btn" id="consensus-continue">Continue ▶</button>
     </div>
   `
   scrollAppend(el, div)
@@ -646,7 +637,6 @@ function appendConsensus(el, { summary, points }, { onNewTopic, onQuit }, state 
       if (t) onNewTopic(t)
     }
   })
-  div.querySelector('#consensus-end').addEventListener('click', onQuit)
   div.querySelector('#consensus-paper')?.addEventListener('click', () => openNewspaper(sessionId, api, participants))
   div.querySelector('#consensus-pdf')?.addEventListener('click', () => downloadTranscript({ ...pdfCtx, state }))
 }
@@ -654,7 +644,7 @@ function appendConsensus(el, { summary, points }, { onNewTopic, onQuit }, state 
 function appendGameOver(el, state, participants, onQuit, sessionId, api, pdfCtx = null) {
   clearTyping(el)
   const div = document.createElement('div')
-  div.className = 'end-panel'
+  div.className = 'end-panel end-panel-gameover'
   const turn = state.turn || 0
   const subtitle = turn
     ? `${turn} turn${turn !== 1 ? 's' : ''} — no consensus reached`
@@ -662,18 +652,14 @@ function appendGameOver(el, state, participants, onQuit, sessionId, api, pdfCtx 
   div.innerHTML = `
     <div class="end-title end-title-gameover">━━━ LAST CALL ━━━</div>
     <blockquote class="end-summary end-summary-dim">${escHtml(subtitle)}</blockquote>
+    <div class="end-downloads">
+      ${pdfCtx ? `<button class="end-dl-btn end-dl-pdf" id="game-over-pdf">⬇ Transcript</button>` : ''}
+      ${sessionId ? `<button class="end-dl-btn end-dl-paper" id="game-over-paper">📰 Morning Paper</button>` : ''}
+    </div>
     ${_debateScoreboard(state)}
     ${_endSections([], state)}
-    <div class="end-actions">
-      <div class="end-btn-row">
-        ${pdfCtx ? `<button class="end-pdf-btn" id="game-over-pdf">⬇ Transcript</button>` : ''}
-        ${sessionId ? `<button class="end-paper-btn" id="game-over-paper">Read the morning paper 📰</button>` : ''}
-        <button class="end-leave-btn" id="game-over-leave">Leave the bar</button>
-      </div>
-    </div>
   `
   scrollAppend(el, div)
-  div.querySelector('#game-over-leave').addEventListener('click', onQuit)
   div.querySelector('#game-over-paper')?.addEventListener('click', () => openNewspaper(sessionId, api, participants))
   div.querySelector('#game-over-pdf')?.addEventListener('click', () => downloadTranscript({ ...pdfCtx, state }))
 }
