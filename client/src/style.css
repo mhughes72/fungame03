@@ -1712,6 +1712,16 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   cursor: pointer;
 }
 .end-leave-btn:hover { border-color: var(--red); color: var(--red); }
+.end-pdf-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  padding: 0.35rem 0.9rem;
+  cursor: pointer;
+}
+.end-pdf-btn:hover { border-color: var(--blue); color: var(--blue); }
 
 
 /* ══════════════════════════════════════════════════════════════════════ */

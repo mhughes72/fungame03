@@ -10,6 +10,7 @@ import { open as openSteerModal, openCommercialBreak } from './steer.js'
 import { open as openCheatModal } from './cheat.js'
 import * as Seating from './seating.js'
 import { openAbout, openHelp } from './info.js'
+import { downloadTranscript } from './pdf.js'
 
 export function mount(container, sessionId, participants, topic, styles, api) {
   const skin     = api.skin ?? {}
@@ -54,6 +55,15 @@ export function mount(container, sessionId, participants, topic, styles, api) {
   let cableRatings = 0.8
   let cableRatingsHistory = []
 
+  let transcript     = []
+  let debateFormat   = 'freeform'
+  let oxfordVerdict  = null
+  let cableReport    = {}
+
+  function makePdfCtx(stateOverride) {
+    return { transcript, format: debateFormat, topic, participants, oxfordVerdict, cableReport, state: stateOverride ?? lastState }
+  }
+
   const seating = Seating.create(seatsBar, participants, skin)
   renderSidebar(sidebar, {
     topic,
@@ -95,6 +105,7 @@ export function mount(container, sessionId, participants, topic, styles, api) {
         clearStarting()
         clearTyping(convoPane)
         if (!data.backchannel) seating.setSpeaking(data.name)
+        transcript.push(data)
         appendMessage(convoPane, data)
         break
 
@@ -119,10 +130,12 @@ export function mount(container, sessionId, participants, topic, styles, api) {
         break
 
       case 'oxford_verdict':
+        oxfordVerdict = data
         appendOxfordVerdict(convoPane, data)
         break
 
       case 'phase_update':
+        if (data.debate_phase) debateFormat = 'oxford'
         currentPhase       = data.debate_phase
         currentFormatRoles = data.format_roles || {}
         renderSidebar(sidebar, { topic, ...lastState, debate_phase: currentPhase, format_roles: currentFormatRoles })
@@ -159,12 +172,13 @@ export function mount(container, sessionId, participants, topic, styles, api) {
       case 'commercial_break':
         if (steerModalPending) break
         steerModalPending = true
+        debateFormat = 'cable_news'
         cableRatings = data.ratings ?? cableRatings
         convoPane.scrollTop = convoPane.scrollHeight
         openCommercialBreak(data, leftCol, skin).then(result => {
           steerModalPending = false
           if (result === null) {
-            appendCableNewsEnd(convoPane, { reason: 'quit', report: {} }, participants, quit, sessionId, api)
+            appendCableNewsEnd(convoPane, { reason: 'quit', report: {} }, participants, quit, sessionId, api, makePdfCtx())
           } else {
             api.steer(sessionId, result.text, 'socratic', '', {}, result.producer_directive)
               .catch(err => appendSystem(convoPane, `Error: ${err.message}`))
@@ -178,7 +192,8 @@ export function mount(container, sessionId, participants, topic, styles, api) {
         if (closeStream) { closeStream(); closeStream = null }
         clearTyping(convoPane)
         seating.clearAll()
-        appendCableNewsEnd(convoPane, data, participants, quit, sessionId, api)
+        cableReport = data.report || {}
+        appendCableNewsEnd(convoPane, data, participants, quit, sessionId, api, makePdfCtx())
         break
 
       case 'steer_needed':
@@ -192,7 +207,7 @@ export function mount(container, sessionId, participants, topic, styles, api) {
         openSteerModal(currentStyle, styles, debateSummary(lastState, participants), leftCol, api.searchEvidence, participants, skin).then(result => {
           steerModalPending = false
           if (result === null) {
-            appendGameOver(convoPane, lastState, participants, quit, sessionId, api)
+            appendGameOver(convoPane, lastState, participants, quit, sessionId, api, makePdfCtx())
           } else {
             currentStyle = result.style
             renderSidebar(sidebar, { topic, ...lastState, moderator_style: result.style })
@@ -222,7 +237,7 @@ export function mount(container, sessionId, participants, topic, styles, api) {
               .catch(err => appendSystem(convoPane, `Error: ${err.message}`))
           },
           onQuit: quit,
-        }, lastState, sessionId, api, participants)
+        }, lastState, sessionId, api, participants, makePdfCtx())
         break
 
       case 'game_over':
@@ -231,11 +246,12 @@ export function mount(container, sessionId, participants, topic, styles, api) {
         if (closeStream) { closeStream(); closeStream = null }
         clearTyping(convoPane)
         seating.clearAll()
-        appendGameOver(convoPane, { ...lastState, ...data }, participants, quit, sessionId, api)
+        appendGameOver(convoPane, { ...lastState, ...data }, participants, quit, sessionId, api, makePdfCtx({ ...lastState, ...data }))
         break
 
       case 'bar_beat':
         clearStarting()
+        transcript.push({ type: 'beat', content: data.text })
         appendBarBeat(convoPane, data.text)
         break
 
@@ -246,6 +262,7 @@ export function mount(container, sessionId, participants, topic, styles, api) {
 
       case 'evidence':
         clearStarting()
+        transcript.push({ type: 'evidence', content: data.finding })
         appendEvidence(convoPane, data.finding)
         break
 
@@ -291,7 +308,7 @@ export function mount(container, sessionId, participants, topic, styles, api) {
         if (closeStream) { closeStream(); closeStream = null }
         clearTyping(convoPane)
         seating.clearAll()
-        appendGameOver(convoPane, lastState, participants, quit, sessionId, api)
+        appendGameOver(convoPane, lastState, participants, quit, sessionId, api, makePdfCtx())
       },
       () => {
         gameEnded = true
@@ -315,7 +332,7 @@ export function mount(container, sessionId, participants, topic, styles, api) {
             },
             onQuit: quit,
           },
-          lastState, sessionId, api, participants)
+          lastState, sessionId, api, participants, makePdfCtx())
       })
   })
 
@@ -324,7 +341,7 @@ export function mount(container, sessionId, participants, topic, styles, api) {
     if (lastState.turn > 0) {
       gameEnded = true
       if (closeStream) { closeStream(); closeStream = null }
-      appendGameOver(convoPane, lastState, participants, quit, sessionId, api)
+      appendGameOver(convoPane, lastState, participants, quit, sessionId, api, makePdfCtx())
     } else {
       quit()
     }
@@ -461,7 +478,7 @@ function appendProducerWhisper(el, note, stress) {
   scrollAppend(el, div)
 }
 
-function appendCableNewsEnd(el, { reason, report = {} }, participants, onQuit, sessionId, api) {
+function appendCableNewsEnd(el, { reason, report = {} }, participants, onQuit, sessionId, api, pdfCtx = null) {
   clearTyping(el)
   const isViral     = reason === 'viral'
   const isCancelled = reason === 'cancelled'
@@ -535,12 +552,14 @@ function appendCableNewsEnd(el, { reason, report = {} }, participants, onQuit, s
     ${catchphraseHtml}
     <div class="end-actions">
       <div class="end-btn-row">
+        ${pdfCtx ? `<button class="end-pdf-btn" id="cable-end-pdf">⬇ Transcript</button>` : ''}
         <button class="end-leave-btn" id="cable-end-leave">Leave the studio</button>
       </div>
     </div>
   `
   scrollAppend(el, div)
   div.querySelector('#cable-end-leave').addEventListener('click', onQuit)
+  div.querySelector('#cable-end-pdf')?.addEventListener('click', () => downloadTranscript({ ...pdfCtx, cableReport: report }))
 }
 
 function appendOxfordVerdict(el, { winner, proposition_open, proposition_final, margin, persona_verdicts, verdict }) {
@@ -593,7 +612,7 @@ function appendOxfordVerdict(el, { winner, proposition_open, proposition_final, 
   scrollAppend(el, div)
 }
 
-function appendConsensus(el, { summary, points }, { onNewTopic, onQuit }, state = {}, sessionId, api, participants = []) {
+function appendConsensus(el, { summary, points }, { onNewTopic, onQuit }, state = {}, sessionId, api, participants = [], pdfCtx = null) {
   const div = document.createElement('div')
   div.className = 'end-panel'
   div.innerHTML = `
@@ -607,6 +626,7 @@ function appendConsensus(el, { summary, points }, { onNewTopic, onQuit }, state 
         <button class="end-continue-btn" id="consensus-continue">Continue ▶</button>
       </div>
       <div class="end-btn-row">
+        ${pdfCtx ? `<button class="end-pdf-btn" id="consensus-pdf">⬇ Transcript</button>` : ''}
         ${sessionId ? `<button class="end-paper-btn" id="consensus-paper">Read the morning paper 📰</button>` : ''}
         <button class="end-leave-btn" id="consensus-end">End the evening</button>
       </div>
@@ -628,9 +648,10 @@ function appendConsensus(el, { summary, points }, { onNewTopic, onQuit }, state 
   })
   div.querySelector('#consensus-end').addEventListener('click', onQuit)
   div.querySelector('#consensus-paper')?.addEventListener('click', () => openNewspaper(sessionId, api, participants))
+  div.querySelector('#consensus-pdf')?.addEventListener('click', () => downloadTranscript({ ...pdfCtx, state }))
 }
 
-function appendGameOver(el, state, participants, onQuit, sessionId, api) {
+function appendGameOver(el, state, participants, onQuit, sessionId, api, pdfCtx = null) {
   clearTyping(el)
   const div = document.createElement('div')
   div.className = 'end-panel'
@@ -645,6 +666,7 @@ function appendGameOver(el, state, participants, onQuit, sessionId, api) {
     ${_endSections([], state)}
     <div class="end-actions">
       <div class="end-btn-row">
+        ${pdfCtx ? `<button class="end-pdf-btn" id="game-over-pdf">⬇ Transcript</button>` : ''}
         ${sessionId ? `<button class="end-paper-btn" id="game-over-paper">Read the morning paper 📰</button>` : ''}
         <button class="end-leave-btn" id="game-over-leave">Leave the bar</button>
       </div>
@@ -653,6 +675,7 @@ function appendGameOver(el, state, participants, onQuit, sessionId, api) {
   scrollAppend(el, div)
   div.querySelector('#game-over-leave').addEventListener('click', onQuit)
   div.querySelector('#game-over-paper')?.addEventListener('click', () => openNewspaper(sessionId, api, participants))
+  div.querySelector('#game-over-pdf')?.addEventListener('click', () => downloadTranscript({ ...pdfCtx, state }))
 }
 
 // ── podcast export ───────────────────────────────────────────────────── //

@@ -320,6 +320,7 @@ class Session:
             turn=self.state.get("turn_count", 0),
             heat=self.state.get("heat", 0),
             concession_total=sum((self.state.get("concession_counts") or {}).values()),
+            concession_counts=self.state.get("concession_counts") or {},
             moderator_style=self.state.get("moderator_style", "socratic"),
             partial_agreements=self.state.get("partial_agreements") or [],
             points_of_agreement=self.state.get("points_of_agreement") or [],
