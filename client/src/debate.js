@@ -731,7 +731,7 @@ async function openNewspaper(sessionId, api, participants = []) {
           ${participants.map(p => `
             <div class="newspaper-portrait-item">
               <img class="newspaper-portrait-img"
-                   src="/newspaper_portraits/${encodeURIComponent(p.replace(/ /g, '_'))}.png"
+                   src="/portraits/${encodeURIComponent(p.replace(/ /g, '_'))}.png"
                    alt="${escHtml(p)}"
                    onerror="this.closest('.newspaper-portrait-item').style.display='none'">
               <div class="newspaper-portrait-name">${escHtml(p)}</div>
