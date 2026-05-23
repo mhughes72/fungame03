@@ -33,6 +33,7 @@ export function openAbout() {
       A debate simulator where 2–4 historical figures argue a topic of your choosing,
       powered by <strong>LangGraph</strong> and <strong>OpenAI</strong>.
       Three formats: open <strong>Freeform</strong>, structured <strong>Oxford</strong>, and ratings-driven <strong>Cable News</strong>.
+      <br><a class="info-link" href="${GITHUB}" target="_blank" rel="noopener">${GITHUB}</a>
     </p>
 
     <div class="info-section-label">SPEAKER SELECTION</div>
@@ -73,13 +74,12 @@ export function openAbout() {
       <li><strong>gpt-4o-mini</strong> — all philosopher turns, moderator steer, selector, heat scoring, backchannels, character arc summaries, Oxford votes, cable news host, catchphrase generation, evidence distillation, suggest cast / suggest topic</li>
     </ul>
 
-    <div class="info-section-label">SOURCE</div>
-    <p><a class="info-link" href="${GITHUB}" target="_blank" rel="noopener">${GITHUB}</a></p>
   `)
 }
 
 export function openHelp() {
   openModal('HOW TO PLAY', `
+    <p><a class="info-link" href="${GITHUB}" target="_blank" rel="noopener">${GITHUB}</a></p>
     <div class="info-section-label">SETUP</div>
     <p>Choose a <strong>format</strong> (Freeform, Oxford, or Cable News), pick 2–4 historical figures, and enter a topic. The more specific the topic, the sharper the debate. Press Enter or click <em>Open the bar</em> to start.</p>
     <ul class="info-list">
